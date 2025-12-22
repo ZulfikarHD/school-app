@@ -248,6 +248,7 @@ interface DashboardStats {
 
 - **API Documentation:** [Authentication API](../../api/authentication.md)
 - **Test Plan:** [AUTH-P0 Test Plan](../../testing/AUTH-P0-test-plan.md)
+- **User Journeys:** [Authentication User Journeys](../../guides/auth-user-journeys.md)
 - **Database Schema:** Migration files in `database/migrations/`
 
 ## Next Phase (P1 - Important)

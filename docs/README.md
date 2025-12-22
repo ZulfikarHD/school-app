@@ -20,8 +20,11 @@ docs/
 ├── api/                          # API endpoint documentation
 │   └── authentication.md
 │
-└── testing/                      # Test plans dan QA checklists
-    └── AUTH-P0-test-plan.md
+├── testing/                      # Test plans dan QA checklists
+│   └── AUTH-P0-test-plan.md
+│
+└── guides/                       # User journeys dan how-to guides
+    └── auth-user-journeys.md
 ```
 
 ---
