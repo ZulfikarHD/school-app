@@ -19,8 +19,15 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
+        'role',
+        'status',
+        'is_first_login',
+        'last_login_at',
+        'last_login_ip',
+        'phone_number',
     ];
 
     /**
@@ -43,6 +50,40 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_first_login' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Relationship dengan ActivityLog untuk tracking aktivitas user
+     */
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
+     * Relationship dengan PasswordHistory untuk riwayat password
+     */
+    public function passwordHistories()
+    {
+        return $this->hasMany(PasswordHistory::class);
+    }
+
+    /**
+     * Helper method untuk check apakah user memiliki role tertentu
+     */
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+
+    /**
+     * Helper method untuk check apakah user aktif
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
     }
 }

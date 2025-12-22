@@ -17,18 +17,26 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * Define the model's default state dengan field baru untuk authentication system
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
+        $name = fake()->name();
+        $username = strtolower(str_replace(' ', '.', $name));
+
         return [
-            'name' => fake()->name(),
+            'name' => $name,
+            'username' => $username,
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'role' => 'TEACHER',
+            'status' => 'active',
+            'is_first_login' => false,
+            'phone_number' => fake()->phoneNumber(),
         ];
     }
 

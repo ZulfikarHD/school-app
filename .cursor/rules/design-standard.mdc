@@ -1,0 +1,136 @@
+---
+alwaysApply: true
+---
+
+# 🎨 iOS-like Design Standard
+
+**Core:** Apple design language, mobile-first, natural animations, premium feel
+
+---
+
+## 🎯 iOS Design Principles (WAJIB)
+
+### 1. Spring Physics
+- Use `motion-v`: `<Motion :transition="{ type: 'spring', stiffness: 400, damping: 30 }" />`
+- Stiffness: 300-500, Damping: 25-35
+
+### 2. Press Feedback
+- ALL buttons: `:whileTap="{ scale: 0.97 }"`
+- Hover: `:whileHover="{ y: -4, scale: 1.02 }"`
+
+### 3. Glass Effect
+- Navbar/Footer: `bg-white/80 backdrop-blur-xl`
+- Modals: `bg-white/95 backdrop-blur-xl`
+- Overlay: `bg-black/50 backdrop-blur-sm`
+
+### 4. Haptic Feedback
+```ts
+import { useHaptics } from '@/composables/useHaptics';
+haptics.light();    // 10ms - clicks, nav
+haptics.medium();   // 20ms - submit, confirm
+haptics.heavy();    // 40ms - delete, critical
+```
+
+### 5. Staggered Animations
+- Cards: delay 0.1s, 0.15s, 0.2s, 0.25s
+- Lists: increment 0.05s per item
+
+### 6. Gestures (Available)
+```ts
+import { useSwipeGesture } from '@/composables/useSwipeGesture';
+```
+
+---
+
+## 🎭 Reusable Components (WAJIB)
+
+**Path:** `resources/js/components/ui/`
+
+### Kapan Gunakan Reusable:
+✅ Confirmations, alerts, simple forms, CRUD feedback, toasts
+❌ Multi-step wizards, complex layouts, special interactions
+
+### useModal (RECOMMENDED)
+```ts
+import { useModal } from '@/composables/useModal';
+const modal = useModal();
+
+modal.success('Berhasil!');
+modal.error('Gagal!');
+modal.warning('Perhatian!');
+const ok = await modal.confirm('Yakin?', 'Lanjut?');
+const del = await modal.confirmDelete();
+```
+
+### BaseModal (Custom Content)
+```vue
+<BaseModal :show="show" title="Judul" @close="show = false">
+  <p>Content</p>
+  <template #footer><button>OK</button></template>
+</BaseModal>
+```
+
+### DialogModal (Confirmations)
+```vue
+<DialogModal
+  :show="show"
+  type="danger"
+  title="Hapus?"
+  message="Data hilang permanen"
+  @confirm="handleConfirm"
+  @cancel="show = false"
+/>
+```
+
+### Alert (Toast)
+```vue
+<Alert
+  :show="show"
+  type="success"
+  message="Berhasil!"
+  :duration="3000"
+  position="top-right"
+/>
+```
+
+### Setup (AppLayout.vue)
+```vue
+<script setup>
+import { useModal } from '@/composables/useModal';
+const modal = useModal();
+</script>
+<template>
+  <DialogModal v-bind="modal.dialogState.value" ... />
+  <Alert v-bind="modal.alertState.value" ... />
+</template>
+```
+
+---
+
+## 📱 Mobile-First
+
+- Touch targets: min 44x44px
+- Padding: `px-6 py-8`
+- Gap: `gap-6` (grid), `space-y-4` (list)
+- Typography: `text-3xl` (title), `text-base` (body)
+- Dark mode: always include `dark:`
+- Gradients: `from-blue-600 to-indigo-600`
+
+---
+
+## ✅ Checklist Before Commit
+
+- [ ] Press feedback (0.97) semua button
+- [ ] Spring animations (stiffness 300-500)
+- [ ] Glass effect navbar/modal
+- [ ] Haptic feedback actions
+- [ ] Staggered animations lists
+- [ ] Mobile test (375px)
+- [ ] Dark mode works
+- [ ] useModal untuk dialogs (if simple)
+- [ ] `yarn run lint` ✓
+- [ ] `yarn run build` ✓
+
+---
+
+**Formula:** Spring + Haptic + Glass + Press Feedback = Premium iOS Feel
