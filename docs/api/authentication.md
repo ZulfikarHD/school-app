@@ -110,10 +110,17 @@ Melakukan authentication user dengan credentials (username atau email) dan passw
 **Success Response:** `302 Redirect`
 
 ```
-Location: /admin/dashboard
+Location: /dashboard (→ auto redirect ke role-specific dashboard)
 Set-Cookie: laravel_session=...
 Set-Cookie: XSRF-TOKEN=...
 ```
+
+**Redirect Destinations berdasarkan Role:**
+- SUPERADMIN/ADMIN → `/admin/dashboard`
+- PRINCIPAL → `/principal/dashboard`
+- TEACHER → `/teacher/dashboard`
+- PARENT → `/parent/dashboard`
+- STUDENT → `/student/dashboard`
 
 **Error Responses:**
 
@@ -179,7 +186,192 @@ curl -X POST http://localhost:8000/login \
 
 ---
 
-### 3. Logout User
+### 3. Show First Login Form
+
+Menampilkan halaman first login untuk user yang baru pertama kali login dan harus mengubah password default.
+
+**Endpoint:** `GET /first-login`
+
+**Authentication:** Authenticated users only (dengan `is_first_login = true`)
+
+**Response:** `200 OK` - Inertia render
+
+```json
+{
+  "component": "Auth/FirstLogin",
+  "props": {
+    "user": {
+      "name": "Budi Santoso",
+      "username": "pak.budi",
+      "email": "budi@sekolah.app"
+    }
+  },
+  "url": "/first-login"
+}
+```
+
+**Authorization Rules:**
+- User HARUS sudah authenticated
+- User HARUS memiliki `is_first_login = true`
+- Jika `is_first_login = false` → redirect ke `/dashboard`
+- Jika guest → redirect ke `/login`
+
+**Example Request:**
+```bash
+curl -X GET http://localhost:8000/first-login \
+  -b cookies.txt
+```
+
+---
+
+### 4. Update Password (First Login)
+
+Mengupdate password user pada first login dengan validation ketat, activity logging, dan automatic flag update.
+
+**Endpoint:** `POST /first-login`
+
+**Authentication:** Authenticated users only (dengan `is_first_login = true`)
+
+**Request Body:**
+
+```json
+{
+  "password": "NewSecure123!@#",
+  "password_confirmation": "NewSecure123!@#"
+}
+```
+
+**Validation Rules:**
+
+| Field | Rules | Error Messages |
+|-------|-------|----------------|
+| `password` | required, string, confirmed, min:8, mixed case, numbers, symbols, uncompromised | "Password baru wajib diisi." |
+| `password_confirmation` | required, matches password | "Konfirmasi password tidak cocok." |
+
+**Password Requirements:**
+- Minimal 8 karakter
+- Harus mengandung huruf besar (uppercase)
+- Harus mengandung huruf kecil (lowercase)
+- Harus mengandung minimal 1 angka
+- Harus mengandung minimal 1 simbol (!@#$%^&*)
+- Tidak boleh ada di leaked password database (haveibeenpwned.com)
+
+**Response Success:** `302 Redirect`
+
+Redirect destination berdasarkan role:
+- **SUPERADMIN / ADMIN** → `/admin/dashboard`
+- **PRINCIPAL** → `/principal/dashboard`
+- **TEACHER** → `/teacher/dashboard`
+- **PARENT** → `/parent/dashboard`
+- **STUDENT** → `/login` (dashboard not implemented)
+
+```json
+{
+  "redirect": "/teacher/dashboard",
+  "message": "Password berhasil diubah. Selamat datang!"
+}
+```
+
+**Response Errors:**
+
+**400 Bad Request** - Validation Failed
+```json
+{
+  "message": "The password field confirmation does not match.",
+  "errors": {
+    "password": [
+      "Konfirmasi password tidak cocok."
+    ]
+  }
+}
+```
+
+**403 Forbidden** - Authorization Failed
+```json
+{
+  "message": "This action is unauthorized."
+}
+```
+
+User dengan `is_first_login = false` tidak bisa akses endpoint ini.
+
+**401 Unauthorized** - Not Authenticated
+```json
+{
+  "message": "Unauthenticated."
+}
+```
+
+**Side Effects:**
+1. User password di-hash dengan bcrypt dan disimpan
+2. `is_first_login` flag diubah menjadi `false`
+3. Activity log tercatat:
+   - `action`: `"first_login_password_change"`
+   - `status`: `"success"`
+   - `ip_address`: Client IP
+   - `user_agent`: Client User Agent
+
+**Example Request:**
+```bash
+# Get CSRF Token
+CSRF_TOKEN=$(curl -s http://localhost:8000/first-login \
+  -b cookies.txt \
+  | grep -oP 'csrf-token" content="\K[^"]+')
+
+# Update Password
+curl -X POST http://localhost:8000/first-login \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-TOKEN: $CSRF_TOKEN" \
+  -b cookies.txt \
+  -c cookies.txt \
+  -d '{
+    "password": "NewSecure123!@#",
+    "password_confirmation": "NewSecure123!@#"
+  }'
+```
+
+**Example Response:**
+```
+HTTP/1.1 302 Found
+Location: /teacher/dashboard
+Set-Cookie: laravel_session=...
+```
+
+---
+
+### 5. Universal Dashboard Redirect
+
+Smart redirect ke dashboard sesuai dengan role user untuk akses yang lebih user-friendly.
+
+**Endpoint:** `GET /dashboard`
+
+**Authentication:** Required (all authenticated users)
+
+**Request:** None
+
+**Success Response:** `302 Redirect`
+
+Behavior:
+- SUPERADMIN/ADMIN → Redirect ke `/admin/dashboard`
+- PRINCIPAL → Redirect ke `/principal/dashboard`
+- TEACHER → Redirect ke `/teacher/dashboard`
+- PARENT → Redirect ke `/parent/dashboard`
+- STUDENT → Redirect ke `/student/dashboard`
+- Unauthenticated → Redirect ke `/login`
+
+**Example Request:**
+```bash
+curl -X GET http://localhost:8000/dashboard \
+  -H "Cookie: laravel_session={session_id}" \
+  -L  # Follow redirects
+```
+
+**Use Case:**
+User dapat bookmark `/dashboard` dan otomatis diarahkan ke dashboard mereka tanpa perlu tahu route spesifik berdasarkan role.
+
+---
+
+### 6. Logout User
 
 Melakukan logout user dengan destroy session dan redirect ke login page.
 
@@ -210,7 +402,7 @@ curl -X POST http://localhost:8000/logout \
 
 ---
 
-### 4. Access Dashboard (Admin)
+### 7. Access Dashboard (Admin)
 
 Mengakses dashboard admin dengan role-based access control.
 
@@ -257,7 +449,7 @@ Mengakses dashboard admin dengan role-based access control.
 
 ---
 
-### 5. Access Dashboard (Principal)
+### 8. Access Dashboard (Principal)
 
 **Endpoint:** `GET /principal/dashboard`
 
@@ -277,7 +469,7 @@ Mengakses dashboard admin dengan role-based access control.
 
 ---
 
-### 6. Access Dashboard (Teacher)
+### 7. Access Dashboard (Teacher)
 
 **Endpoint:** `GET /teacher/dashboard`
 
@@ -297,7 +489,7 @@ Mengakses dashboard admin dengan role-based access control.
 
 ---
 
-### 7. Access Dashboard (Parent)
+### 8. Access Dashboard (Parent)
 
 **Endpoint:** `GET /parent/dashboard`
 
@@ -317,7 +509,7 @@ Mengakses dashboard admin dengan role-based access control.
 
 ---
 
-### 8. Access Dashboard (Student)
+### 9. Access Dashboard (Student)
 
 **Endpoint:** `GET /student/dashboard`
 
@@ -479,6 +671,7 @@ Setiap Inertia page menerima auth state:
 
 ```javascript
 import { useForm } from '@inertiajs/vue3';
+import login from '@/routes/login';
 
 // Login
 const form = useForm({
@@ -487,7 +680,7 @@ const form = useForm({
     remember: false,
 });
 
-form.post(route('login'), {
+form.post(login.post().url, {
     onSuccess: () => {
         // Redirect handled by server
     },
@@ -498,9 +691,12 @@ form.post(route('login'), {
 
 // Logout
 import { router } from '@inertiajs/vue3';
+import { logout } from '@/routes';
 
-router.post(route('logout'));
+router.post(logout().url);
 ```
+
+**Note:** Project ini menggunakan **Laravel Wayfinder** untuk type-safe routing, bukan Ziggy. Routes di-generate otomatis di `resources/js/routes/` saat build.
 
 ### cURL
 
@@ -520,6 +716,18 @@ curl -X POST http://localhost:8000/login \
     "remember": false
   }'
 
+# If is_first_login = true, user will be redirected to /first-login
+# Update password on first login
+curl -X POST http://localhost:8000/first-login \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-TOKEN: $CSRF_TOKEN" \
+  -b cookies.txt \
+  -c cookies.txt \
+  -d '{
+    "password": "NewSecure123!@#",
+    "password_confirmation": "NewSecure123!@#"
+  }'
+
 # Access Protected Route
 curl -X GET http://localhost:8000/admin/dashboard \
   -b cookies.txt
@@ -534,12 +742,17 @@ curl -X POST http://localhost:8000/logout \
 
 ## Related Documentation
 
-- **Feature Documentation:** [AUTH-P0 Authentication](../features/auth/AUTH-P0-authentication.md)
-- **Test Plan:** [AUTH-P0 Test Plan](../testing/AUTH-P0-test-plan.md)
+- **Feature Documentation:**
+  - [AUTH-P0 Authentication](../features/auth/AUTH-P0-authentication.md)
+  - [AUTH-P1 First Login](../features/auth/AUTH-P1-first-login.md)
+- **Test Plans:**
+  - [AUTH-P0 Test Plan](../testing/AUTH-P0-test-plan.md)
+  - [AUTH-P1 Test Plan](../testing/AUTH-P1-first-login-test-plan.md)
 - **Database Schema:** Migration files in `database/migrations/`
 
 ---
 
-*Last Updated: 2025-12-22*
-*API Version: 1.0 (P0 Implementation)*
+*Last Updated: 2025-12-23*
+*API Version: 1.1 (P0 + P1 Implementation)*
+
 

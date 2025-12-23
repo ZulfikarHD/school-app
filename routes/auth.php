@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\FirstLoginController;
 use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +30,13 @@ Route::middleware('guest')->group(function () {
  * Authenticated Routes - hanya bisa diakses oleh user yang sudah login
  */
 Route::middleware('auth')->group(function () {
+    // First Login - untuk user yang baru pertama kali login dan harus ubah password
+    Route::get('/first-login', [FirstLoginController::class, 'show'])
+        ->name('auth.first-login');
+
+    Route::post('/first-login', [FirstLoginController::class, 'update'])
+        ->name('auth.first-login.update');
+
     // Logout route
     Route::post('/logout', [LoginController::class, 'logout'])
         ->name('logout');
