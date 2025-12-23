@@ -3,12 +3,13 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
+import { User, Lock, Eye, EyeOff, Loader2, LogIn, ShieldCheck, Zap, LayoutDashboard } from 'lucide-vue-next';
 import login from '@/routes/login';
 
 /**
- * Login page untuk authentication user dengan support
- * username/email login, remember me, dan rate limiting feedback
- * serta iOS-like animations dan haptic feedback
+ * Login page dengan full-page immersive design
+ * Menggunakan split-screen layout untuk desktop dan stacked untuk mobile
+ * Dengan iOS-like animations dan haptic feedback untuk UX yang optimal
  */
 
 const form = useForm({
@@ -59,125 +60,265 @@ const handleRememberChange = () => {
 <template>
     <Head title="Masuk ke Sistem" />
 
-    <div class="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 dark:from-gray-900 dark:to-gray-800">
-        <Motion
-            :initial="{ opacity: 0, scale: 0.95, y: 20 }"
-            :animate="{ opacity: 1, scale: 1, y: 0 }"
-            :transition="{ type: 'spring', stiffness: 300, damping: 25, mass: 0.8 }"
-            class="w-full max-w-md"
-        >
-            <!-- Card Container dengan glass effect untuk iOS-like design -->
-            <div class="overflow-hidden rounded-2xl bg-white/80 shadow-2xl backdrop-blur-xl dark:bg-gray-800/80">
-                <!-- Header -->
-                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-10 text-center">
-                    <h1 class="text-3xl font-bold text-white">Sistem Sekolah</h1>
-                    <p class="mt-2 text-sm text-blue-100">Silakan masuk untuk melanjutkan</p>
-                </div>
+    <div class="min-h-screen w-full bg-gray-50 dark:bg-gray-900 overflow-hidden relative">
+        <!-- iOS-like Background Mesh/Blur -->
+        <div class="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] rounded-full bg-blue-400/20 blur-[100px] dark:bg-blue-600/10 pointer-events-none animate-pulse-slow"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-full bg-purple-400/20 blur-[100px] dark:bg-purple-600/10 pointer-events-none animate-pulse-slow animation-delay-2000"></div>
 
-                <!-- Form Container -->
-                <form @submit.prevent="submit" class="space-y-6 px-8 py-8">
-                    <!-- Identifier Input (Username/Email) -->
-                    <div>
-                        <label for="identifier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Username atau Email
-                        </label>
-                        <input
-                            id="identifier"
-                            v-model="form.identifier"
-                            type="text"
-                            required
-                            autocomplete="username"
-                            class="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 transition-all duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
-                            placeholder="Masukkan username atau email"
-                            :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500/20': form.errors.identifier }"
-                        />
-                        <p v-if="form.errors.identifier" class="mt-2 text-sm text-red-600 dark:text-red-400">
-                            {{ form.errors.identifier }}
-                        </p>
-                    </div>
-
-                    <!-- Password Input -->
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Password
-                        </label>
-                        <div class="relative mt-2">
-                            <input
-                                id="password"
-                                v-model="form.password"
-                                :type="showPassword ? 'text' : 'password'"
-                                required
-                                autocomplete="current-password"
-                                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 pr-12 text-gray-900 transition-all duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
-                                placeholder="Masukkan password"
-                                :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500/20': form.errors.password }"
-                            />
-                            <!-- Toggle Show/Hide Password -->
-                            <button
-                                type="button"
-                                @click="togglePasswordVisibility"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-gray-400 dark:hover:text-gray-200"
-                                :aria-label="showPassword ? 'Sembunyikan password' : 'Tampilkan password'"
-                            >
-                                <svg v-if="!showPassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                </svg>
-                            </button>
-                        </div>
-                        <p v-if="form.errors.password" class="mt-2 text-sm text-red-600 dark:text-red-400">
-                            {{ form.errors.password }}
-                        </p>
-                    </div>
-
-                    <!-- Remember Me -->
-                    <div class="flex items-center justify-between">
-                        <label class="flex items-center">
-                            <input
-                                v-model="form.remember"
-                                type="checkbox"
-                                @change="handleRememberChange"
-                                class="h-4 w-4 rounded border-gray-300 text-blue-600 transition-colors focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700"
-                            />
-                            <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Ingat saya</span>
-                        </label>
-                    </div>
-
-                    <!-- Submit Button dengan spring animation -->
+        <!-- Main Container -->
+        <div class="relative flex min-h-screen flex-col lg:flex-row">
+            <!-- Left Side - Branding & Visual (Desktop Only) -->
+            <Motion
+                :initial="{ opacity: 0, x: -50 }"
+                :animate="{ opacity: 1, x: 0 }"
+                :transition="{ type: 'spring', stiffness: 400, damping: 30 }"
+                class="hidden lg:flex flex-1 flex-col justify-center px-16 py-20 relative z-10"
+            >
+                <div class="mx-auto w-full max-w-xl">
+                    <!-- Logo/Brand Section -->
                     <Motion
-                        :whileTap="{ scale: 0.97 }"
-                        :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
+                        :initial="{ opacity: 0, y: 20 }"
+                        :animate="{ opacity: 1, y: 0 }"
+                        :transition="{ type: 'spring', stiffness: 400, damping: 30, delay: 0.1 }"
+                        class="mb-10"
                     >
-                        <button
-                            type="submit"
-                            :disabled="isSubmitting"
-                            class="flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:from-blue-600 disabled:hover:to-indigo-600"
-                        >
-                        <svg
-                            v-if="isSubmitting"
-                            class="mr-2 h-5 w-5 animate-spin"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        <span>{{ isSubmitting ? 'Memproses...' : 'Masuk' }}</span>
-                        </button>
+                        <div class="mb-8 inline-flex items-center justify-center rounded-2xl bg-white p-4 shadow-xl shadow-blue-500/10 ring-1 ring-gray-100 dark:bg-gray-800 dark:ring-gray-700 dark:shadow-none">
+                            <LayoutDashboard class="h-12 w-12 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl dark:text-white">
+                            Sistem Informasi
+                            <span class="block text-blue-600 dark:text-blue-400">Sekolah</span>
+                        </h1>
+                        <p class="mt-6 text-lg text-gray-600 sm:text-xl leading-relaxed max-w-md dark:text-gray-300">
+                            Platform terpadu untuk manajemen sekolah yang lebih efisien, aman, dan modern.
+                        </p>
                     </Motion>
-                </form>
 
-                <!-- Footer -->
-                <div class="border-t border-gray-200 bg-gray-50 px-8 py-4 text-center dark:border-gray-700 dark:bg-gray-800/50">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                        &copy; 2024 Sistem Informasi Sekolah
-                    </p>
+                    <!-- Features List -->
+                    <div class="mt-10 space-y-6 lg:mt-16">
+                        <Motion
+                            :initial="{ opacity: 0, x: -20 }"
+                            :animate="{ opacity: 1, x: 0 }"
+                            :transition="{ type: 'spring', stiffness: 400, damping: 30, delay: 0.2 }"
+                            class="flex items-start gap-4 group"
+                        >
+                            <div class="mt-1 shrink-0">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-gray-100 transition-transform group-hover:scale-110 dark:bg-gray-800 dark:ring-gray-700">
+                                    <LayoutDashboard class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900 text-lg dark:text-white">Manajemen Terpadu</h3>
+                                <p class="mt-1 text-sm text-gray-600 leading-relaxed dark:text-gray-400">Kelola data siswa, guru, dan akademik dalam satu dashboard yang intuitif.</p>
+                            </div>
+                        </Motion>
+
+                        <Motion
+                            :initial="{ opacity: 0, x: -20 }"
+                            :animate="{ opacity: 1, x: 0 }"
+                            :transition="{ type: 'spring', stiffness: 400, damping: 30, delay: 0.25 }"
+                            class="flex items-start gap-4 group"
+                        >
+                            <div class="mt-1 shrink-0">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-gray-100 transition-transform group-hover:scale-110 dark:bg-gray-800 dark:ring-gray-700">
+                                    <ShieldCheck class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900 text-lg dark:text-white">Keamanan Terjamin</h3>
+                                <p class="mt-1 text-sm text-gray-600 leading-relaxed dark:text-gray-400">Proteksi data tingkat tinggi dengan enkripsi modern dan backup berkala.</p>
+                            </div>
+                        </Motion>
+
+                        <Motion
+                            :initial="{ opacity: 0, x: -20 }"
+                            :animate="{ opacity: 1, x: 0 }"
+                            :transition="{ type: 'spring', stiffness: 400, damping: 30, delay: 0.3 }"
+                            class="flex items-start gap-4 group"
+                        >
+                            <div class="mt-1 shrink-0">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-gray-100 transition-transform group-hover:scale-110 dark:bg-gray-800 dark:ring-gray-700">
+                                    <Zap class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900 text-lg dark:text-white">Performa Cepat</h3>
+                                <p class="mt-1 text-sm text-gray-600 leading-relaxed dark:text-gray-400">Akses data real-time dengan antarmuka yang responsif di semua perangkat.</p>
+                            </div>
+                        </Motion>
+                    </div>
                 </div>
-            </div>
-        </Motion>
+            </Motion>
+
+            <!-- Right Side - Login Form (Desktop) / Full Screen (Mobile) -->
+            <Motion
+                :initial="{ opacity: 0, scale: 0.95 }"
+                :animate="{ opacity: 1, scale: 1 }"
+                :transition="{ type: 'spring', stiffness: 400, damping: 30, delay: 0.1 }"
+                class="flex flex-1 items-center justify-center px-6 py-8 lg:px-16 lg:py-20 relative z-10 w-full"
+            >
+                <div class="w-full max-w-[420px]">
+                    <!-- Mobile Logo (Visible only on mobile) -->
+                    <div class="lg:hidden mb-12 text-center">
+                        <div class="inline-flex items-center justify-center rounded-2xl bg-white p-3 shadow-lg shadow-blue-500/10 ring-1 ring-gray-100 mb-5 dark:bg-gray-800 dark:ring-gray-700">
+                            <LayoutDashboard class="h-10 w-10 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">SIS Sekolah</h1>
+                        <p class="mt-2 text-base text-gray-500 dark:text-gray-400">Selamat datang kembali</p>
+                    </div>
+
+                    <!-- Login Card (Transparent on Mobile, Card on Desktop) -->
+                    <div
+                        class="w-full lg:overflow-hidden lg:rounded-3xl lg:bg-white/80 lg:shadow-2xl lg:shadow-blue-900/5 lg:backdrop-blur-xl lg:ring-1 lg:ring-gray-200/50 dark:lg:bg-gray-800/80 dark:lg:ring-gray-700/50 dark:lg:shadow-none"
+                    >
+                        <!-- Card Header (Desktop Only) -->
+                        <div class="relative px-8 pt-10 pb-6 text-center lg:block hidden">
+                            <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Selamat Datang</h2>
+                            <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Silakan masuk untuk mengakses akun Anda</p>
+                        </div>
+
+                        <!-- Form Container -->
+                        <form @submit.prevent="submit" class="lg:px-8 lg:pb-10 space-y-6">
+                            <!-- Identifier Input (Username/Email) -->
+                            <Motion
+                                :initial="{ opacity: 0, y: 10 }"
+                                :animate="{ opacity: 1, y: 0 }"
+                                :transition="{ type: 'spring', stiffness: 400, damping: 30, delay: 0.3 }"
+                            >
+                                <div class="group">
+                                    <label for="identifier" class="block text-sm font-medium text-gray-700 dark:text-gray-300 ml-1 mb-1.5">
+                                        Username atau Email
+                                    </label>
+                                    <div class="relative transition-all duration-200 focus-within:scale-[1.01]">
+                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors">
+                                            <User class="h-5 w-5" />
+                                        </div>
+                                        <input
+                                            id="identifier"
+                                            v-model="form.identifier"
+                                            type="text"
+                                            required
+                                            autocomplete="username"
+                                            class="block w-full rounded-xl border-gray-200 bg-white lg:bg-gray-50/50 py-3.5 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-gray-600 dark:bg-gray-800 lg:dark:bg-gray-700/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-gray-700 transition-all duration-200 shadow-sm lg:shadow-none ring-1 lg:ring-0 ring-gray-200 dark:ring-gray-700"
+                                            placeholder="Masukkan username atau email"
+                                            :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500/10': form.errors.identifier }"
+                                        />
+                                    </div>
+                                    <p v-if="form.errors.identifier" class="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-1.5 ml-1">
+                                        <span class="inline-block h-1 w-1 rounded-full bg-red-600 dark:bg-red-400"></span>
+                                        {{ form.errors.identifier }}
+                                    </p>
+                                </div>
+                            </Motion>
+
+                            <!-- Password Input -->
+                            <Motion
+                                :initial="{ opacity: 0, y: 10 }"
+                                :animate="{ opacity: 1, y: 0 }"
+                                :transition="{ type: 'spring', stiffness: 400, damping: 30, delay: 0.35 }"
+                            >
+                                <div class="group">
+                                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 ml-1 mb-1.5">
+                                        Password
+                                    </label>
+                                    <div class="relative transition-all duration-200 focus-within:scale-[1.01]">
+                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors">
+                                            <Lock class="h-5 w-5" />
+                                        </div>
+                                        <input
+                                            id="password"
+                                            v-model="form.password"
+                                            :type="showPassword ? 'text' : 'password'"
+                                            required
+                                            autocomplete="current-password"
+                                            class="block w-full rounded-xl border-gray-200 bg-white lg:bg-gray-50/50 py-3.5 pl-11 pr-12 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-gray-600 dark:bg-gray-800 lg:dark:bg-gray-700/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-gray-700 transition-all duration-200 shadow-sm lg:shadow-none ring-1 lg:ring-0 ring-gray-200 dark:ring-gray-700"
+                                            placeholder="Masukkan password"
+                                            :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500/10': form.errors.password }"
+                                        />
+                                        <!-- Toggle Show/Hide Password -->
+                                        <button
+                                            type="button"
+                                            @click="togglePasswordVisibility"
+                                            class="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                                            :aria-label="showPassword ? 'Sembunyikan password' : 'Tampilkan password'"
+                                        >
+                                            <EyeOff v-if="!showPassword" class="h-5 w-5" />
+                                            <Eye v-else class="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                    <p v-if="form.errors.password" class="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-1.5 ml-1">
+                                        <span class="inline-block h-1 w-1 rounded-full bg-red-600 dark:bg-red-400"></span>
+                                        {{ form.errors.password }}
+                                    </p>
+                                </div>
+                            </Motion>
+
+                            <!-- Remember Me & Forgot Password -->
+                            <Motion
+                                :initial="{ opacity: 0, y: 10 }"
+                                :animate="{ opacity: 1, y: 0 }"
+                                :transition="{ type: 'spring', stiffness: 400, damping: 30, delay: 0.4 }"
+                                class="flex items-center justify-between"
+                            >
+                                <label class="flex items-center cursor-pointer group">
+                                    <div class="relative flex items-center">
+                                        <input
+                                            v-model="form.remember"
+                                            type="checkbox"
+                                            @change="handleRememberChange"
+                                            class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-gray-300 bg-white transition-all checked:border-blue-600 checked:bg-blue-600 hover:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 lg:dark:bg-gray-700 dark:checked:border-blue-500 dark:checked:bg-blue-500"
+                                        />
+                                        <svg
+                                            class="pointer-events-none absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            stroke-width="3"
+                                        >
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <span class="ml-2.5 text-sm font-medium text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200 transition-colors">Ingat saya</span>
+                                </label>
+                                <a
+                                    href="#"
+                                    class="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                >
+                                    Lupa password?
+                                </a>
+                            </Motion>
+
+                            <!-- Submit Button -->
+                            <Motion
+                                :initial="{ opacity: 0, y: 10 }"
+                                :animate="{ opacity: 1, y: 0 }"
+                                :transition="{ type: 'spring', stiffness: 400, damping: 30, delay: 0.45 }"
+                                :whileTap="{ scale: 0.97 }"
+                                :transition-tap="{ type: 'spring', stiffness: 500, damping: 30 }"
+                            >
+                                <button
+                                    type="submit"
+                                    :disabled="isSubmitting"
+                                    class="relative w-full overflow-hidden rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-4 font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-500/40 focus:outline-none focus:ring-4 focus:ring-blue-500/30 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:shadow-none"
+                                >
+                                    <div class="relative flex items-center justify-center gap-2">
+                                        <Loader2 v-if="isSubmitting" class="h-5 w-5 animate-spin" />
+                                        <LogIn v-else class="h-5 w-5" />
+                                        <span>{{ isSubmitting ? 'Memproses...' : 'Masuk Sekarang' }}</span>
+                                    </div>
+                                </button>
+                            </Motion>
+                        </form>
+
+                        <!-- Footer -->
+                        <div class="lg:bg-gray-50/50 lg:px-8 lg:py-5 mt-8 lg:mt-0 text-center dark:lg:bg-gray-800/30 lg:border-t lg:border-gray-100 dark:lg:border-gray-700/50">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                &copy; {{ new Date().getFullYear() }} Sistem Informasi Sekolah. <br class="sm:hidden" />Hak Cipta Dilindungi.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </Motion>
+        </div>
     </div>
 </template>
-

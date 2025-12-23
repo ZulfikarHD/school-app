@@ -93,11 +93,22 @@ class LoginController extends Controller
         $request->session()->regenerate();
 
         // Redirect berdasarkan kondisi
+        // Untuk first login, gunakan Inertia::location() untuk full page reload
+        // untuk memastikan authentication state ter-update dengan benar
         if ($user->is_first_login) {
-            return redirect()->route('auth.first-login');
+            return Inertia::location(route('auth.first-login'));
         }
 
-        return redirect()->intended($this->getDashboardRoute($user->role));
+        // Untuk login normal, gunakan redirect biasa untuk smooth Inertia navigation
+        $dashboardRoute = $this->getDashboardRoute($user->role);
+        $intendedUrl = $request->session()->pull('url.intended');
+
+        // Jika ada intended URL dan valid, gunakan itu
+        if ($intendedUrl && $intendedUrl !== route('login')) {
+            return redirect($intendedUrl);
+        }
+
+        return redirect()->route($dashboardRoute);
     }
 
     /**
