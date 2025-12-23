@@ -24,30 +24,33 @@ interface AlertOptions {
     dismissible?: boolean;
 }
 
-export const useModal = () => {
-    const modals = ref<Record<string, boolean>>({});
-    const dialogState = ref<{
-        show: boolean;
-        options: DialogOptions;
-        onConfirm?: () => void;
-        onCancel?: () => void;
-    }>({
-        show: false,
-        options: {
-            title: '',
-            message: '',
-        },
-    });
-    const alertState = ref<{
-        show: boolean;
-        options: AlertOptions;
-    }>({
-        show: false,
-        options: {
-            message: '',
-        },
-    });
+// Global state (Singleton)
+const modals = ref<Record<string, boolean>>({});
 
+const dialogState = ref<{
+    show: boolean;
+    options: DialogOptions;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+}>({
+    show: false,
+    options: {
+        title: '',
+        message: '',
+    },
+});
+
+const alertState = ref<{
+    show: boolean;
+    options: AlertOptions;
+}>({
+    show: false,
+    options: {
+        message: '',
+    },
+});
+
+export const useModal = () => {
     /**
      * Open modal by name
      */
@@ -211,4 +214,3 @@ export const useModal = () => {
         closeAlert,
     };
 };
-

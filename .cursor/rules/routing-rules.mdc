@@ -1,0 +1,89 @@
+---
+alwaysApply: true
+---
+
+# Wayfinder Routing Rules
+
+Proyek ini menggunakan **Laravel Wayfinder** untuk type-safe routing. Ikuti aturan berikut untuk menghindari error.
+
+## Import Routes dengan Benar
+
+### ❌ SALAH - Jangan import dari subfolder jika tidak ada export-nya
+
+```typescript
+// WRONG: login GET tidak di-export dari @/routes/login
+import { login } from '@/routes/login';
+```
+
+### ✅ BENAR - Import dari lokasi yang tepat
+
+```typescript
+// Routes utama (home, dashboard, login GET, logout) ada di @/routes/index.ts
+import { login, logout, dashboard, home } from '@/routes';
+
+// Routes dengan subfolder (admin, profile, password, dll)
+import { index, create, store, edit, update, destroy } from '@/routes/admin/users';
+import { email, request, update as passwordUpdate } from '@/routes/password';
+import { show as profileShow } from '@/routes/profile';
+import { update as profilePasswordUpdate } from '@/routes/profile/password';
+```
+
+## Penggunaan dengan Inertia
+
+### Link Component - Langsung pass Wayfinder function
+
+```vue
+<!-- ✅ BENAR: Link menerima Wayfinder object langsung -->
+<Link :href="login()">Masuk</Link>
+<Link :href="create()">Tambah User</Link>
+<Link :href="edit(user.id)">Edit</Link>
+```
+
+### Router Methods - Gunakan `.url` property
+
+```typescript
+// ✅ BENAR: router.visit() butuh string URL
+router.visit(edit.url(user.id));
+
+// ✅ BENAR: router.get/post/delete butuh .url
+router.get(index().url, filters, options);
+router.delete(destroy(user.id).url);
+router.post(store().url);
+
+// ❌ SALAH: router.visit() tidak menerima object
+router.visit(edit(user.id)); // ERROR!
+```
+
+### useForm - Gunakan `.url` property
+
+```typescript
+// ✅ BENAR
+form.post(store().url, options);
+form.put(update(user.id).url, options);
+
+// ❌ SALAH
+form.post(store(), options); // ERROR!
+```
+
+## Quick Reference
+
+| Method | Accepts Object | Needs `.url` |
+|--------|---------------|--------------|
+| `<Link :href="">` | ✅ Yes | No |
+| `router.visit()` | ❌ No | Yes |
+| `router.get/post/put/delete()` | ❌ No | Yes |
+| `form.post/put/patch/delete()` | ❌ No | Yes |
+
+## Struktur Routes
+
+```
+@/routes/
+├── index.ts          # home, dashboard, login (GET), logout
+├── login/index.ts    # post (login POST only)
+├── password/         # request, email, reset, update
+├── profile/          # show, password/update
+├── admin/
+│   ├── users/        # index, create, store, edit, update, destroy, resetPassword, toggleStatus
+│   └── audit-logs/   # index
+└── ...
+```

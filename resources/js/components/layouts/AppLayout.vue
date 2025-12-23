@@ -4,10 +4,16 @@ import { usePage, router, Link } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
 import { useModal } from '@/composables/useModal';
+import { useSessionTimeout } from '@/composables/useSessionTimeout';
 import { dashboard, logout as logoutRoute } from '@/routes';
+import { index as adminUsersIndex } from '@/routes/admin/users';
+import { index as adminAuditLogsIndex } from '@/routes/admin/audit-logs';
+import { index as auditLogsIndex } from '@/routes/audit-logs';
+import { show as profileShow } from '@/routes/profile';
 import DialogModal from '@/components/ui/DialogModal.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import Alert from '@/components/ui/Alert.vue';
+import SessionTimeoutModal from '@/components/ui/SessionTimeoutModal.vue';
 import {
     Home,
     Users,
@@ -19,11 +25,8 @@ import {
     LogOut,
     User,
     Settings,
-    HelpCircle,
     Bell,
     Search,
-    Menu,
-    X,
     ChevronRight
 } from 'lucide-vue-next';
 
@@ -40,17 +43,26 @@ const haptics = useHaptics();
 const modal = useModal();
 const showProfileMenu = ref(false);
 
+// Session Timeout Logic
+// Admin: 15 mins, Others: 30 mins
+const timeoutDuration = computed(() =>
+    (user.value?.role === 'SUPERADMIN' || user.value?.role === 'ADMIN') ? 15 : 30
+);
+const { showWarning, remainingSeconds, extendSession, logout: sessionLogout } = useSessionTimeout(timeoutDuration.value);
+
 // Destructure modal states for template usage
 const { dialogState, alertState } = modal;
 
 /**
- * Helper function untuk generate route URL
+ * Helper function untuk generate route URL menggunakan Wayfinder
  */
 const getRouteUrl = (routeName: string): string => {
     const routeMap: Record<string, string> = {
         'dashboard': dashboard().url,
-        'admin.users.index': '/admin/users',
-        'admin.audit-logs.index': '/admin/audit-logs',
+        'admin.users.index': adminUsersIndex().url,
+        'admin.audit-logs.index': adminAuditLogsIndex().url,
+        'audit-logs.index': auditLogsIndex().url,
+        'profile.show': profileShow().url,
         'principal.reports': '/principal/reports',
         'teacher.classes': '/teacher/classes',
         'teacher.grades': '/teacher/grades',
@@ -116,8 +128,8 @@ const menuItems = computed(() => {
     if (role === 'SUPERADMIN' || role === 'ADMIN') {
         return [
             ...commonItems,
-            { name: 'User Management', route: 'admin.users.index', icon: Users },
-            { name: 'System Logs', route: 'admin.audit-logs.index', icon: Activity },
+            { name: 'Manajemen User', route: 'admin.users.index', icon: Users },
+            { name: 'Audit Log', route: 'admin.audit-logs.index', icon: Activity },
         ];
     }
 
@@ -125,7 +137,7 @@ const menuItems = computed(() => {
         return [
             ...commonItems,
             { name: 'Laporan Sekolah', route: 'principal.reports', icon: FileText },
-            { name: 'Aktivitas User', route: 'admin.audit-logs.index', icon: Activity },
+            { name: 'Audit Log', route: 'audit-logs.index', icon: Activity },
         ];
     }
 
@@ -174,6 +186,14 @@ const currentDate = new Intl.DateTimeFormat('id-ID', {
             @close="modal.closeAlert"
         />
 
+        <!-- SESSION TIMEOUT WARNING -->
+        <SessionTimeoutModal
+            :show="showWarning"
+            :remaining-seconds="remainingSeconds"
+            @extend="extendSession"
+            @logout="sessionLogout"
+        />
+
         <!-- MOBILE PROFILE ACTION SHEET (Bottom Sheet) -->
         <BaseModal
             :show="showProfileMenu"
@@ -196,13 +216,13 @@ const currentDate = new Intl.DateTimeFormat('id-ID', {
                     </div>
                 </div>
 
-                <button @click="showProfileMenu = false" class="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 flex items-center justify-between group">
+                <Link :href="getRouteUrl('profile.show')" @click="showProfileMenu = false" class="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 flex items-center justify-between group">
                     <span class="flex items-center gap-3 text-gray-700 dark:text-gray-300">
                         <User class="w-5 h-5 text-gray-400" />
                         Profil Saya
                     </span>
                     <ChevronRight class="w-4 h-4 text-gray-400" />
-                </button>
+                </Link>
 
                 <button @click="showProfileMenu = false" class="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 flex items-center justify-between group">
                     <span class="flex items-center gap-3 text-gray-700 dark:text-gray-300">

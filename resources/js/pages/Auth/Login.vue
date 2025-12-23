@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
-import { User, Lock, Eye, EyeOff, Loader2, LogIn, ShieldCheck, Zap, LayoutDashboard } from 'lucide-vue-next';
+import { User, Lock, Eye, EyeOff, Loader2, LogIn, ShieldCheck, Zap, LayoutDashboard, AlertOctagon } from 'lucide-vue-next';
 import login from '@/routes/login';
+import { request as passwordRequest } from '@/routes/password';
 
 /**
  * Login page dengan full-page immersive design
@@ -12,6 +13,7 @@ import login from '@/routes/login';
  * Dengan iOS-like animations dan haptic feedback untuk UX yang optimal
  */
 
+const page = usePage();
 const form = useForm({
     identifier: '',
     password: '',
@@ -20,14 +22,70 @@ const form = useForm({
 
 const showPassword = ref(false);
 const isSubmitting = computed(() => form.processing);
-
 const haptics = useHaptics();
+
+// Lockout Logic
+const lockoutUntil = computed(() => {
+    // Check if backend explicitly sends lockout timestamp
+    // Backend returns locked_until timestamp dalam error response
+    // @ts-expect-error - locked_until may not be in page props type definition
+    return page.props.locked_until || null;
+});
+
+const lockoutRemaining = ref(0);
+let lockoutInterval: ReturnType<typeof setInterval>;
+
+const startLockoutTimer = () => {
+    if (!lockoutUntil.value) return;
+
+    const targetTime = lockoutUntil.value * 1000; // PHP timestamp is seconds, JS is ms
+
+    const updateTimer = () => {
+        const now = Date.now();
+        const diff = Math.ceil((targetTime - now) / 1000);
+
+        if (diff <= 0) {
+            lockoutRemaining.value = 0;
+            clearInterval(lockoutInterval);
+            // Optionally reload to clear error state if needed
+        } else {
+            lockoutRemaining.value = diff;
+        }
+    };
+
+    updateTimer(); // Initial call
+    lockoutInterval = setInterval(updateTimer, 1000);
+};
+
+// Watch for errors to detect lockout
+watch(() => page.props.errors, () => {
+    // Also check if locked_until prop is present
+    if (page.props.locked_until) {
+        startLockoutTimer();
+    }
+}, { deep: true, immediate: true });
+
+// Format remaining time
+const formattedLockoutTime = computed(() => {
+    const minutes = Math.floor(lockoutRemaining.value / 60);
+    const seconds = lockoutRemaining.value % 60;
+
+    if (minutes > 0) {
+        return `${minutes} menit ${seconds} detik`;
+    }
+    return `${seconds} detik`;
+});
 
 /**
  * Submit login form dengan validation, error handling,
  * dan haptic feedback untuk user experience yang lebih baik
  */
 const submit = () => {
+    if (lockoutRemaining.value > 0) {
+        haptics.error();
+        return;
+    }
+
     haptics.medium();
     form.post(login.post().url, {
         onFinish: () => {
@@ -55,6 +113,16 @@ const togglePasswordVisibility = () => {
 const handleRememberChange = () => {
     haptics.selection();
 };
+
+onMounted(() => {
+    if (page.props.locked_until) {
+        startLockoutTimer();
+    }
+});
+
+onUnmounted(() => {
+    clearInterval(lockoutInterval);
+});
 </script>
 
 <template>
@@ -177,6 +245,20 @@ const handleRememberChange = () => {
                             <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Silakan masuk untuk mengakses akun Anda</p>
                         </div>
 
+                        <!-- LOCKOUT ALERT -->
+                        <div v-if="lockoutRemaining > 0" class="mx-6 lg:mx-8 mb-4 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 flex items-start gap-3">
+                            <AlertOctagon class="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                            <div>
+                                <h3 class="text-sm font-bold text-red-800 dark:text-red-300">Akun Terkunci Sementara</h3>
+                                <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+                                    Terlalu banyak percobaan login gagal. Silakan coba lagi dalam:
+                                </p>
+                                <p class="text-sm font-mono font-bold text-red-700 dark:text-red-300 mt-1.5">
+                                    {{ formattedLockoutTime }}
+                                </p>
+                            </div>
+                        </div>
+
                         <!-- Form Container -->
                         <form @submit.prevent="submit" class="lg:px-8 lg:pb-10 space-y-6">
                             <!-- Identifier Input (Username/Email) -->
@@ -198,8 +280,9 @@ const handleRememberChange = () => {
                                             v-model="form.identifier"
                                             type="text"
                                             required
+                                            :disabled="lockoutRemaining > 0"
                                             autocomplete="username"
-                                            class="block w-full rounded-xl border border-gray-200 bg-white lg:bg-gray-50/50 py-3.5 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-900/50 lg:dark:bg-zinc-800/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-zinc-900 transition-all duration-200 shadow-sm lg:shadow-none"
+                                            class="block w-full rounded-xl border border-gray-200 bg-white lg:bg-gray-50/50 py-3.5 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-900/50 lg:dark:bg-zinc-800/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-zinc-900 transition-all duration-200 shadow-sm lg:shadow-none disabled:opacity-60 disabled:cursor-not-allowed"
                                             placeholder="Masukkan username atau email"
                                             :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500/10': form.errors.identifier }"
                                         />
@@ -230,8 +313,9 @@ const handleRememberChange = () => {
                                             v-model="form.password"
                                             :type="showPassword ? 'text' : 'password'"
                                             required
+                                            :disabled="lockoutRemaining > 0"
                                             autocomplete="current-password"
-                                            class="block w-full rounded-xl border border-gray-200 bg-white lg:bg-gray-50/50 py-3.5 pl-11 pr-12 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-900/50 lg:dark:bg-zinc-800/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-zinc-900 transition-all duration-200 shadow-sm lg:shadow-none"
+                                            class="block w-full rounded-xl border border-gray-200 bg-white lg:bg-gray-50/50 py-3.5 pl-11 pr-12 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-900/50 lg:dark:bg-zinc-800/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-zinc-900 transition-all duration-200 shadow-sm lg:shadow-none disabled:opacity-60 disabled:cursor-not-allowed"
                                             placeholder="Masukkan password"
                                             :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500/10': form.errors.password }"
                                         />
@@ -280,12 +364,12 @@ const handleRememberChange = () => {
                                     </div>
                                     <span class="ml-2.5 text-sm font-medium text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200 transition-colors">Ingat saya</span>
                                 </label>
-                                <a
-                                    href="#"
+                                <Link
+                                    :href="passwordRequest()"
                                     class="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                                 >
                                     Lupa password?
-                                </a>
+                                </Link>
                             </Motion>
 
                             <!-- Submit Button -->
@@ -298,13 +382,15 @@ const handleRememberChange = () => {
                             >
                                 <button
                                     type="submit"
-                                    :disabled="isSubmitting"
+                                    :disabled="isSubmitting || lockoutRemaining > 0"
                                     class="relative w-full overflow-hidden rounded-xl bg-blue-600 px-6 py-4 font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:bg-blue-700 hover:shadow-blue-500/40 focus:outline-none focus:ring-4 focus:ring-blue-500/30 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:shadow-none"
                                 >
                                     <div class="relative flex items-center justify-center gap-2">
                                         <Loader2 v-if="isSubmitting" class="h-5 w-5 animate-spin" />
                                         <LogIn v-else class="h-5 w-5" />
-                                        <span>{{ isSubmitting ? 'Memproses...' : 'Masuk Sekarang' }}</span>
+                                        <span>
+                                            {{ isSubmitting ? 'Memproses...' : (lockoutRemaining > 0 ? `Tunggu ${lockoutRemaining}s` : 'Masuk Sekarang') }}
+                                        </span>
                                     </div>
                                 </button>
                             </Motion>

@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
 import { LayoutDashboard, ShieldCheck, ArrowRight, Users, School } from 'lucide-vue-next';
+import { login } from '@/routes';
 
 /**
  * Welcome / Landing Page
@@ -51,7 +52,7 @@ const handleTap = () => {
                     <div class="flex items-center gap-4">
                         <Motion :whileTap="{ scale: 0.95 }">
                             <Link
-                                :href="route('login')"
+                                :href="login()"
                                 @click="handleTap"
                                 class="rounded-lg px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-zinc-800 dark:hover:text-white"
                             >
@@ -102,7 +103,7 @@ const handleTap = () => {
                 >
                     <Motion :whileTap="{ scale: 0.97 }" :whileHover="{ scale: 1.02 }">
                         <Link
-                            :href="route('login')"
+                            :href="login()"
                             @click="handleTap"
                             class="group relative flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-4 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 hover:shadow-blue-500/40"
                         >
