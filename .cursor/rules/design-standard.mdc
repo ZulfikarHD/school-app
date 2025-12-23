@@ -4,7 +4,7 @@ alwaysApply: true
 
 # 🎨 iOS-like Design Standard
 
-**Core:** Apple design language, mobile-first, natural animations, premium feel
+**Core:** Modern Apple IOS design, mobile-first, natural animations, premium feel, Use Motion-v mcp if needed.
 
 ---
 
@@ -39,6 +39,9 @@ haptics.heavy();    // 40ms - delete, critical
 ```ts
 import { useSwipeGesture } from '@/composables/useSwipeGesture';
 ```
+
+### 7. Icons Libarary
+- Use Lucide Icon for Icons
 
 ---
 

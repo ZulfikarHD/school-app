@@ -59,6 +59,8 @@ Authentication & Authorization System merupakan fitur security fundamental yang 
 | Model | `app/Models/ActivityLog.php` | Activity tracking |
 | Model | `app/Models/FailedLoginAttempt.php` | Failed login tracking |
 | Model | `app/Models/PasswordHistory.php` | Password history untuk reuse prevention |
+| Routes | `resources/js/routes/index.ts` | Auto-generated Wayfinder routes (type-safe) |
+| Routes | `resources/js/routes/login/index.ts` | Login route helpers |
 | Page | `resources/js/pages/Auth/Login.vue` | Login form dengan iOS design |
 | Layout | `resources/js/components/layouts/AppLayout.vue` | Main app layout dengan navigation |
 | Dashboard | `resources/js/pages/Dashboard/*.vue` | Role-specific dashboards |
@@ -68,11 +70,16 @@ Authentication & Authorization System merupakan fitur security fundamental yang 
 | Group | Count | Prefix | Authentication Required |
 |-------|-------|--------|------------------------|
 | Authentication | 3 | `/login`, `/logout` | Guest (login), Auth (logout) |
+| Universal Redirect | 1 | `/dashboard` | All authenticated users |
 | Admin Dashboard | 1 | `/admin/dashboard` | SUPERADMIN, ADMIN |
 | Principal Dashboard | 1 | `/principal/dashboard` | PRINCIPAL |
 | Teacher Dashboard | 1 | `/teacher/dashboard` | TEACHER |
 | Parent Dashboard | 1 | `/parent/dashboard` | PARENT |
 | Student Dashboard | 1 | `/student/dashboard` | STUDENT |
+
+**Total Auth Routes:** 9 routes (excluding public routes, health check, dan internal routes)
+
+**Routing System:** Laravel Wayfinder - Type-safe auto-generated routes di `resources/js/routes/`
 
 > 📡 Full API documentation: [Authentication API](../../api/authentication.md)
 
@@ -264,6 +271,7 @@ interface DashboardStats {
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2025-12-22 | Initial P0 implementation - Login, Logout, RBAC, Activity Logging |
+| 1.0.1 | 2025-12-23 | Route structure updated - Universal /dashboard redirect, Wayfinder migration |
 
 ## Update Triggers
 
@@ -276,7 +284,7 @@ Update dokumentasi ini ketika:
 
 ---
 
-*Last Updated: 2025-12-22*
+*Last Updated: 2025-12-23*
 *Documentation Status: ✅ Complete dengan verification*
 *Implementation Status: ✅ Tested dan Production-Ready*
 

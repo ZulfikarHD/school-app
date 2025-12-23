@@ -120,7 +120,9 @@ Set-Cookie: XSRF-TOKEN=...
 - PRINCIPAL → `/principal/dashboard`
 - TEACHER → `/teacher/dashboard`
 - PARENT → `/parent/dashboard`
-- STUDENT → `/student/dashboard`
+- ~~STUDENT → `/student/dashboard`~~ **[DISABLED]** → Redirect ke `/login`
+
+> **⚠️ Note:** STUDENT role currently disabled. User dengan role STUDENT akan di-redirect ke login page. Lihat [STUDENT_FEATURES_DISABLED.md](../STUDENT_FEATURES_DISABLED.md) untuk detail.
 
 **Error Responses:**
 
@@ -263,7 +265,7 @@ Redirect destination berdasarkan role:
 - **PRINCIPAL** → `/principal/dashboard`
 - **TEACHER** → `/teacher/dashboard`
 - **PARENT** → `/parent/dashboard`
-- **STUDENT** → `/login` (dashboard not implemented)
+- **STUDENT** → `/login` ⚠️ **[DISABLED]** - Dashboard not implemented
 
 ```json
 {
@@ -356,7 +358,7 @@ Behavior:
 - PRINCIPAL → Redirect ke `/principal/dashboard`
 - TEACHER → Redirect ke `/teacher/dashboard`
 - PARENT → Redirect ke `/parent/dashboard`
-- STUDENT → Redirect ke `/student/dashboard`
+- ~~STUDENT → Redirect ke `/student/dashboard`~~ **[DISABLED]** → Redirect ke `/login`
 - Unauthenticated → Redirect ke `/login`
 
 **Example Request:**
@@ -509,13 +511,20 @@ Mengakses dashboard admin dengan role-based access control.
 
 ---
 
-### 9. Access Dashboard (Student)
+### 9. Access Dashboard (Student) - ⚠️ **DISABLED**
 
 **Endpoint:** `GET /student/dashboard`
 
 **Authentication:** Required (STUDENT role)
 
-**Props:** TBD (basic implementation)
+**Status:** ⚠️ **CURRENTLY DISABLED**
+
+> **Note:** Student dashboard currently not implemented. User dengan role STUDENT akan di-redirect ke login page. Lihat [STUDENT_FEATURES_DISABLED.md](../STUDENT_FEATURES_DISABLED.md) untuk detail dan roadmap.
+
+**Behavior saat ini:**
+- Route: **Not registered** (commented out)
+- Access attempt: Redirect ke `/login`
+- Planned implementation: P1 atau future phase
 
 ---
 
@@ -661,7 +670,9 @@ Setiap Inertia page menerima auth state:
 | bu.siti | siti@sekolah.app | Sekolah123 | ADMIN | active |
 | pak.budi | budi@sekolah.app | Sekolah123 | TEACHER | active |
 | ibu.ani | ani@parent.com | Sekolah123 | PARENT | active |
-| raka.pratama | raka@student.com | Sekolah123 | STUDENT | active |
+| ~~raka.pratama~~ | ~~raka@student.com~~ | ~~Sekolah123~~ | ~~STUDENT~~ | ⚠️ **DISABLED** |
+
+> **⚠️ Note:** Student test account currently disabled in seeder. User dengan role STUDENT tidak dapat login karena dashboard tidak tersedia.
 
 ---
 

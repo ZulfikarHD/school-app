@@ -161,6 +161,7 @@ class LoginController extends Controller
 
     /**
      * Helper untuk mendapatkan route dashboard berdasarkan user role
+     * Note: STUDENT role currently disabled, redirect to login instead
      */
     protected function getDashboardRoute(string $role): string
     {
@@ -169,8 +170,8 @@ class LoginController extends Controller
             'PRINCIPAL' => 'principal.dashboard',
             'TEACHER' => 'teacher.dashboard',
             'PARENT' => 'parent.dashboard',
-            'STUDENT' => 'student.dashboard',
-            default => 'home',
+            // 'STUDENT' => 'student.dashboard', // DISABLED - Student portal belum diimplementasi
+            default => 'login', // Changed from 'home' - redirect to login for undefined roles including STUDENT
         };
     }
 }

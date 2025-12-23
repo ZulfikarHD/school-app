@@ -24,7 +24,8 @@ docs/
 │   └── AUTH-P0-test-plan.md
 │
 └── guides/                       # User journeys dan how-to guides
-    └── auth-user-journeys.md
+    ├── auth-user-journeys.md
+    └── wayfinder-migration.md    # Ziggy → Wayfinder migration guide
 ```
 
 ---
@@ -74,10 +75,13 @@ php artisan serve
 **Included in AUTH-P0:**
 - ✅ Login dengan username/email + password
 - ✅ Logout dengan session cleanup
-- ✅ Role-Based Access Control (6 roles)
+- ✅ Role-Based Access Control (5 active roles: SUPERADMIN, PRINCIPAL, ADMIN, TEACHER, PARENT)
+- ⚠️ STUDENT role disabled (untuk future implementation - [detail](./STUDENT_FEATURES_DISABLED.md))
 - ✅ Brute Force Protection (5 attempts → 15 min lock)
 - ✅ Activity Logging untuk audit trail
-- ✅ iOS-inspired UI dengan glass effects
+- ✅ First Login Flow dengan force password change
+- ✅ Timing Attack Mitigation untuk security
+- ✅ iOS-inspired UI dengan glass effects & haptic feedback
 - ✅ Mobile-first responsive design
 - ✅ Show/hide password toggle
 - ✅ Remember me functionality
@@ -130,14 +134,16 @@ php artisan test --coverage
 
 Default accounts available setelah seeding:
 
-| Role | Username | Email | Password |
-|------|----------|-------|----------|
-| SUPERADMIN | superadmin | superadmin@sekolah.app | Sekolah123 |
-| PRINCIPAL | kepala.sekolah | kepala@sekolah.app | Sekolah123 |
-| ADMIN | bu.siti | siti@sekolah.app | Sekolah123 |
-| TEACHER | pak.budi | budi@sekolah.app | Sekolah123 |
-| PARENT | ibu.ani | ani@parent.com | Sekolah123 |
-| STUDENT | raka.pratama | raka@student.com | Sekolah123 |
+| Role | Username | Email | Password | Status |
+|------|----------|-------|----------|--------|
+| SUPERADMIN | superadmin | superadmin@sekolah.app | Sekolah123 | ✅ Active |
+| PRINCIPAL | kepala.sekolah | kepala@sekolah.app | Sekolah123 | ✅ Active |
+| ADMIN | bu.siti | siti@sekolah.app | Sekolah123 | ✅ Active |
+| TEACHER | pak.budi | budi@sekolah.app | Sekolah123 | ✅ Active |
+| PARENT | ibu.ani | ani@parent.com | Sekolah123 | ✅ Active |
+| ~~STUDENT~~ | ~~raka.pratama~~ | ~~raka@student.com~~ | ~~Sekolah123~~ | ⚠️ **DISABLED** |
+
+> **⚠️ Note:** STUDENT role currently disabled. Lihat [STUDENT_FEATURES_DISABLED.md](./STUDENT_FEATURES_DISABLED.md) untuk detail.
 
 ---
 
@@ -150,8 +156,10 @@ Default accounts available setelah seeding:
 | Backend Framework | Laravel | 12.x |
 | Frontend Framework | Vue.js | 3.x |
 | Frontend Integration | Inertia.js | 2.x |
+| Frontend Routing | Laravel Wayfinder | 0.1.x |
 | CSS Framework | Tailwind CSS | 4.x |
-| Database | PostgreSQL/MySQL | - |
+| Animation Library | Motion-v | Latest |
+| Database | PostgreSQL/MySQL/SQLite | - |
 | Package Manager | Yarn | Latest |
 | PHP Version | PHP | 8.4+ |
 
@@ -199,6 +207,7 @@ school-app/
 - **Responsive**: 375px (mobile) - 1920px+ (desktop)
 - **Color Palette**: Blue-Indigo gradients untuk primary actions
 - **Typography**: System fonts dengan consistent scale
+- **Routing**: Type-safe Wayfinder routes (auto-generated dari Laravel routes)
 
 ---
 
@@ -272,9 +281,15 @@ Project ini menggunakan Laravel Boost MCP server dengan tools:
 - `search-docs` - Search Laravel documentation
 - `list-artisan-commands` - View available artisan commands
 
+### Internal Guides
+
+- [Wayfinder Migration Guide](./guides/wayfinder-migration.md) - Ziggy → Wayfinder migration documentation
+- [Auth User Journeys](./guides/auth-user-journeys.md) - Authentication user flows
+
 ### External Documentation
 
 - [Laravel 12 Documentation](https://laravel.com/docs/12.x)
+- [Laravel Wayfinder](https://github.com/laravel/wayfinder)
 - [Inertia.js Documentation](https://inertiajs.com/)
 - [Vue 3 Documentation](https://vuejs.org/)
 - [Tailwind CSS 4 Documentation](https://tailwindcss.com/docs)
@@ -285,12 +300,13 @@ Project ini menggunakan Laravel Boost MCP server dengan tools:
 
 ### Sprint 1-2: P1 Features (Important)
 
-- [ ] First Login Flow - Force password change
+- [x] First Login Flow - Force password change ✅ **COMPLETED**
 - [ ] Forgot Password - Email reset link
 - [ ] Profile Management - Update user info
 - [ ] Password History Validation - Prevent reuse
 - [ ] User Management UI - CRUD untuk admin
 - [ ] Audit Log Viewer - View activity logs
+- [ ] Student Portal - Dashboard & features (currently disabled)
 
 ### Sprint 2: P2 Features (Enhancement)
 
@@ -326,6 +342,6 @@ Private project - All rights reserved.
 
 ---
 
-*Last Updated: 2025-12-22*  
-*Documentation Version: 1.0*
+*Last Updated: 2025-12-23*  
+*Documentation Version: 1.2* - Added STUDENT role disabled documentation
 

@@ -11,7 +11,8 @@ class UserSeeder extends Seeder
     /**
      * Run the database seeds.
      * Membuat default users untuk testing setiap role,
-     * yaitu: SUPERADMIN, PRINCIPAL, ADMIN, TEACHER, PARENT, STUDENT
+     * yaitu: SUPERADMIN, PRINCIPAL, ADMIN, TEACHER, PARENT
+     * Note: STUDENT user disabled - untuk future implementation
      */
     public function run(): void
     {
@@ -75,16 +76,17 @@ class UserSeeder extends Seeder
             'phone_number' => '081234567894',
         ]);
 
-        // STUDENT - Siswa (optional, biasanya tidak login)
-        User::create([
-            'name' => 'Raka Pratama',
-            'username' => 'raka.pratama',
-            'email' => 'raka@student.com',
-            'password' => Hash::make('Sekolah123'),
-            'role' => 'STUDENT',
-            'status' => 'active',
-            'is_first_login' => true,
-            'phone_number' => '081234567895',
-        ]);
+        // STUDENT - DISABLED untuk future implementation
+        // TODO: Uncomment ketika Student Portal sudah siap
+        // User::create([
+        //     'name' => 'Raka Pratama',
+        //     'username' => 'raka.pratama',
+        //     'email' => 'raka@student.com',
+        //     'password' => Hash::make('Sekolah123'),
+        //     'role' => 'STUDENT',
+        //     'status' => 'active',
+        //     'is_first_login' => true,
+        //     'phone_number' => '081234567895',
+        // ]);
     }
 }

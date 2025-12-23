@@ -1,8 +1,8 @@
 # document-code-and-update-git
 
 **Documentation Update** 
-**STRICTLY FOLLOW THIS GUIDE:** [DOCUMENTATION_GUIDE.md](../../docs-v2/DOCUMENTATION_GUIDE.md)
-q
+**STRICTLY FOLLOW THIS GUIDE:** [DOCUMENTATION_GUIDE.md](../../docs/DOCUMENTATION_GUIDE.md)
+
 
 # 📚 Lessons Learned: Documentation Mistakes & Best Practices
 

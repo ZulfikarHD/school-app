@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
+import { home } from '@/routes';
 
 /**
  * Error 403 Forbidden page untuk unauthorized access
@@ -16,7 +17,7 @@ const haptics = useHaptics();
  */
 const goBack = () => {
     haptics.light();
-    router.visit(route('home'));
+    router.visit(home().url);
 };
 
 /**

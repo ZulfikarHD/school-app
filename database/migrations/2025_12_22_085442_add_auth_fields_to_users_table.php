@@ -10,6 +10,9 @@ return new class extends Migration
      * Run the migrations.
      * Menambahkan field authentication dan authorization yang diperlukan untuk
      * manajemen user, role-based access control, dan audit trail
+     *
+     * Note: STUDENT role tersedia di database untuk future implementation,
+     * namun currently tidak digunakan di aplikasi
      */
     public function up(): void
     {

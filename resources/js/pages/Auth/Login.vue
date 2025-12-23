@@ -3,6 +3,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
+import login from '@/routes/login';
 
 /**
  * Login page untuk authentication user dengan support
@@ -27,7 +28,7 @@ const haptics = useHaptics();
  */
 const submit = () => {
     haptics.medium();
-    form.post(route('login'), {
+    form.post(login.post().url, {
         onFinish: () => {
             if (form.errors.password) {
                 form.reset('password');

@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
+import { dashboard, logout as logoutRoute } from '@/routes';
 
 /**
  * Main application layout dengan navigation dan logout functionality
@@ -17,6 +18,26 @@ const mobileMenuRef = ref<HTMLElement | null>(null);
 const overlayRef = ref<HTMLElement | null>(null);
 
 const haptics = useHaptics();
+
+/**
+ * Helper function untuk generate route URL
+ * dengan fallback untuk routes yang belum dibuat di backend
+ */
+const getRouteUrl = (routeName: string): string => {
+    // Map route names ke URLs (untuk routes yang belum ada di Wayfinder)
+    const routeMap: Record<string, string> = {
+        'dashboard': dashboard().url,
+        'admin.users.index': '/admin/users',
+        'admin.audit-logs.index': '/admin/audit-logs',
+        'principal.reports': '/principal/reports',
+        'teacher.classes': '/teacher/classes',
+        'teacher.grades': '/teacher/grades',
+        'parent.children': '/parent/children',
+        'parent.payments': '/parent/payments',
+    };
+
+    return routeMap[routeName] || '#';
+};
 
 /**
  * Toggle mobile menu dengan haptic feedback
@@ -42,7 +63,7 @@ const logout = () => {
     haptics.medium();
     if (confirm('Apakah Anda yakin ingin keluar?')) {
         haptics.heavy();
-        router.post(route('logout'));
+        router.post(logoutRoute().url);
     }
 };
 
@@ -138,7 +159,7 @@ const onLeave = (el: Element, done: () => void) => {
                             :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
                         >
                             <a
-                                :href="route(item.route)"
+                                :href="getRouteUrl(item.route)"
                                 @click="handleNavClick"
                                 class="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
                             >
@@ -222,7 +243,7 @@ const onLeave = (el: Element, done: () => void) => {
                         :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
                     >
                         <a
-                            :href="route(item.route)"
+                            :href="getRouteUrl(item.route)"
                             class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
                             @click="closeMobileMenu"
                         >
