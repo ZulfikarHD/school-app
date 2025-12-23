@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Auth\FirstLoginController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -24,6 +26,21 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login'])
         ->middleware('throttle:5,1')
         ->name('login.post');
+
+    // Forgot Password routes dengan rate limiting (3 attempts per hour)
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])
+        ->name('password.request');
+
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])
+        ->middleware('throttle:3,60')
+        ->name('password.email');
+
+    // Reset Password routes
+    Route::get('/reset-password/{token}', [ResetPasswordController::class, 'show'])
+        ->name('password.reset');
+
+    Route::post('/reset-password', [ResetPasswordController::class, 'update'])
+        ->name('password.update');
 });
 
 /**

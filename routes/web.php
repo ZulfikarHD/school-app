@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Dashboard\AdminDashboardController;
 use App\Http\Controllers\Dashboard\ParentDashboardController;
 use App\Http\Controllers\Dashboard\PrincipalDashboardController;
@@ -21,11 +23,28 @@ Route::middleware(['auth'])->group(function () {
     // Admin/TU Dashboard
     Route::middleware('role:SUPERADMIN,ADMIN')->group(function () {
         Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+
+        // User Management Routes
+        Route::prefix('admin')->name('admin.')->group(function () {
+            Route::resource('users', UserController::class);
+            Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])
+                ->name('users.reset-password');
+            Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
+                ->name('users.toggle-status');
+
+            // Audit Log Routes
+            Route::get('audit-logs', [AuditLogController::class, 'index'])
+                ->name('audit-logs.index');
+        });
     });
 
-    // Principal Dashboard
+    // Principal Dashboard - can also view audit logs
     Route::middleware('role:PRINCIPAL')->group(function () {
         Route::get('/principal/dashboard', [PrincipalDashboardController::class, 'index'])->name('principal.dashboard');
+
+        // Audit Log Routes (read-only for Principal)
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])
+            ->name('audit-logs.index');
     });
 
     // Teacher Dashboard
@@ -45,6 +64,14 @@ Route::middleware(['auth'])->group(function () {
     //         return Inertia::render('Dashboard/StudentDashboard');
     //     })->name('student.dashboard');
     // });
+
+    // Profile Routes - accessible by all authenticated users
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Profile\ProfileController::class, 'show'])
+            ->name('show');
+        Route::post('/password', [\App\Http\Controllers\Profile\PasswordController::class, 'update'])
+            ->name('password.update');
+    });
 
     // Universal /dashboard route - redirect ke dashboard sesuai role
     Route::get('/dashboard', function () {

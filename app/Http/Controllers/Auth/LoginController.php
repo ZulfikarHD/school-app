@@ -40,9 +40,11 @@ class LoginController extends Controller
 
         if ($failedAttempt && $failedAttempt->isLocked()) {
             $remainingMinutes = now()->diffInMinutes($failedAttempt->locked_until);
+            $lockedUntilTimestamp = $failedAttempt->locked_until->timestamp;
 
             return back()->withErrors([
                 'identifier' => "Akun terkunci karena terlalu banyak percobaan login gagal. Silakan coba lagi dalam {$remainingMinutes} menit.",
+                'locked_until' => $lockedUntilTimestamp,
             ]);
         }
 

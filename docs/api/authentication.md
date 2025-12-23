@@ -2,768 +2,319 @@
 
 ## Overview
 
-API untuk mengelola authentication user dalam sistem, yaitu: login, logout, dan session management dengan role-based access control.
+API untuk mengelola authentication flow, yaitu: login, logout, forgot password, reset password, first login, dan profile management.
 
-**Base URL:** `http://localhost:8000`
-
-**Authentication Method:** Laravel Session-based (Cookie)
-
----
-
-## Authentication Flow
-
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    participant DB as Database
-    participant M as Middleware
-    
-    C->>S: POST /login (credentials)
-    S->>DB: Check user credentials
-    DB-->>S: User data
-    S->>DB: Check failed attempts
-    alt Account Locked
-        S-->>C: 403 Account Locked
-    else Valid Credentials
-        S->>DB: Clear failed attempts
-        S->>DB: Log activity (login)
-        S->>DB: Update last_login
-        S->>S: Create session
-        S-->>C: 302 Redirect to Dashboard
-    else Invalid Credentials
-        S->>DB: Increment failed attempts
-        S->>DB: Log activity (failed_login)
-        S-->>C: 422 Invalid Credentials
-    end
-    
-    C->>S: POST /logout
-    S->>DB: Log activity (logout)
-    S->>S: Destroy session
-    S-->>C: 302 Redirect to Login
-    
-    C->>S: GET /dashboard (authenticated)
-    M->>M: Check session
-    M->>M: Check role
-    alt Authorized
-        S-->>C: 200 Dashboard
-    else Unauthorized
-        S-->>C: 403 Forbidden
-    end
-```
+**Base URL:** `{APP_URL}` (configured in .env)  
+**Authentication:** Session-based (Laravel Sanctum SPA)
 
 ---
 
-## Endpoints
+## Authentication Endpoints
 
-### 1. Show Login Form
+### 1. Login
 
-Menampilkan halaman login dengan form authentication.
+Authenticate user dengan username/email dan password.
 
-**Endpoint:** `GET /login`
-
-**Authentication:** Guest only (redirect jika sudah login)
-
-**Response:** `200 OK` - Inertia render
-
-```json
-{
-  "component": "Auth/Login",
-  "props": {},
-  "url": "/login"
-}
-```
-
-**Example Request:**
-```bash
-curl -X GET http://localhost:8000/login
-```
-
----
-
-### 2. Login User
-
-Melakukan authentication user dengan credentials (username atau email) dan password.
-
-**Endpoint:** `POST /login`
-
-**Authentication:** Guest only
+**Endpoint:** `POST /login`  
+**Middleware:** `guest`, `throttle:5,1` (max 5 attempts per minute)  
+**Route Name:** `login.post`
 
 **Request Body:**
 
 ```json
 {
-  "identifier": "bu.siti",
-  "password": "Sekolah123",
-  "remember": false
+  "identifier": "admin@sekolah.sch.id",
+  "password": "Password123",
+  "remember": true
 }
 ```
 
-**Field Validation:**
-
-| Field | Type | Required | Validation | Description |
-|-------|------|----------|------------|-------------|
-| identifier | string | Yes | Required | Username atau email |
-| password | string | Yes | Required | Password user |
-| remember | boolean | No | Boolean | Remember me checkbox |
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| identifier | string | Yes | Username atau email |
+| password | string | Yes | Min 8 chars |
+| remember | boolean | No | "Ingat Saya" checkbox |
 
 **Success Response:** `302 Redirect`
 
 ```
-Location: /dashboard (→ auto redirect ke role-specific dashboard)
-Set-Cookie: laravel_session=...
-Set-Cookie: XSRF-TOKEN=...
+Location: /dashboard (atau /first-login jika is_first_login=true)
 ```
 
-**Redirect Destinations berdasarkan Role:**
-- SUPERADMIN/ADMIN → `/admin/dashboard`
-- PRINCIPAL → `/principal/dashboard`
-- TEACHER → `/teacher/dashboard`
-- PARENT → `/parent/dashboard`
-- ~~STUDENT → `/student/dashboard`~~ **[DISABLED]** → Redirect ke `/login`
+**Error Response:** `302 Redirect Back` dengan errors
 
-> **⚠️ Note:** STUDENT role currently disabled. User dengan role STUDENT akan di-redirect ke login page. Lihat [STUDENT_FEATURES_DISABLED.md](../STUDENT_FEATURES_DISABLED.md) untuk detail.
-
-**Error Responses:**
-
-#### Invalid Credentials (422 Unprocessable Entity)
 ```json
 {
-  "message": "Username/email atau password salah.",
   "errors": {
-    "identifier": [
-      "Username/email atau password salah."
-    ]
+    "identifier": ["Username/email atau password salah, atau akun tidak aktif."]
   }
 }
 ```
 
-#### Account Locked (422 Unprocessable Entity)
-```json
-{
-  "message": "Akun terkunci karena terlalu banyak percobaan login gagal. Silakan coba lagi dalam 12 menit.",
-  "errors": {
-    "identifier": [
-      "Akun terkunci karena terlalu banyak percobaan login gagal. Silakan coba lagi dalam 12 menit."
-    ]
-  }
-}
-```
+**Account Lockout Response:**
 
-#### Inactive User (422 Unprocessable Entity)
 ```json
 {
-  "message": "Akun Anda telah dinonaktifkan. Hubungi administrator.",
   "errors": {
-    "identifier": [
-      "Akun Anda telah dinonaktifkan. Hubungi administrator."
-    ]
+    "identifier": ["Akun terkunci karena terlalu banyak percobaan login gagal. Silakan coba lagi dalam 15 menit."],
+    "locked_until": 1703401200
   }
 }
 ```
 
 **Side Effects:**
-1. Session created dengan user_id
-2. `last_login_at` dan `last_login_ip` updated
-3. ActivityLog record created (action='login', status='success')
-4. FailedLoginAttempt deleted (jika ada)
-5. Session regenerated untuk security
-
-**Failed Login Side Effects:**
-1. FailedLoginAttempt created atau incremented
-2. ActivityLog record created (action='failed_login', status='failed')
-3. Account locked setelah 5 percobaan (locked_until = now + 15 minutes)
-
-**Example Request:**
-```bash
-curl -X POST http://localhost:8000/login \
-  -H "Content-Type: application/json" \
-  -H "X-CSRF-TOKEN: {token}" \
-  -d '{
-    "identifier": "bu.siti",
-    "password": "Sekolah123",
-    "remember": false
-  }'
-```
+- Creates `ActivityLog` record (action: `login`)
+- Updates `users.last_login_at`, `users.last_login_ip`
+- Deletes `FailedLoginAttempt` record on success
+- Creates/updates `FailedLoginAttempt` record on failure
 
 ---
 
-### 3. Show First Login Form
+### 2. Logout
 
-Menampilkan halaman first login untuk user yang baru pertama kali login dan harus mengubah password default.
+Log out current user dan invalidate session.
 
-**Endpoint:** `GET /first-login`
-
-**Authentication:** Authenticated users only (dengan `is_first_login = true`)
-
-**Response:** `200 OK` - Inertia render
-
-```json
-{
-  "component": "Auth/FirstLogin",
-  "props": {
-    "user": {
-      "name": "Budi Santoso",
-      "username": "pak.budi",
-      "email": "budi@sekolah.app"
-    }
-  },
-  "url": "/first-login"
-}
-```
-
-**Authorization Rules:**
-- User HARUS sudah authenticated
-- User HARUS memiliki `is_first_login = true`
-- Jika `is_first_login = false` → redirect ke `/dashboard`
-- Jika guest → redirect ke `/login`
-
-**Example Request:**
-```bash
-curl -X GET http://localhost:8000/first-login \
-  -b cookies.txt
-```
-
----
-
-### 4. Update Password (First Login)
-
-Mengupdate password user pada first login dengan validation ketat, activity logging, dan automatic flag update.
-
-**Endpoint:** `POST /first-login`
-
-**Authentication:** Authenticated users only (dengan `is_first_login = true`)
-
-**Request Body:**
-
-```json
-{
-  "password": "NewSecure123!@#",
-  "password_confirmation": "NewSecure123!@#"
-}
-```
-
-**Validation Rules:**
-
-| Field | Rules | Error Messages |
-|-------|-------|----------------|
-| `password` | required, string, confirmed, min:8, mixed case, numbers, symbols, uncompromised | "Password baru wajib diisi." |
-| `password_confirmation` | required, matches password | "Konfirmasi password tidak cocok." |
-
-**Password Requirements:**
-- Minimal 8 karakter
-- Harus mengandung huruf besar (uppercase)
-- Harus mengandung huruf kecil (lowercase)
-- Harus mengandung minimal 1 angka
-- Harus mengandung minimal 1 simbol (!@#$%^&*)
-- Tidak boleh ada di leaked password database (haveibeenpwned.com)
-
-**Response Success:** `302 Redirect`
-
-Redirect destination berdasarkan role:
-- **SUPERADMIN / ADMIN** → `/admin/dashboard`
-- **PRINCIPAL** → `/principal/dashboard`
-- **TEACHER** → `/teacher/dashboard`
-- **PARENT** → `/parent/dashboard`
-- **STUDENT** → `/login` ⚠️ **[DISABLED]** - Dashboard not implemented
-
-```json
-{
-  "redirect": "/teacher/dashboard",
-  "message": "Password berhasil diubah. Selamat datang!"
-}
-```
-
-**Response Errors:**
-
-**400 Bad Request** - Validation Failed
-```json
-{
-  "message": "The password field confirmation does not match.",
-  "errors": {
-    "password": [
-      "Konfirmasi password tidak cocok."
-    ]
-  }
-}
-```
-
-**403 Forbidden** - Authorization Failed
-```json
-{
-  "message": "This action is unauthorized."
-}
-```
-
-User dengan `is_first_login = false` tidak bisa akses endpoint ini.
-
-**401 Unauthorized** - Not Authenticated
-```json
-{
-  "message": "Unauthenticated."
-}
-```
-
-**Side Effects:**
-1. User password di-hash dengan bcrypt dan disimpan
-2. `is_first_login` flag diubah menjadi `false`
-3. Activity log tercatat:
-   - `action`: `"first_login_password_change"`
-   - `status`: `"success"`
-   - `ip_address`: Client IP
-   - `user_agent`: Client User Agent
-
-**Example Request:**
-```bash
-# Get CSRF Token
-CSRF_TOKEN=$(curl -s http://localhost:8000/first-login \
-  -b cookies.txt \
-  | grep -oP 'csrf-token" content="\K[^"]+')
-
-# Update Password
-curl -X POST http://localhost:8000/first-login \
-  -H "Content-Type: application/json" \
-  -H "X-CSRF-TOKEN: $CSRF_TOKEN" \
-  -b cookies.txt \
-  -c cookies.txt \
-  -d '{
-    "password": "NewSecure123!@#",
-    "password_confirmation": "NewSecure123!@#"
-  }'
-```
-
-**Example Response:**
-```
-HTTP/1.1 302 Found
-Location: /teacher/dashboard
-Set-Cookie: laravel_session=...
-```
-
----
-
-### 5. Universal Dashboard Redirect
-
-Smart redirect ke dashboard sesuai dengan role user untuk akses yang lebih user-friendly.
-
-**Endpoint:** `GET /dashboard`
-
-**Authentication:** Required (all authenticated users)
-
-**Request:** None
-
-**Success Response:** `302 Redirect`
-
-Behavior:
-- SUPERADMIN/ADMIN → Redirect ke `/admin/dashboard`
-- PRINCIPAL → Redirect ke `/principal/dashboard`
-- TEACHER → Redirect ke `/teacher/dashboard`
-- PARENT → Redirect ke `/parent/dashboard`
-- ~~STUDENT → Redirect ke `/student/dashboard`~~ **[DISABLED]** → Redirect ke `/login`
-- Unauthenticated → Redirect ke `/login`
-
-**Example Request:**
-```bash
-curl -X GET http://localhost:8000/dashboard \
-  -H "Cookie: laravel_session={session_id}" \
-  -L  # Follow redirects
-```
-
-**Use Case:**
-User dapat bookmark `/dashboard` dan otomatis diarahkan ke dashboard mereka tanpa perlu tahu route spesifik berdasarkan role.
-
----
-
-### 6. Logout User
-
-Melakukan logout user dengan destroy session dan redirect ke login page.
-
-**Endpoint:** `POST /logout`
-
-**Authentication:** Authenticated user only
-
-**Request Body:** None
+**Endpoint:** `POST /logout`  
+**Middleware:** `auth`  
+**Route Name:** `logout`
 
 **Success Response:** `302 Redirect`
 
 ```
 Location: /login
-Message: "Anda telah keluar dari sistem."
+Flash message: "Anda telah keluar dari sistem."
 ```
 
 **Side Effects:**
-1. ActivityLog record created (action='logout', status='success')
-2. Session invalidated
-3. CSRF token regenerated
-
-**Example Request:**
-```bash
-curl -X POST http://localhost:8000/logout \
-  -H "Cookie: laravel_session={session_id}" \
-  -H "X-CSRF-TOKEN: {token}"
-```
+- Creates `ActivityLog` record (action: `logout`)
+- Invalidates session
+- Regenerates CSRF token
 
 ---
 
-### 7. Access Dashboard (Admin)
+### 3. Forgot Password - Request Reset Link
 
-Mengakses dashboard admin dengan role-based access control.
+Request password reset link via email.
 
-**Endpoint:** `GET /admin/dashboard`
+**Endpoint:** `POST /forgot-password`  
+**Middleware:** `guest`, `throttle:3,60` (max 3 attempts per hour)  
+**Route Name:** `password.email`
 
-**Authentication:** Required (SUPERADMIN or ADMIN role)
-
-**Response:** `200 OK` - Inertia render
+**Request Body:**
 
 ```json
 {
-  "component": "Dashboard/AdminDashboard",
-  "props": {
-    "auth": {
-      "user": {
-        "id": 3,
-        "name": "Siti Nurhaliza",
-        "username": "bu.siti",
-        "email": "siti@sekolah.app",
-        "role": "ADMIN",
-        "status": "active",
-        "is_first_login": false,
-        "last_login_at": "2025-12-22T10:30:00.000000Z",
-        "last_login_ip": "127.0.0.1"
-      }
-    },
-    "stats": {
-      "total_students": 0,
-      "total_payments": 0,
-      "pending_psb": 0,
-      "total_users": 0
-    }
+  "email": "user@sekolah.sch.id"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| email | string | Yes | Valid email, exists in users table |
+
+**Success Response:** `302 Redirect Back`
+
+```
+Flash message: "Link reset password telah dikirim ke email Anda. Periksa inbox Anda (link valid selama 1 jam)."
+```
+
+**Error Response:** `302 Redirect Back`
+
+```json
+{
+  "errors": {
+    "email": ["Anda telah mencapai batas maksimal permintaan reset password (3x per 24 jam)."]
   }
 }
 ```
 
-**Error Response:** `403 Forbidden`
+**Side Effects:**
+- Generates SHA-256 hashed token
+- Inserts record to `password_reset_tokens` table
+- Deletes old tokens for same email
+- Sends email via `PasswordResetMail` mailable
+- Creates `ActivityLog` record (action: `password_reset_requested`)
 
-```json
-{
-  "message": "Anda tidak memiliki akses ke halaman ini."
-}
-```
+**Email Content:**
+- Subject: "Reset Password - Sistem Informasi Sekolah"
+- Contains: Reset link with token
+- Expiry warning: 1 hour
 
 ---
 
-### 8. Access Dashboard (Principal)
+### 4. Reset Password - Execute Reset
 
-**Endpoint:** `GET /principal/dashboard`
+Reset password menggunakan token dari email.
 
-**Authentication:** Required (PRINCIPAL role)
+**Endpoint:** `POST /reset-password`  
+**Middleware:** `guest`  
+**Route Name:** `password.update`
 
-**Props:**
+**Request Body:**
+
 ```json
 {
-  "stats": {
-    "total_students": 0,
-    "total_teachers": 0,
-    "total_classes": 0,
-    "attendance_rate": 0
+  "token": "abc123def456...",
+  "email": "user@sekolah.sch.id",
+  "password": "NewPassword123",
+  "password_confirmation": "NewPassword123"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| token | string | Yes | Valid reset token |
+| email | string | Yes | Valid email, exists in users |
+| password | string | Yes | Min 8 chars, letters, numbers, uncompromised, confirmed |
+| password_confirmation | string | Yes | Must match password |
+
+**Success Response:** `302 Redirect`
+
+```
+Location: /login
+Flash message: "Password berhasil diubah. Silakan login dengan password baru Anda."
+```
+
+**Error Response:** `302 Redirect Back`
+
+```json
+{
+  "errors": {
+    "email": ["Link reset password tidak valid atau sudah kadaluarsa."]
   }
 }
 ```
 
+**Side Effects:**
+- Updates `users.password`
+- Deletes used token from `password_reset_tokens`
+- Creates `ActivityLog` record (action: `password_reset_completed`)
+
 ---
 
-### 7. Access Dashboard (Teacher)
+### 5. Change Password (Authenticated)
 
-**Endpoint:** `GET /teacher/dashboard`
+Change password untuk user yang sudah login.
 
-**Authentication:** Required (TEACHER role)
+**Endpoint:** `POST /profile/password`  
+**Middleware:** `auth`  
+**Route Name:** `profile.password.update`
 
-**Props:**
+**Request Body:**
+
 ```json
 {
-  "stats": {
-    "my_classes": 0,
-    "total_students": 0,
-    "pending_grades": 0,
-    "today_schedule": []
+  "current_password": "OldPassword123",
+  "password": "NewPassword456",
+  "password_confirmation": "NewPassword456"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| current_password | string | Yes | Must match current password |
+| password | string | Yes | Min 8 chars, letters, numbers, different from current |
+| password_confirmation | string | Yes | Must match password |
+
+**Success Response:** `302 Redirect Back`
+
+```
+Flash message: "Password berhasil diubah."
+```
+
+**Error Response:** `302 Redirect Back`
+
+```json
+{
+  "errors": {
+    "current_password": ["Password lama tidak sesuai."],
+    "password": ["Password baru harus berbeda dengan password lama."]
   }
 }
 ```
 
+**Side Effects:**
+- Updates `users.password`
+- Creates `ActivityLog` record (action: `password_changed`)
+
 ---
 
-### 8. Access Dashboard (Parent)
+### 6. First Login - Force Password Change
 
-**Endpoint:** `GET /parent/dashboard`
+Force change password untuk user yang baru pertama kali login.
 
-**Authentication:** Required (PARENT role)
+**Endpoint:** `POST /first-login`  
+**Middleware:** `auth`  
+**Route Name:** `auth.first-login.update`
 
-**Props:**
+**Request Body:**
+
 ```json
 {
-  "stats": {
-    "children": [],
-    "pending_payments": 0,
-    "recent_grades": [],
-    "attendance_summary": []
+  "password": "MyNewPassword123",
+  "password_confirmation": "MyNewPassword123"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| password | string | Yes | Min 8 chars, letters, numbers, uncompromised |
+| password_confirmation | string | Yes | Must match password |
+
+**Success Response:** `302 Redirect`
+
+```
+Location: /dashboard (sesuai role)
+```
+
+**Error Response:** `302 Redirect Back`
+
+```json
+{
+  "errors": {
+    "password": ["Password minimal 8 karakter.", "Password harus mengandung huruf."]
   }
 }
 ```
 
----
-
-### 9. Access Dashboard (Student) - ⚠️ **DISABLED**
-
-**Endpoint:** `GET /student/dashboard`
-
-**Authentication:** Required (STUDENT role)
-
-**Status:** ⚠️ **CURRENTLY DISABLED**
-
-> **Note:** Student dashboard currently not implemented. User dengan role STUDENT akan di-redirect ke login page. Lihat [STUDENT_FEATURES_DISABLED.md](../STUDENT_FEATURES_DISABLED.md) untuk detail dan roadmap.
-
-**Behavior saat ini:**
-- Route: **Not registered** (commented out)
-- Access attempt: Redirect ke `/login`
-- Planned implementation: P1 atau future phase
+**Side Effects:**
+- Updates `users.password`
+- Sets `users.is_first_login = false`
+- Creates `ActivityLog` record (action: `first_login_password_change`)
 
 ---
 
-## Authentication State
+## Common Error Codes
 
-### Shared Props (All Pages)
-
-Setiap Inertia page menerima auth state:
-
-```json
-{
-  "auth": {
-    "user": {
-      "id": 1,
-      "name": "User Name",
-      "username": "username",
-      "email": "user@example.com",
-      "role": "ADMIN",
-      "status": "active",
-      "is_first_login": false,
-      "last_login_at": "2025-12-22T10:00:00.000000Z",
-      "last_login_ip": "127.0.0.1",
-      "phone_number": "+62812345678"
-    }
-  }
-}
-```
-
----
-
-## Error Codes
-
-| HTTP Status | Message | Cause | Action |
-|-------------|---------|-------|--------|
-| 401 Unauthorized | "Unauthenticated." | Session expired atau tidak ada | Redirect ke `/login` |
-| 403 Forbidden | "Anda tidak memiliki akses..." | User role tidak sesuai | Show 403 error page |
-| 419 Page Expired | "CSRF token mismatch." | CSRF token invalid | Refresh page dan coba lagi |
-| 422 Unprocessable Entity | Validation errors | Form validation gagal | Display error messages |
-| 429 Too Many Requests | "Too Many Attempts." | Rate limiting triggered | Wait dan retry |
-
----
-
-## Security Headers
-
-### Request Headers
-
-| Header | Value | Description |
-|--------|-------|-------------|
-| X-CSRF-TOKEN | {token} | CSRF protection token |
-| X-Requested-With | XMLHttpRequest | Identify AJAX requests |
-| Accept | application/json | Request JSON response |
-| Content-Type | application/json | JSON request body |
-
-### Response Headers
-
-| Header | Value | Description |
-|--------|-------|-------------|
-| Set-Cookie | laravel_session | Session cookie (HttpOnly, Secure in production) |
-| X-Frame-Options | SAMEORIGIN | Clickjacking protection |
-| X-Content-Type-Options | nosniff | MIME-sniffing protection |
-| X-XSS-Protection | 1; mode=block | XSS protection |
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| VALIDATION_ERROR | 400 | Request body validation failed |
+| UNAUTHENTICATED | 401 | Not logged in atau session expired |
+| RATE_LIMIT_EXCEEDED | 429 | Too many requests |
+| ACCOUNT_LOCKED | 423 | Account locked due to failed attempts |
+| TOKEN_EXPIRED | 410 | Password reset token expired |
+| TOKEN_INVALID | 400 | Password reset token tidak valid |
 
 ---
 
 ## Rate Limiting
 
-### Login Endpoint
-
-- **Limit:** 5 attempts per identifier + IP combination
-- **Window:** 15 minutes
-- **Behavior:** Account locked setelah 5 failed attempts
-- **Reset:** Automatic setelah 15 menit atau manual via admin
-
-### General API
-
-- **Limit:** 60 requests per minute per IP (Laravel default)
-- **Response:** `429 Too Many Requests`
+| Endpoint | Limit | Window |
+|----------|-------|--------|
+| `POST /login` | 5 attempts | 1 minute |
+| `POST /forgot-password` | 3 attempts | 1 hour |
+| Failed login (per identifier + IP) | 5 attempts | 15 minutes lockout |
+| Password reset request (per email) | 3 requests | 24 hours |
 
 ---
 
 ## Session Management
 
-### Session Configuration
-
-| Setting | Value | Description |
-|---------|-------|-------------|
-| Driver | database | Session stored in database |
-| Lifetime | 120 minutes | Session expires after 2 hours |
-| Expire on Close | false | Session persist after browser close (if remember=true) |
-| Cookie Name | laravel_session | Session cookie name |
-| Cookie HttpOnly | true | JavaScript cannot access cookie |
-| Cookie Secure | false (local), true (production) | HTTPS only in production |
-| Cookie SameSite | lax | CSRF protection |
-
-### Session Data
-
-```php
-[
-    '_token' => 'csrf_token_here',
-    '_previous' => ['url' => 'http://...'],
-    '_flash' => [],
-    'login_web_59ba36addc2b2f9401580f014c7f58ea4e30989d' => 3, // user_id
-]
-```
-
----
-
-## Activity Logging
-
-### Logged Actions
-
-| Action | Trigger | Status | Logged Data |
-|--------|---------|--------|-------------|
-| login | Successful login | success | user_id, ip_address, user_agent |
-| failed_login | Failed login attempt | failed | identifier, attempts, ip_address |
-| logout | User logout | success | user_id, ip_address, user_agent |
-
-### Activity Log Structure
-
-```json
-{
-  "id": 1,
-  "user_id": 3,
-  "action": "login",
-  "ip_address": "127.0.0.1",
-  "user_agent": "Mozilla/5.0...",
-  "old_values": null,
-  "new_values": null,
-  "status": "success",
-  "created_at": "2025-12-22T10:30:00.000000Z",
-  "updated_at": "2025-12-22T10:30:00.000000Z"
-}
-```
-
----
-
-## Test Accounts
-
-| Username | Email | Password | Role | Status |
-|----------|-------|----------|------|--------|
-| superadmin | superadmin@sekolah.app | Sekolah123 | SUPERADMIN | active |
-| kepala.sekolah | kepala@sekolah.app | Sekolah123 | PRINCIPAL | active |
-| bu.siti | siti@sekolah.app | Sekolah123 | ADMIN | active |
-| pak.budi | budi@sekolah.app | Sekolah123 | TEACHER | active |
-| ibu.ani | ani@parent.com | Sekolah123 | PARENT | active |
-| ~~raka.pratama~~ | ~~raka@student.com~~ | ~~Sekolah123~~ | ~~STUDENT~~ | ⚠️ **DISABLED** |
-
-> **⚠️ Note:** Student test account currently disabled in seeder. User dengan role STUDENT tidak dapat login karena dashboard tidak tersedia.
-
----
-
-## Integration Examples
-
-### JavaScript (Inertia + Vue)
-
-```javascript
-import { useForm } from '@inertiajs/vue3';
-import login from '@/routes/login';
-
-// Login
-const form = useForm({
-    identifier: 'bu.siti',
-    password: 'Sekolah123',
-    remember: false,
-});
-
-form.post(login.post().url, {
-    onSuccess: () => {
-        // Redirect handled by server
-    },
-    onError: (errors) => {
-        console.error('Login failed:', errors);
-    },
-});
-
-// Logout
-import { router } from '@inertiajs/vue3';
-import { logout } from '@/routes';
-
-router.post(logout().url);
-```
-
-**Note:** Project ini menggunakan **Laravel Wayfinder** untuk type-safe routing, bukan Ziggy. Routes di-generate otomatis di `resources/js/routes/` saat build.
-
-### cURL
-
-```bash
-# Get CSRF Token
-CSRF_TOKEN=$(curl -s http://localhost:8000/login \
-  | grep -oP 'csrf-token" content="\K[^"]+')
-
-# Login
-curl -X POST http://localhost:8000/login \
-  -H "Content-Type: application/json" \
-  -H "X-CSRF-TOKEN: $CSRF_TOKEN" \
-  -c cookies.txt \
-  -d '{
-    "identifier": "bu.siti",
-    "password": "Sekolah123",
-    "remember": false
-  }'
-
-# If is_first_login = true, user will be redirected to /first-login
-# Update password on first login
-curl -X POST http://localhost:8000/first-login \
-  -H "Content-Type: application/json" \
-  -H "X-CSRF-TOKEN: $CSRF_TOKEN" \
-  -b cookies.txt \
-  -c cookies.txt \
-  -d '{
-    "password": "NewSecure123!@#",
-    "password_confirmation": "NewSecure123!@#"
-  }'
-
-# Access Protected Route
-curl -X GET http://localhost:8000/admin/dashboard \
-  -b cookies.txt
-
-# Logout
-curl -X POST http://localhost:8000/logout \
-  -H "X-CSRF-TOKEN: $CSRF_TOKEN" \
-  -b cookies.txt
-```
-
----
-
-## Related Documentation
-
-- **Feature Documentation:**
-  - [AUTH-P0 Authentication](../features/auth/AUTH-P0-authentication.md)
-  - [AUTH-P1 First Login](../features/auth/AUTH-P1-first-login.md)
-- **Test Plans:**
-  - [AUTH-P0 Test Plan](../testing/AUTH-P0-test-plan.md)
-  - [AUTH-P1 Test Plan](../testing/AUTH-P1-first-login-test-plan.md)
-- **Database Schema:** Migration files in `database/migrations/`
+- **Session Driver:** Configured via `SESSION_DRIVER` env
+- **Session Lifetime:** Configured via `SESSION_LIFETIME` env (default: 120 minutes)
+- **Session Regeneration:** On login dan logout untuk prevent session fixation
+- **Remember Me:** Stores remember token untuk 2 weeks
 
 ---
 
 *Last Updated: 2025-12-23*
-*API Version: 1.1 (P0 + P1 Implementation)*
-
-
