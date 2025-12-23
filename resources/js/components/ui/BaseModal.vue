@@ -2,6 +2,7 @@
 import { computed, watch, onMounted, onUnmounted } from 'vue';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
+import { useTransition } from '@/composables/useTransition';
 
 /**
  * Base Modal Component dengan iOS-like design dan spring animations
@@ -34,6 +35,7 @@ const emit = defineEmits<{
 }>();
 
 const haptics = useHaptics();
+const { onTransitionEnd } = useTransition();
 
 /**
  * Computed class untuk responsive modal size
@@ -110,8 +112,8 @@ onUnmounted(() => {
     <Teleport to="body">
         <Transition
             :css="false"
-            @enter="(el: Element, done: () => void) => setTimeout(done, 300)"
-            @leave="(el: Element, done: () => void) => setTimeout(done, 300)"
+            @enter="onTransitionEnd()"
+            @leave="onTransitionEnd()"
         >
             <div
                 v-if="show"
@@ -125,7 +127,7 @@ onUnmounted(() => {
                     :transition="{ duration: 0.2 }"
                 >
                     <div
-                        class="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                        class="fixed inset-0 bg-black/50"
                         @click="handleBackdropClick"
                     />
                 </Motion>
@@ -135,16 +137,16 @@ onUnmounted(() => {
                     :initial="{ opacity: 0, scale: 0.95, y: 20 }"
                     :animate="{ opacity: 1, scale: 1, y: 0 }"
                     :exit="{ opacity: 0, scale: 0.95, y: 20 }"
-                    :transition="{ type: 'spring', stiffness: 400, damping: 30 }"
+                    :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
                     :class="['relative z-10 w-full', modalSizeClass]"
                 >
                     <div
-                        class="overflow-hidden rounded-3xl bg-white/95 shadow-2xl backdrop-blur-xl dark:bg-gray-800/95"
+                        class="overflow-hidden rounded-3xl bg-white/98 shadow-xl dark:bg-zinc-900/98 border border-gray-100 dark:border-zinc-800"
                     >
                         <!-- Header dengan glass effect -->
                         <div
                             v-if="title || showCloseButton || $slots.header"
-                            class="flex items-center justify-between border-b border-gray-200/50 px-6 py-4 dark:border-gray-700/50"
+                            class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-zinc-800"
                         >
                             <!-- Title atau Custom Header -->
                             <slot name="header">
@@ -157,12 +159,12 @@ onUnmounted(() => {
                             <Motion
                                 v-if="showCloseButton"
                                 :whileTap="{ scale: 0.97 }"
-                                :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
+                                :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
                             >
                                 <button
                                     type="button"
                                     @click="closeModal"
-                                    class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-300/50 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                                    class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-300/50 dark:text-gray-400 dark:hover:bg-zinc-800 dark:hover:text-gray-200"
                                     aria-label="Tutup modal"
                                 >
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +187,7 @@ onUnmounted(() => {
                         <!-- Footer dengan actions -->
                         <div
                             v-if="$slots.footer"
-                            class="border-t border-gray-200/50 bg-gray-50/50 px-6 py-4 backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/50"
+                            class="border-t border-gray-100 bg-gray-50/50 px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900/50"
                         >
                             <slot name="footer" />
                         </div>

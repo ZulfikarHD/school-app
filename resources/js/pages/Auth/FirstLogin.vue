@@ -70,7 +70,7 @@ const togglePasswordConfirmationVisibility = () => {
 <template>
     <Head title="Ubah Password - Login Pertama" />
 
-    <div class="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 px-4 dark:from-gray-900 dark:to-gray-800">
+    <div class="flex min-h-screen items-center justify-center bg-gray-50 px-4 dark:bg-zinc-950">
         <Motion
             :initial="{ opacity: 0, scale: 0.95, y: 20 }"
             :animate="{ opacity: 1, scale: 1, y: 0 }"
@@ -78,9 +78,9 @@ const togglePasswordConfirmationVisibility = () => {
             class="w-full max-w-md"
         >
             <!-- Card Container dengan glass effect untuk iOS-like design -->
-            <div class="overflow-hidden rounded-2xl bg-white/80 shadow-2xl backdrop-blur-xl dark:bg-gray-800/80">
+            <div class="overflow-hidden rounded-2xl bg-white/95 shadow-xl border border-gray-100 dark:bg-zinc-900/95 dark:border-zinc-800">
                 <!-- Header -->
-                <div class="bg-linear-to-r from-blue-600 to-indigo-600 px-8 py-10 text-center">
+                <div class="bg-blue-600 px-8 py-10 text-center">
                     <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
                         <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -91,7 +91,7 @@ const togglePasswordConfirmationVisibility = () => {
                 </div>
 
                 <!-- Welcome Message -->
-                <div class="border-b border-gray-200 bg-blue-50 px-8 py-4 dark:border-gray-700 dark:bg-gray-800/50">
+                <div class="border-b border-gray-100 bg-blue-50 px-8 py-4 dark:border-zinc-800 dark:bg-zinc-900/50">
                     <p class="text-sm text-gray-700 dark:text-gray-300">
                         Selamat datang, <strong>{{ props.user.name }}</strong>!
                     </p>
@@ -141,7 +141,7 @@ const togglePasswordConfirmationVisibility = () => {
                                 :type="showPassword ? 'text' : 'password'"
                                 required
                                 autocomplete="new-password"
-                                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 pr-12 text-gray-900 transition-all duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                                class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 pr-12 text-gray-900 transition-all duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder:text-gray-500"
                                 placeholder="Masukkan password baru"
                                 :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500/20': form.errors.password }"
                             />
@@ -178,7 +178,7 @@ const togglePasswordConfirmationVisibility = () => {
                                 :type="showPasswordConfirmation ? 'text' : 'password'"
                                 required
                                 autocomplete="new-password"
-                                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 pr-12 text-gray-900 transition-all duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                                class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 pr-12 text-gray-900 transition-all duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder:text-gray-500"
                                 placeholder="Masukkan ulang password baru"
                             />
                             <!-- Toggle Show/Hide Password Confirmation -->
@@ -202,12 +202,12 @@ const togglePasswordConfirmationVisibility = () => {
                     <!-- Submit Button dengan spring animation -->
                     <Motion
                         :whileTap="{ scale: 0.97 }"
-                        :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
                     >
                         <button
                             type="submit"
                             :disabled="isSubmitting"
-                            class="flex w-full items-center justify-center rounded-lg bg-linear-to-r from-blue-600 to-indigo-600 px-4 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:from-blue-600 disabled:hover:to-indigo-600"
+                            class="flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             <svg
                                 v-if="isSubmitting"
@@ -224,7 +224,7 @@ const togglePasswordConfirmationVisibility = () => {
                 </form>
 
                 <!-- Footer -->
-                <div class="border-t border-gray-200 bg-gray-50 px-8 py-4 text-center dark:border-gray-700 dark:bg-gray-800/50">
+                <div class="border-t border-gray-100 bg-gray-50 px-8 py-4 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
                     <p class="text-xs text-gray-500 dark:text-gray-400">
                         Password Anda akan di-enkripsi dan disimpan dengan aman
                     </p>

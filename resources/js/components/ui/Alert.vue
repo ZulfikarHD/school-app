@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from 'vue';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
+import { useTransition } from '@/composables/useTransition';
 
 /**
  * Alert/Toast Component untuk notifications dan feedback messages
@@ -32,6 +33,7 @@ const emit = defineEmits<{
 }>();
 
 const haptics = useHaptics();
+const { onTransitionEnd } = useTransition();
 const isVisible = ref(props.show);
 const timer = ref<number | null>(null);
 
@@ -52,24 +54,32 @@ const positionClasses = {
  */
 const typeConfig = {
     success: {
-        bg: 'from-green-500 to-green-600',
+        bg: 'bg-white dark:bg-zinc-900 border-green-200 dark:border-green-900',
         icon: 'M5 13l4 4L19 7',
-        iconBg: 'bg-green-400/30',
+        iconBg: 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400',
+        titleColor: 'text-gray-900 dark:text-white',
+        textColor: 'text-gray-600 dark:text-gray-400',
     },
     error: {
-        bg: 'from-red-500 to-red-600',
+        bg: 'bg-white dark:bg-zinc-900 border-red-200 dark:border-red-900',
         icon: 'M6 18L18 6M6 6l12 12',
-        iconBg: 'bg-red-400/30',
+        iconBg: 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400',
+        titleColor: 'text-gray-900 dark:text-white',
+        textColor: 'text-gray-600 dark:text-gray-400',
     },
     warning: {
-        bg: 'from-yellow-500 to-yellow-600',
+        bg: 'bg-white dark:bg-zinc-900 border-yellow-200 dark:border-yellow-900',
         icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
-        iconBg: 'bg-yellow-400/30',
+        iconBg: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-400',
+        titleColor: 'text-gray-900 dark:text-white',
+        textColor: 'text-gray-600 dark:text-gray-400',
     },
     info: {
-        bg: 'from-blue-500 to-blue-600',
+        bg: 'bg-white dark:bg-zinc-900 border-blue-200 dark:border-blue-900',
         icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-        iconBg: 'bg-blue-400/30',
+        iconBg: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
+        titleColor: 'text-gray-900 dark:text-white',
+        textColor: 'text-gray-600 dark:text-gray-400',
     },
 };
 
@@ -131,20 +141,20 @@ onMounted(() => {
     <Teleport to="body">
         <Transition
             :css="false"
-            @enter="(el: Element, done: () => void) => setTimeout(done, 300)"
-            @leave="(el: Element, done: () => void) => setTimeout(done, 300)"
+            @enter="onTransitionEnd()"
+            @leave="onTransitionEnd()"
         >
             <Motion
                 v-if="isVisible"
                 :initial="{ opacity: 0, y: position.includes('bottom') ? 20 : -20, scale: 0.95 }"
                 :animate="{ opacity: 1, y: 0, scale: 1 }"
                 :exit="{ opacity: 0, y: position.includes('bottom') ? 20 : -20, scale: 0.95 }"
-                :transition="{ type: 'spring', stiffness: 400, damping: 30 }"
+                :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
                 :class="['fixed z-50 w-full max-w-md px-4 sm:px-0', positionClasses[position]]"
             >
                 <div
                     :class="[
-                        'overflow-hidden rounded-2xl bg-gradient-to-r shadow-2xl backdrop-blur-xl',
+                        'overflow-hidden rounded-2xl border shadow-lg',
                         typeConfig[type].bg,
                     ]"
                 >
@@ -153,10 +163,10 @@ onMounted(() => {
                         <Motion
                             :initial="{ scale: 0, rotate: -90 }"
                             :animate="{ scale: 1, rotate: 0 }"
-                            :transition="{ type: 'spring', stiffness: 500, damping: 25, delay: 0.1 }"
+                            :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.1 }"
                         >
                             <div :class="['flex h-10 w-10 shrink-0 items-center justify-center rounded-full', typeConfig[type].iconBg]">
-                                <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg :class="['h-5 w-5', typeConfig[type].iconBg.split(' ')[1]]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
@@ -169,10 +179,10 @@ onMounted(() => {
 
                         <!-- Content -->
                         <div class="flex-1 pt-0.5">
-                            <h4 v-if="title" class="font-bold text-white">
+                            <h4 v-if="title" :class="['font-bold', typeConfig[type].titleColor]">
                                 {{ title }}
                             </h4>
-                            <p class="text-sm text-white/90" :class="{ 'mt-1': title }">
+                            <p :class="['text-sm', typeConfig[type].textColor, { 'mt-1': title }]">
                                 {{ message }}
                             </p>
                         </div>
@@ -181,12 +191,12 @@ onMounted(() => {
                         <Motion
                             v-if="dismissible"
                             :whileTap="{ scale: 0.97 }"
-                            :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
+                            :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
                         >
                             <button
                                 type="button"
                                 @click="closeAlert"
-                                class="shrink-0 rounded-lg p-1.5 text-white/80 transition-colors hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                                class="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:hover:bg-zinc-800 dark:hover:text-gray-300"
                                 aria-label="Tutup notifikasi"
                             >
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +212,7 @@ onMounted(() => {
                         :initial="{ scaleX: 1 }"
                         :animate="{ scaleX: 0 }"
                         :transition="{ duration: duration / 1000, ease: 'linear' }"
-                        class="h-1 origin-left bg-white/30"
+                        :class="['h-1 origin-left opacity-30', typeConfig[type].iconBg]"
                     />
                 </div>
             </Motion>

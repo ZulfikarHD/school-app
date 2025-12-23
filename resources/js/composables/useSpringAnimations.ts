@@ -12,8 +12,8 @@ export const useSpringAnimations = () => {
         tap: { scale: 0.97 },
         transition: {
             type: 'spring',
-            stiffness: 500,
-            damping: 30,
+            stiffness: 300,
+            damping: 25,
         },
     };
 
@@ -76,12 +76,12 @@ export const useSpringAnimations = () => {
      * Spring preset untuk modal/dialog dengan scale
      */
     const modal = {
-        initial: { scale: 0.9, opacity: 0 },
-        enter: { scale: 1, opacity: 1 },
-        leave: { scale: 0.9, opacity: 0 },
+        initial: { scale: 0.95, opacity: 0, y: 20 },
+        enter: { scale: 1, opacity: 1, y: 0 },
+        leave: { scale: 0.95, opacity: 0, y: 20 },
         transition: {
             type: 'spring',
-            stiffness: 400,
+            stiffness: 300,
             damping: 30,
         },
     };

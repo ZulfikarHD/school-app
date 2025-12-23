@@ -134,7 +134,7 @@ const onLeave = (el: Element, done: () => void) => {
 <template>
     <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
         <!-- Top Navigation Bar dengan glass effect -->
-        <nav class="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-xl dark:border-gray-700 dark:bg-gray-800/80">
+        <nav class="sticky top-0 z-50 border-b border-gray-100 bg-white/95 dark:border-zinc-800 dark:bg-zinc-900/95">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="flex h-16 items-center justify-between">
                     <!-- Logo & Brand -->
@@ -156,12 +156,12 @@ const onLeave = (el: Element, done: () => void) => {
                             v-for="item in menuItems"
                             :key="item.route"
                             :whileTap="{ scale: 0.97 }"
-                            :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
+                            :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
                         >
                             <a
                                 :href="getRouteUrl(item.route)"
                                 @click="handleNavClick"
-                                class="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+                                class="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-zinc-800 dark:hover:text-white"
                             >
                                 {{ item.name }}
                             </a>
@@ -176,7 +176,7 @@ const onLeave = (el: Element, done: () => void) => {
                         </div>
                         <Motion
                             :whileTap="{ scale: 0.97 }"
-                            :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
+                            :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
                         >
                             <button
                                 @click="logout"
@@ -210,7 +210,7 @@ const onLeave = (el: Element, done: () => void) => {
                 >
                     <div
                         @click="closeMobileMenu"
-                        class="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                        class="fixed inset-0 bg-black/50"
                     />
                 </Motion>
 
@@ -220,14 +220,14 @@ const onLeave = (el: Element, done: () => void) => {
                     :initial="{ x: -264 }"
                     :animate="{ x: 0 }"
                     :exit="{ x: -264 }"
-                    :transition="{ type: 'spring', stiffness: 400, damping: 35 }"
-                    class="fixed inset-y-0 left-0 w-64 bg-white shadow-xl dark:bg-gray-800"
+                    :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
+                    class="fixed inset-y-0 left-0 w-64 bg-white shadow-xl dark:bg-zinc-900"
                 >
-                <div class="flex h-16 items-center justify-between border-b border-gray-200 px-4 dark:border-gray-700">
+                <div class="flex h-16 items-center justify-between border-b border-gray-100 px-4 dark:border-zinc-800">
                     <h2 class="text-lg font-bold text-gray-900 dark:text-white">Menu</h2>
                     <button
                         @click="toggleMobileMenu"
-                        class="rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                        class="rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-800"
                     >
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -240,11 +240,11 @@ const onLeave = (el: Element, done: () => void) => {
                         v-for="item in menuItems"
                         :key="item.route"
                         :whileTap="{ scale: 0.97 }"
-                        :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
                     >
                         <a
                             :href="getRouteUrl(item.route)"
-                            class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+                            class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-zinc-800 dark:hover:text-white"
                             @click="closeMobileMenu"
                         >
                             {{ item.name }}

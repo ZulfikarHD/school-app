@@ -2,6 +2,30 @@
 
 Reusable UI components dengan iOS-like design, spring animations, haptic feedback, dan glass effects.
 
+## 🔧 Composables
+
+### **useTransition** - Transition Callbacks Helper
+Composable untuk handle Vue Transition callbacks dengan proper TypeScript typing.
+
+#### Usage
+```typescript
+import { useTransition } from '@/composables/useTransition';
+
+const { onTransitionEnd } = useTransition();
+
+// Di template:
+<Transition
+    :css="false"
+    @enter="onTransitionEnd()"
+    @leave="onTransitionEnd(300)"
+>
+```
+
+#### API
+- `onTransitionEnd(duration?: number)` - Returns transition callback dengan delay (default: 300ms)
+
+---
+
 ## 📦 Components
 
 ### 1. **BaseModal** - Modal Dasar
@@ -284,18 +308,18 @@ const handleSave = async () => {
 
 ## ✨ Features
 
-### iOS-like Design
-- ✅ Spring physics animations (natural bounce)
-- ✅ Glass effect dengan backdrop blur
+### iOS-like Design (Optimized)
+- ✅ Spring physics animations (natural bounce, tuned for speed)
+- ✅ "Fake Glass" effect (high opacity, no heavy blur)
 - ✅ Press feedback (scale 0.97)
 - ✅ Haptic feedback untuk tactile response
 - ✅ Smooth transitions dengan motion-v
-- ✅ Gradient backgrounds
+- ✅ Clean & crisp borders
 - ✅ Dark mode support
 
 ### Mobile-First UX
 - ✅ Responsive sizing
-- ✅ Touch-friendly buttons
+- ✅ Touch-friendly buttons (min 44px targets)
 - ✅ Prevent body scroll saat modal open
 - ✅ Swipe gestures (ready for implementation)
 - ✅ Bottom sheet style (mobile)
@@ -327,10 +351,10 @@ const handleSave = async () => {
 - `bottom-left`: Bottom left corner
 
 ### Animation Timings
-- Modal entrance: spring (stiffness: 400, damping: 30)
-- Button tap: spring (stiffness: 500, damping: 30)
-- Alert slide: spring (stiffness: 400, damping: 30)
-- Icon bounce: spring (stiffness: 500, damping: 25)
+- Modal entrance: spring (stiffness: 300, damping: 30)
+- Button tap: spring (stiffness: 300, damping: 25)
+- Alert slide: spring (stiffness: 300, damping: 25)
+- Icon bounce: spring (stiffness: 300, damping: 25)
 
 ---
 

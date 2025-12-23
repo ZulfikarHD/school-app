@@ -47,22 +47,22 @@ const typeConfig = computed(() => {
         success: {
             bgColor: 'bg-green-100 dark:bg-green-900/30',
             iconColor: 'text-green-600 dark:text-green-400',
-            buttonColor: 'from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:ring-green-500/50',
+            buttonColor: 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500/50',
         },
         warning: {
             bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
             iconColor: 'text-yellow-600 dark:text-yellow-400',
-            buttonColor: 'from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 focus:ring-yellow-500/50',
+            buttonColor: 'bg-yellow-600 hover:bg-yellow-700 text-white focus:ring-yellow-500/50',
         },
         danger: {
             bgColor: 'bg-red-100 dark:bg-red-900/30',
             iconColor: 'text-red-600 dark:text-red-400',
-            buttonColor: 'from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:ring-red-500/50',
+            buttonColor: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500/50',
         },
         info: {
             bgColor: 'bg-blue-100 dark:bg-blue-900/30',
             iconColor: 'text-blue-600 dark:text-blue-400',
-            buttonColor: 'from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:ring-blue-500/50',
+            buttonColor: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/50',
         },
     };
     return configs[props.type];
@@ -99,7 +99,7 @@ const handleCancel = () => {
             <Motion
                 :initial="{ scale: 0, rotate: -180 }"
                 :animate="{ scale: 1, rotate: 0 }"
-                :transition="{ type: 'spring', stiffness: 400, damping: 20, delay: 0.1 }"
+                :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.1 }"
             >
                 <div :class="['mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full', typeConfig.bgColor]">
                     <!-- Success Icon -->
@@ -206,7 +206,7 @@ const handleCancel = () => {
                     <!-- Confirm Button -->
                     <Motion
                         :whileTap="{ scale: 0.97 }"
-                        :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
                         class="flex-1"
                     >
                         <button
@@ -214,7 +214,7 @@ const handleCancel = () => {
                             :disabled="loading"
                             @click="handleConfirm"
                             :class="[
-                                'flex w-full items-center justify-center rounded-xl bg-gradient-to-r px-6 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:shadow-xl focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60',
+                                'flex w-full items-center justify-center rounded-xl px-6 py-3 font-semibold shadow-sm transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60',
                                 typeConfig.buttonColor,
                             ]"
                         >
@@ -239,14 +239,14 @@ const handleCancel = () => {
                     <Motion
                         v-if="showCancel"
                         :whileTap="{ scale: 0.97 }"
-                        :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
                         class="flex-1"
                     >
                         <button
                             type="button"
                             :disabled="loading"
                             @click="handleCancel"
-                            class="w-full rounded-xl border-2 border-gray-300 px-6 py-3 font-semibold text-gray-700 transition-all duration-200 hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-300/50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:bg-gray-700"
+                            class="w-full rounded-xl border border-gray-200 bg-white px-6 py-3 font-semibold text-gray-700 transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-700 dark:focus:ring-zinc-700/50"
                         >
                             {{ cancelText }}
                         </button>
