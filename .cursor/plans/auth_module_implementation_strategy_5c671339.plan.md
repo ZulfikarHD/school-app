@@ -462,7 +462,7 @@ Route::middleware(['auth', 'role:PRINCIPAL'])->group(function () {
 
 - **Add**: Link to `/forgot-password` (already has placeholder at line 284)
   ```vue
-            <a href="/forgot-password" class="...">Lupa password?</a>
+              <a href="/forgot-password" class="...">Lupa password?</a>
   ```
 
 
@@ -470,9 +470,9 @@ Route::middleware(['auth', 'role:PRINCIPAL'])->group(function () {
 
 - **Add**: Display lockout countdown if `errors.identifier` contains "terkunci"
   ```vue
-            <p v-if="lockoutRemaining > 0">
-              Akun terkunci. Coba lagi dalam {{ lockoutRemaining }} menit.
-            </p>
+              <p v-if="lockoutRemaining > 0">
+                Akun terkunci. Coba lagi dalam {{ lockoutRemaining }} menit.
+              </p>
   ```
 
 
@@ -484,11 +484,11 @@ Route::middleware(['auth', 'role:PRINCIPAL'])->group(function () {
 
 - **Add**: Navigation menu item "Manajemen User" for Super Admin/TU
   ```vue
-            <NavItem v-if="$page.props.auth.user.role === 'SUPERADMIN' || $page.props.auth.user.role === 'ADMIN'"
-                     :href="route('admin.users.index')"
-                     icon="Users">
-              Manajemen User
-            </NavItem>
+              <NavItem v-if="$page.props.auth.user.role === 'SUPERADMIN' || $page.props.auth.user.role === 'ADMIN'"
+                       :href="route('admin.users.index')"
+                       icon="Users">
+                Manajemen User
+              </NavItem>
   ```
 
 
@@ -636,15 +636,15 @@ Route::middleware(['auth', 'role:PRINCIPAL'])->group(function () {
 - Log activity: `action='create_user', user_id=admin_id, new_values=siti.guru`
 - Send email to siti.rahmawati@sekolah.sch.id:
      ```javascript
-                              Subject: Akun Anda Telah Dibuat
-                              
-                              Halo Ibu Siti Rahmawati,
-                              
-                              Akun Anda di Sistem Informasi Sekolah telah dibuat:
-                              Username: siti.guru
-                              Password: Siti1234
-                              
-                              Silakan login dan ganti password Anda.
+                                   Subject: Akun Anda Telah Dibuat
+                                   
+                                   Halo Ibu Siti Rahmawati,
+                                   
+                                   Akun Anda di Sistem Informasi Sekolah telah dibuat:
+                                   Username: siti.guru
+                                   Password: Siti1234
+                                   
+                                   Silakan login dan ganti password Anda.
      ```
 
 
@@ -701,9 +701,9 @@ Route::middleware(['auth', 'role:PRINCIPAL'])->group(function () {
 - Generate unique token: `$token = Str::random(64)`
 - Insert into `password_reset_tokens`:
      ```javascript
-                              email: siti.rahmawati@sekolah.sch.id
-                              token: hashed($token)
-                              created_at: now()
+                                   email: siti.rahmawati@sekolah.sch.id
+                                   token: hashed($token)
+                                   created_at: now()
      ```
 
 
@@ -711,12 +711,12 @@ Route::middleware(['auth', 'role:PRINCIPAL'])->group(function () {
 
 - Send email:
      ```javascript
-                              Subject: Reset Password Anda
-                              
-                              Klik link berikut untuk reset password (valid 1 jam):
-                              https://sekolah.app/reset-password?token=abc123def456
-                              
-                              Jika Anda tidak meminta reset, abaikan email ini.
+                                   Subject: Reset Password Anda
+                                   
+                                   Klik link berikut untuk reset password (valid 1 jam):
+                                   https://sekolah.app/reset-password?token=abc123def456
+                                   
+                                   Jika Anda tidak meminta reset, abaikan email ini.
      ```
 
 
@@ -810,11 +810,11 @@ Route::middleware(['auth', 'role:PRINCIPAL'])->group(function () {
 
 7. **Admin clicks**: Row to expand details:
    ```json
-                  {
-                    "identifier": "siti.guru",
-                    "attempts": 5,
-                    "locked_until": "2025-12-23 14:50 WIB"
-                  }
+                     {
+                       "identifier": "siti.guru",
+                       "attempts": 5,
+                       "locked_until": "2025-12-23 14:50 WIB"
+                     }
    ```
 
 
@@ -882,4 +882,3 @@ Route::middleware(['auth', 'role:PRINCIPAL'])->group(function () {
 1. **Confirm Priorities**: Review P0/P1/P2 classification with stakeholders
 2. **Setup Email Service**: Configure SMTP/SendGrid for password reset emails
 3. **Database Review**: Confirm `password_reset_tokens` table exists or create migration
-4. **Start with P0**: Begin User Management CRUD (highest business value)

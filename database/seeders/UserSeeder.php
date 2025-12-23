@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
             'email' => 'superadmin@sekolah.app',
             'password' => Hash::make('Sekolah123'),
             'role' => 'SUPERADMIN',
-            'status' => 'active',
+            'status' => 'ACTIVE',
             'is_first_login' => false,
             'phone_number' => '081234567890',
         ]);
@@ -35,7 +35,7 @@ class UserSeeder extends Seeder
             'email' => 'kepala@sekolah.app',
             'password' => Hash::make('Sekolah123'),
             'role' => 'PRINCIPAL',
-            'status' => 'active',
+            'status' => 'ACTIVE',
             'is_first_login' => true,
             'phone_number' => '081234567891',
         ]);
@@ -47,7 +47,7 @@ class UserSeeder extends Seeder
             'email' => 'siti@sekolah.app',
             'password' => Hash::make('Sekolah123'),
             'role' => 'ADMIN',
-            'status' => 'active',
+            'status' => 'ACTIVE',
             'is_first_login' => true,
             'phone_number' => '081234567892',
         ]);
@@ -59,7 +59,7 @@ class UserSeeder extends Seeder
             'email' => 'budi@sekolah.app',
             'password' => Hash::make('Sekolah123'),
             'role' => 'TEACHER',
-            'status' => 'active',
+            'status' => 'ACTIVE',
             'is_first_login' => true,
             'phone_number' => '081234567893',
         ]);
@@ -71,7 +71,7 @@ class UserSeeder extends Seeder
             'email' => 'ani@parent.com',
             'password' => Hash::make('Sekolah123'),
             'role' => 'PARENT',
-            'status' => 'active',
+            'status' => 'ACTIVE',
             'is_first_login' => true,
             'phone_number' => '081234567894',
         ]);
@@ -84,7 +84,7 @@ class UserSeeder extends Seeder
         //     'email' => 'raka@student.com',
         //     'password' => Hash::make('Sekolah123'),
         //     'role' => 'STUDENT',
-        //     'status' => 'active',
+        //     'status' => 'ACTIVE',
         //     'is_first_login' => true,
         //     'phone_number' => '081234567895',
         // ]);

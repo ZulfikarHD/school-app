@@ -32,7 +32,7 @@ class UpdateUserRequest extends FormRequest
             'username' => ['required', 'string', 'min:3', 'max:50', Rule::unique('users', 'username')->ignore($userId), 'regex:/^[a-zA-Z0-9._]+$/'],
             'phone_number' => ['nullable', 'string', 'max:20'],
             'role' => ['required', Rule::in(['SUPERADMIN', 'ADMIN', 'PRINCIPAL', 'TEACHER', 'PARENT'])],
-            'status' => ['required', Rule::in(['active', 'inactive'])],
+            'status' => ['required', Rule::in(['ACTIVE', 'INACTIVE'])],
         ];
     }
 

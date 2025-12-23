@@ -716,33 +716,219 @@ Session Lifecycle:
 
 ---
 
-## Future Journey Improvements (P1)
+## 7. User Management Journey (P2)
 
-### Planned Enhancements:
+**Actor:** Super Admin / Admin TU  
+**Goal:** Mengelola user (CRUD operations)
 
-1. **First Login Journey**
-   - Force password change
-   - Welcome tutorial
-
-2. **Forgot Password Journey**
-   - Email reset link
-   - Secure token validation
-   - New password setup
-
-3. **Profile Management Journey**
-   - Update personal info
-   - Change password
-   - Upload avatar
-
-4. **Two-Factor Auth Journey** (P2)
-   - Setup TOTP
-   - SMS verification
-   - Backup codes
+```
+[Admin Dashboard]
+        │
+        ├─▶ Navigate to: Admin > Manajemen User
+        │
+[Users Index Page]
+        │
+        ├─▶ View: User table dengan pagination
+        ├─▶ Action: Search user by name/email
+        ├─▶ Action: Filter by role & status
+        │
+        ├─▶ CRUD OPTIONS:
+        │
+        ├─▶ [CREATE] Click "Tambah User"
+        │   ├─▶ Fill form: name, email, username, role, status
+        │   ├─▶ View auto-generated password (12 chars)
+        │   ├─▶ Click "Simpan"
+        │   └─▶ Success: User created, back to list
+        │
+        ├─▶ [UPDATE] Click edit icon
+        │   ├─▶ Form pre-filled dengan data user
+        │   ├─▶ Edit fields (name, email, role, status)
+        │   ├─▶ Click "Simpan"
+        │   └─▶ Success: User updated, back to list
+        │
+        ├─▶ [DELETE] Click delete icon
+        │   ├─▶ Confirmation modal: "Hapus user ini?"
+        │   ├─▶ Click "Hapus"
+        │   └─▶ Success: User deleted, list refreshed
+        │
+        ├─▶ [RESET PASSWORD] Click reset icon
+        │   ├─▶ Confirmation modal: "Reset password?"
+        │   ├─▶ Click "Reset"
+        │   └─▶ Success: New password sent to email
+        │
+        └─▶ [TOGGLE STATUS] Click toggle button
+            └─▶ Status changes immediately (optimistic UI)
+```
 
 ---
 
-*Last Updated: 2025-12-22*  
-*Version: 1.0*  
-*Status: Complete untuk P0, akan di-extend untuk P1*
+## 8. Password Reset Journey (P3)
+
+**Actor:** Any User (forgot password)  
+**Goal:** Reset password via email link
+
+```
+[Login Page]
+        │
+        ├─▶ Click "Lupa Password?"
+        │
+[Forgot Password Page]
+        │
+        ├─▶ Enter email address
+        ├─▶ Click "Kirim Link Reset"
+        │
+        ├─▶ [Backend] Check email exists
+        │   ├─▶ Not found → Generic success (no info disclosure)
+        │   └─▶ Found → Generate token + Send email
+        │
+        ├─▶ Show success message
+        ├─▶ Show 60s countdown (rate limit)
+        │
+[Check Email]
+        │
+        ├─▶ Open email: "Reset Password Request"
+        ├─▶ Click reset link in email
+        │
+[Reset Password Page]
+        │
+        ├─▶ [Backend] Validate token
+        │   ├─▶ Expired → Redirect to forgot password
+        │   ├─▶ Invalid → Redirect to forgot password
+        │   └─▶ Valid → Show form
+        │
+        ├─▶ Enter new password
+        ├─▶ View password strength meter (real-time)
+        ├─▶ Enter password confirmation
+        ├─▶ Click "Reset Password"
+        │
+        ├─▶ [Backend] Validate & update
+        │   ├─▶ Weak password → Show error + meter
+        │   ├─▶ Mismatch → Show error
+        │   └─▶ Valid → Update password, invalidate token
+        │
+        ├─▶ Success toast: "Password berhasil diubah"
+        ├─▶ Auto-redirect to login (3s countdown)
+        │
+[Login Page]
+        │
+        └─▶ Login dengan password baru
+```
+
+---
+
+## 9. Profile Management Journey (P4)
+
+**Actor:** Authenticated User  
+**Goal:** View profile & change password
+
+```
+[Any Dashboard]
+        │
+        ├─▶ Click profile icon (navbar)
+        │
+[Profile Page]
+        │
+        ├─▶ View: Avatar dengan initial letter
+        ├─▶ View: Name, Email, Username
+        ├─▶ View: Role badge (colored)
+        ├─▶ View: Status badge (Active/Inactive)
+        ├─▶ View: Member since date
+        │
+        ├─▶ Click "Ganti Password"
+        │
+[Change Password Modal]
+        │
+        ├─▶ Modal opens dengan animation
+        ├─▶ Enter current password
+        ├─▶ Enter new password
+        ├─▶ View password strength meter (real-time)
+        ├─▶ Enter password confirmation
+        ├─▶ Click "Ubah Password"
+        │
+        ├─▶ [Backend] Validate
+        │   ├─▶ Current password wrong → Error
+        │   ├─▶ Weak new password → Error + meter
+        │   ├─▶ Mismatch → Error
+        │   └─▶ Valid → Update password, log activity
+        │
+        ├─▶ Success toast: "Password berhasil diubah"
+        ├─▶ Modal closes
+        └─▶ Can continue using app
+```
+
+---
+
+## 10. Audit Log Viewing Journey (P5)
+
+**Actor:** Admin / Principal  
+**Goal:** Monitor system activities
+
+```
+[Admin Dashboard]
+        │
+        ├─▶ Navigate to: Admin > Audit Log
+        │
+[Audit Log Index Page]
+        │
+        ├─▶ View: Log table dengan pagination (50/page)
+        │
+        ├─▶ FILTER OPTIONS:
+        │   ├─▶ Date range: Today / Last 7 days / Last 30 days / Custom
+        │   ├─▶ User: Dropdown (searchable)
+        │   ├─▶ Action: Multi-select (login, logout, create, update, delete)
+        │   └─▶ Status: All / Success / Failed
+        │
+        ├─▶ Apply filters
+        │   └─▶ Results updated instantly
+        │
+        ├─▶ View log entry:
+        │   ├─▶ Timestamp (WIB)
+        │   ├─▶ User name + role
+        │   ├─▶ Action badge (colored)
+        │   ├─▶ Description
+        │   ├─▶ Status badge (green/red)
+        │   └─▶ Expand icon
+        │
+        ├─▶ Click expand icon
+        │   └─▶ Row expands dengan animation
+        │       ├─▶ Show old values (JSON)
+        │       ├─▶ Show new values (JSON)
+        │       ├─▶ Highlight changed fields
+        │       ├─▶ Show IP address
+        │       └─▶ Show user agent
+        │
+        ├─▶ Navigate pagination
+        │   ├─▶ Next page
+        │   └─▶ Previous page
+        │
+        └─▶ Empty state: "Belum ada log aktivitas"
+```
+
+---
+
+## Future Enhancements
+
+### Planned for P2:
+
+1. **Two-Factor Authentication Journey**
+   - Setup TOTP authenticator
+   - SMS verification backup
+   - Recovery codes generation
+
+2. **Session Management Journey**
+   - View active sessions
+   - Logout other devices
+   - Session timeout warnings
+
+3. **Email Verification Journey**
+   - Email confirmation on registration
+   - Re-send verification link
+   - Verified badge display
+
+---
+
+*Last Updated: 2025-12-23*  
+*Version: 2.0*  
+*Status: Complete untuk P0-P5, akan di-extend untuk P2 features*
 
 

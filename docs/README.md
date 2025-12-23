@@ -14,18 +14,33 @@ docs/
 ├── DOCUMENTATION_GUIDE.md        # Panduan membuat dokumentasi
 │
 ├── features/                     # Feature-specific documentation
-│   └── auth/
-│       └── AUTH-P0-authentication.md
+│   ├── auth/
+│   │   ├── AUTH-P0-authentication.md
+│   │   ├── AUTH-P1-first-login.md
+│   │   ├── AUTH-P2-user-management.md
+│   │   ├── AUTH-P3-password-reset.md
+│   │   ├── AUTH-P4-profile-management.md
+│   │   └── AUTH-P5-audit-logs.md
+│   └── admin/
+│       └── AUTH-authentication-authorization-backend.md
 │
 ├── api/                          # API endpoint documentation
-│   └── authentication.md
+│   ├── authentication.md
+│   └── users.md
 │
 ├── testing/                      # Test plans dan QA checklists
-│   └── AUTH-P0-test-plan.md
+│   ├── AUTH-P0-test-plan.md
+│   ├── AUTH-P1-first-login-test-plan.md
+│   ├── AUTH-P2-user-management-test-plan.md
+│   ├── AUTH-P3-password-reset-test-plan.md
+│   ├── AUTH-P4-profile-management-test-plan.md
+│   └── AUTH-P5-audit-logs-test-plan.md
 │
 └── guides/                       # User journeys dan how-to guides
-    ├── auth-user-journeys.md
-    └── wayfinder-migration.md    # Ziggy → Wayfinder migration guide
+    ├── auth-user-journeys.md     # Updated dengan P1-P5 flows
+    ├── ios-design-system.md
+    ├── navigation-design-system.md
+    └── wayfinder-migration.md
 ```
 
 ---
@@ -79,12 +94,35 @@ php artisan serve
 - ⚠️ STUDENT role disabled (untuk future implementation - [detail](./STUDENT_FEATURES_DISABLED.md))
 - ✅ Brute Force Protection (5 attempts → 15 min lock)
 - ✅ Activity Logging untuk audit trail
-- ✅ First Login Flow dengan force password change
 - ✅ Timing Attack Mitigation untuk security
 - ✅ iOS-inspired UI dengan glass effects & haptic feedback
 - ✅ Mobile-first responsive design
 - ✅ Show/hide password toggle
 - ✅ Remember me functionality
+
+### ✅ P1 - Important Features (Sprint 1-2)
+
+| Feature Code | Feature Name | Status | Documentation |
+|--------------|--------------|--------|---------------|
+| AUTH-P1 | First Login Password Change | ✅ Complete | [Feature Doc](./features/auth/AUTH-P1-first-login.md) |
+| AUTH-P2 | User Management (CRUD) | ✅ Complete | [Feature Doc](./features/auth/AUTH-P2-user-management.md) |
+| AUTH-P3 | Password Reset Flow | ✅ Complete | [Feature Doc](./features/auth/AUTH-P3-password-reset.md) |
+| AUTH-P4 | Profile Management | ✅ Complete | [Feature Doc](./features/auth/AUTH-P4-profile-management.md) |
+| AUTH-P5 | Audit Log Viewing | ✅ Complete | [Feature Doc](./features/auth/AUTH-P5-audit-logs.md) |
+
+**Included in P1 Features:**
+- ✅ Force password change pada first login (AUTH-P1)
+- ✅ User CRUD dengan auto-generated password (AUTH-P2)
+- ✅ Reset password user dengan email notification (AUTH-P2)
+- ✅ Toggle user status (Active/Inactive) (AUTH-P2)
+- ✅ Forgot password dengan email reset link (AUTH-P3)
+- ✅ Password strength meter real-time (AUTH-P3)
+- ✅ Rate limiting protection (3 req/60min) (AUTH-P3)
+- ✅ Profile viewing dengan role badges (AUTH-P4)
+- ✅ Change password untuk authenticated user (AUTH-P4)
+- ✅ Audit log viewing dengan filtering (AUTH-P5)
+- ✅ Expandable rows untuk old/new values (AUTH-P5)
+- ✅ Role-based access (Admin/Principal) (AUTH-P5)
 
 ---
 
@@ -92,7 +130,8 @@ php artisan serve
 
 | Resource | Endpoints | Documentation |
 |----------|-----------|---------------|
-| Authentication | Login, Logout, Dashboards | [API Doc](./api/authentication.md) |
+| Authentication | Login, Logout, Dashboards, Password Reset, Profile | [API Doc](./api/authentication.md) |
+| Users | CRUD, Reset Password, Toggle Status | [API Doc](./api/users.md) |
 
 ### Available Routes
 
@@ -127,6 +166,11 @@ php artisan test --coverage
 | Feature | Test Plan | Status |
 |---------|-----------|--------|
 | Authentication | [AUTH-P0 Test Plan](./testing/AUTH-P0-test-plan.md) | ✅ 5/5 passing |
+| First Login | [AUTH-P1 Test Plan](./testing/AUTH-P1-first-login-test-plan.md) | ✅ 8/8 passing |
+| User Management | [AUTH-P2 Test Plan](./testing/AUTH-P2-user-management-test-plan.md) | ✅ Complete |
+| Password Reset | [AUTH-P3 Test Plan](./testing/AUTH-P3-password-reset-test-plan.md) | ✅ Complete |
+| Profile Management | [AUTH-P4 Test Plan](./testing/AUTH-P4-profile-management-test-plan.md) | ✅ Complete |
+| Audit Logs | [AUTH-P5 Test Plan](./testing/AUTH-P5-audit-logs-test-plan.md) | ✅ Complete |
 
 ---
 
@@ -298,14 +342,14 @@ Project ini menggunakan Laravel Boost MCP server dengan tools:
 
 ## 📅 Roadmap
 
-### Sprint 1-2: P1 Features (Important)
+### Sprint 1-2: P1 Features (Important) - ✅ COMPLETED
 
 - [x] First Login Flow - Force password change ✅ **COMPLETED**
-- [ ] Forgot Password - Email reset link
-- [ ] Profile Management - Update user info
-- [ ] Password History Validation - Prevent reuse
-- [ ] User Management UI - CRUD untuk admin
-- [ ] Audit Log Viewer - View activity logs
+- [x] Forgot Password - Email reset link ✅ **COMPLETED**
+- [x] Reset Password - Token validation & new password ✅ **COMPLETED**
+- [x] Profile Management - View profile & change password ✅ **COMPLETED**
+- [x] User Management UI - CRUD untuk admin ✅ **COMPLETED**
+- [x] Audit Log Viewer - View activity logs dengan filtering ✅ **COMPLETED**
 - [ ] Student Portal - Dashboard & features (currently disabled)
 
 ### Sprint 2: P2 Features (Enhancement)
@@ -343,5 +387,5 @@ Private project - All rights reserved.
 ---
 
 *Last Updated: 2025-12-23*  
-*Documentation Version: 1.2* - Added STUDENT role disabled documentation
+*Documentation Version: 2.0* - Split authentication features into modular docs (AUTH-P0 through AUTH-P5)
 

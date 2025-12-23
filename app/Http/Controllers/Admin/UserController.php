@@ -178,7 +178,7 @@ class UserController extends Controller
             ]);
 
             // Jika role atau status berubah, terminate active sessions untuk force re-login
-            if ($roleChanged || ($statusChanged && $user->status === 'inactive')) {
+            if ($roleChanged || ($statusChanged && $user->status === 'INACTIVE')) {
                 // TODO: Implement session termination untuk user tertentu
                 // Membutuhkan database session driver dan query ke sessions table
             }
@@ -212,7 +212,7 @@ class UserController extends Controller
 
         // Prevent deleting last Super Admin
         if ($user->role === 'SUPERADMIN') {
-            $superAdminCount = User::where('role', 'SUPERADMIN')->where('status', 'active')->count();
+            $superAdminCount = User::where('role', 'SUPERADMIN')->where('status', 'ACTIVE')->count();
             if ($superAdminCount <= 1) {
                 return back()->withErrors(['error' => 'Tidak dapat menghapus Super Admin terakhir.']);
             }
@@ -311,8 +311,8 @@ class UserController extends Controller
         }
 
         // Prevent deactivating last Super Admin
-        if ($user->role === 'SUPERADMIN' && $user->status === 'active') {
-            $activeAdminCount = User::where('role', 'SUPERADMIN')->where('status', 'active')->count();
+        if ($user->role === 'SUPERADMIN' && $user->status === 'ACTIVE') {
+            $activeAdminCount = User::where('role', 'SUPERADMIN')->where('status', 'ACTIVE')->count();
             if ($activeAdminCount <= 1) {
                 return back()->withErrors(['error' => 'Tidak dapat menonaktifkan Super Admin terakhir.']);
             }
@@ -321,7 +321,7 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try {
-            $newStatus = $user->status === 'active' ? 'inactive' : 'active';
+            $newStatus = $user->status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
             $user->update(['status' => $newStatus]);
 
@@ -345,7 +345,7 @@ class UserController extends Controller
 
             DB::commit();
 
-            $message = $newStatus === 'active' ? 'User berhasil diaktifkan.' : 'User berhasil dinonaktifkan.';
+            $message = $newStatus === 'ACTIVE' ? 'User berhasil diaktifkan.' : 'User berhasil dinonaktifkan.';
 
             return back()->with('success', $message);
         } catch (\Exception $e) {

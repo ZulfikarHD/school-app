@@ -29,7 +29,7 @@ class LoginTest extends TestCase
         $user = User::factory()->create([
             'username' => 'testuser',
             'password' => bcrypt('password123'),
-            'status' => 'active',
+            'status' => 'ACTIVE',
         ]);
 
         $response = $this->post(route('login'), [
@@ -70,7 +70,7 @@ class LoginTest extends TestCase
         $user = User::factory()->create([
             'username' => 'inactiveuser',
             'password' => bcrypt('password123'),
-            'status' => 'inactive',
+            'status' => 'INACTIVE',
         ]);
 
         $response = $this->post(route('login'), [
@@ -89,7 +89,7 @@ class LoginTest extends TestCase
     public function test_authenticated_user_can_logout(): void
     {
         $user = User::factory()->create([
-            'status' => 'active',
+            'status' => 'ACTIVE',
         ]);
 
         $this->actingAs($user);

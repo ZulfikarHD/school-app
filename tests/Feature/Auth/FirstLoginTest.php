@@ -18,7 +18,7 @@ class FirstLoginTest extends TestCase
     {
         $user = User::factory()->create([
             'is_first_login' => true,
-            'status' => 'active',
+            'status' => 'ACTIVE',
         ]);
 
         $response = $this->actingAs($user)->get('/first-login');
@@ -41,7 +41,7 @@ class FirstLoginTest extends TestCase
     {
         $user = User::factory()->create([
             'is_first_login' => false,
-            'status' => 'active',
+            'status' => 'ACTIVE',
             'role' => 'ADMIN',
         ]);
 
@@ -67,7 +67,7 @@ class FirstLoginTest extends TestCase
     {
         $user = User::factory()->create([
             'is_first_login' => true,
-            'status' => 'active',
+            'status' => 'ACTIVE',
             'role' => 'TEACHER',
             'password' => Hash::make('OldPassword123!'),
         ]);
@@ -104,7 +104,7 @@ class FirstLoginTest extends TestCase
     {
         $user = User::factory()->create([
             'is_first_login' => true,
-            'status' => 'active',
+            'status' => 'ACTIVE',
         ]);
 
         // Test password terlalu pendek
@@ -155,7 +155,7 @@ class FirstLoginTest extends TestCase
     {
         $user = User::factory()->create([
             'is_first_login' => true,
-            'status' => 'active',
+            'status' => 'ACTIVE',
         ]);
 
         $response = $this->actingAs($user)->post('/first-login', [
@@ -173,7 +173,7 @@ class FirstLoginTest extends TestCase
     {
         $user = User::factory()->create([
             'is_first_login' => false,
-            'status' => 'active',
+            'status' => 'ACTIVE',
         ]);
 
         $response = $this->actingAs($user)->post('/first-login', [
@@ -202,7 +202,7 @@ class FirstLoginTest extends TestCase
         foreach ($roles as $role => $expectedRoute) {
             $user = User::factory()->create([
                 'is_first_login' => true,
-                'status' => 'active',
+                'status' => 'ACTIVE',
                 'role' => $role,
             ]);
 
