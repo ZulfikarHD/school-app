@@ -35,11 +35,8 @@ Route::middleware(['auth'])->group(function () {
                 ->name('users.toggle-status');
 
             // Student Management Routes
-            Route::resource('students', StudentController::class);
-            Route::post('students/assign-class', [StudentController::class, 'assignClass'])
-                ->name('students.assign-class');
-            Route::post('students/{student}/update-status', [StudentController::class, 'updateStatus'])
-                ->name('students.update-status');
+            // Note: Special routes (promote, export, import) harus didefinisikan SEBELUM resource
+            // untuk menghindari conflict dengan route {student}
             Route::get('students/promote', [StudentController::class, 'showPromotePage'])
                 ->name('students.promote.page');
             Route::post('students/promote', [StudentController::class, 'promote'])
@@ -50,6 +47,11 @@ Route::middleware(['auth'])->group(function () {
                 ->name('students.import.preview');
             Route::post('students/import', [StudentController::class, 'import'])
                 ->name('students.import');
+            Route::post('students/assign-class', [StudentController::class, 'assignClass'])
+                ->name('students.assign-class');
+            Route::post('students/{student}/update-status', [StudentController::class, 'updateStatus'])
+                ->name('students.update-status');
+            Route::resource('students', StudentController::class);
 
             // Audit Log Routes
             Route::get('audit-logs', [AuditLogController::class, 'index'])
