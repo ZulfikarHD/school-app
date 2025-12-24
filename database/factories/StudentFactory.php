@@ -52,11 +52,29 @@ class StudentFactory extends Factory
             'no_hp' => fake()->numerify('08##########'),
             'email' => fake()->optional()->safeEmail(),
             'foto' => null,
-            'kelas_id' => fake()->numberBetween(1, 12), // Assuming 12 classes
+            'kelas_id' => null, // Will be assigned in seeder or tests
             'tahun_ajaran_masuk' => $year.'/'.(($year + 1)),
             'tanggal_masuk' => fake()->dateTimeBetween('-1 year', 'now'),
             'status' => 'aktif',
         ];
+    }
+
+    /**
+     * State untuk siswa dengan kelas tertentu
+     */
+    public function withClass(?int $kelasId = null): static
+    {
+        return $this->state(function (array $attributes) use ($kelasId) {
+            if ($kelasId === null) {
+                // Get random active class jika tidak di-specify
+                $class = \App\Models\SchoolClass::active()->inRandomOrder()->first();
+                $kelasId = $class?->id;
+            }
+
+            return [
+                'kelas_id' => $kelasId,
+            ];
+        });
     }
 
     /**

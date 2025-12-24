@@ -36,6 +36,8 @@ Route::middleware(['auth'])->group(function () {
 
             // Student Management Routes
             Route::resource('students', StudentController::class);
+            Route::post('students/assign-class', [StudentController::class, 'assignClass'])
+                ->name('students.assign-class');
             Route::post('students/{student}/update-status', [StudentController::class, 'updateStatus'])
                 ->name('students.update-status');
             Route::post('students/promote', [StudentController::class, 'promote'])

@@ -64,6 +64,14 @@ class Student extends Model
     }
 
     /**
+     * Relationship many-to-one dengan SchoolClass
+     */
+    public function kelas(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(SchoolClass::class, 'kelas_id');
+    }
+
+    /**
      * Relationship many-to-many dengan Guardian melalui pivot table student_guardian
      * dimana satu siswa bisa punya multiple guardians (ayah, ibu, wali)
      */

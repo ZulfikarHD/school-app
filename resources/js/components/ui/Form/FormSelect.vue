@@ -44,12 +44,21 @@ const haptics = useHaptics();
 const isFocused = ref(false);
 
 const normalizedOptions = computed<Option[]>(() => {
-    return props.options.map(opt => {
-        if (typeof opt === 'string') {
-            return { value: opt, label: opt };
-        }
-        return opt;
-    });
+    if (!props.options || !Array.isArray(props.options)) {
+        return [];
+    }
+
+    return props.options
+        .map(opt => {
+            if (typeof opt === 'string') {
+                return { value: opt, label: opt };
+            }
+            if (opt && typeof opt === 'object' && 'value' in opt && 'label' in opt) {
+                return opt;
+            }
+            return null;
+        })
+        .filter((opt): opt is Option => opt !== null);
 });
 
 const hasValue = computed(() => {
@@ -98,10 +107,38 @@ const labelClasses = computed(() => [
 ]);
 
 const handleChange = (event: Event) => {
-    const value = (event.target as HTMLSelectElement).value;
-    haptics.light();
-    emit('update:modelValue', value);
-    emit('change', value);
+    const selectElement = event.target as HTMLSelectElement;
+    const stringValue = selectElement.value;
+
+    // If empty string, emit null
+    if (stringValue === '') {
+        haptics.light();
+        emit('update:modelValue', null);
+        emit('change', null);
+        return;
+    }
+
+    // Find matching option and preserve type
+    const selectedOption = normalizedOptions.value.find(opt => String(opt.value) === stringValue);
+
+    if (selectedOption) {
+        // Preserve the original type from option
+        const value = typeof selectedOption.value === 'number'
+            ? selectedOption.value
+            : stringValue;
+
+        haptics.light();
+        emit('update:modelValue', value);
+        emit('change', value);
+    } else {
+        // Fallback: try to convert to number if it looks like a number
+        const numValue = Number(stringValue);
+        const value = !isNaN(numValue) && stringValue !== '' ? numValue : stringValue;
+
+        haptics.light();
+        emit('update:modelValue', value);
+        emit('change', value);
+    }
 };
 
 const handleFocus = () => {
@@ -141,7 +178,7 @@ const handleBlur = () => {
 
                 <!-- Select Field -->
                 <select
-                    :value="modelValue"
+                    :value="modelValue === null || modelValue === undefined ? '' : modelValue"
                     :disabled="disabled"
                     :class="selectClasses"
                     @change="handleChange"
@@ -151,11 +188,11 @@ const handleBlur = () => {
                     <option value="" disabled>{{ placeholder }}</option>
                     <option
                         v-for="option in normalizedOptions"
-                        :key="option.value"
+                        :key="String(option.value)"
                         :value="option.value"
                         :disabled="option.disabled"
                     >
-                        {{ option.label }}
+                        {{ option.label || String(option.value) }}
                     </option>
                 </select>
 

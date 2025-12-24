@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import {
     Search,
@@ -56,7 +56,7 @@ const props = withDefaults(defineProps<Props>(), {
     academicYears: () => []
 });
 
-const emit = defineEmits(['edit', 'delete', 'view', 'update-status']);
+const emit = defineEmits(['edit', 'delete', 'view', 'update-status', 'selection-change']);
 const haptics = useHaptics();
 
 // Local state for filters
@@ -65,6 +65,9 @@ const kelasId = ref(props.filters.kelas_id || '');
 const status = ref(props.filters.status || '');
 const tahunAjaran = ref(props.filters.tahun_ajaran || '');
 const jenisKelamin = ref(props.filters.jenis_kelamin || '');
+
+// Selection state
+const selectedIds = ref<number[]>([]);
 
 // Debounce search
 let timeout: ReturnType<typeof setTimeout>;
@@ -78,6 +81,10 @@ const handleSearch = () => {
 
 const applyFilters = () => {
     haptics.selection();
+    // Reset selection when filtering
+    selectedIds.value = [];
+    emit('selection-change', []);
+
     router.get(
         studentsIndex().url,
         {
@@ -93,6 +100,31 @@ const applyFilters = () => {
             replace: true
         }
     );
+};
+
+// Selection Logic
+const allSelected = computed(() => {
+    return props.students.data.length > 0 && selectedIds.value.length === props.students.data.length;
+});
+
+const toggleSelectAll = () => {
+    haptics.light();
+    if (allSelected.value) {
+        selectedIds.value = [];
+    } else {
+        selectedIds.value = props.students.data.map(s => s.id);
+    }
+    emit('selection-change', props.students.data.filter(s => selectedIds.value.includes(s.id)));
+};
+
+const toggleSelection = (id: number) => {
+    haptics.light();
+    if (selectedIds.value.includes(id)) {
+        selectedIds.value = selectedIds.value.filter(itemId => itemId !== id);
+    } else {
+        selectedIds.value.push(id);
+    }
+    emit('selection-change', props.students.data.filter(s => selectedIds.value.includes(s.id)));
 };
 
 // Helpers - Status badge dengan emerald sebagai primary color untuk "aktif"
@@ -136,12 +168,20 @@ const onUpdateStatus = (student: Student) => {
     haptics.light();
     emit('update-status', student);
 };
+
+// Expose resetSelection method
+defineExpose({
+    resetSelection: () => {
+        selectedIds.value = [];
+        emit('selection-change', []);
+    }
+});
 </script>
 
 <template>
     <div class="space-y-4">
         <!-- Filters & Search -->
-        <Motion 
+        <Motion
             :initial="{ opacity: 0, y: -10 }"
             :animate="{ opacity: 1, y: 0 }"
             :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
@@ -166,7 +206,7 @@ const onUpdateStatus = (student: Student) => {
                     <!-- Scroll shadow indicators -->
                     <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-zinc-900 to-transparent pointer-events-none z-10 md:hidden"></div>
                     <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-zinc-900 to-transparent pointer-events-none z-10 md:hidden"></div>
-                    
+
                     <div class="flex gap-2 overflow-x-auto pb-2 md:pb-0 md:flex-wrap scrollbar-hide snap-x snap-mandatory">
                         <!-- Status Filter -->
                         <select
@@ -223,7 +263,7 @@ const onUpdateStatus = (student: Student) => {
         </Motion>
 
         <!-- Desktop Table -->
-        <Motion 
+        <Motion
             :initial="{ opacity: 0, y: 20 }"
             :animate="{ opacity: 1, y: 0 }"
             :transition="{ type: 'spring', stiffness: 300, damping: 30, delay: 0.1 }"
@@ -233,6 +273,16 @@ const onUpdateStatus = (student: Student) => {
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-100 dark:border-zinc-800">
                             <tr>
+                                <th class="px-6 py-3.5 w-10">
+                                    <div class="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            :checked="allSelected"
+                                            @change="toggleSelectAll"
+                                            class="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 dark:border-zinc-600 dark:bg-zinc-700 dark:ring-offset-zinc-800"
+                                        >
+                                    </div>
+                                </th>
                                 <th class="px-6 py-3.5 font-semibold tracking-wide">Siswa</th>
                                 <th class="px-6 py-3.5 font-semibold tracking-wide">NIS / NISN</th>
                                 <th class="px-6 py-3.5 font-semibold tracking-wide">L/P</th>
@@ -245,6 +295,7 @@ const onUpdateStatus = (student: Student) => {
                             <!-- Skeleton Loading State -->
                             <template v-if="loading">
                                 <tr v-for="i in 5" :key="i" class="animate-pulse">
+                                    <td class="px-6 py-4"><div class="w-4 h-4 bg-slate-200 dark:bg-zinc-700 rounded"></div></td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-zinc-700"></div>
@@ -277,10 +328,10 @@ const onUpdateStatus = (student: Student) => {
                                     </td>
                                 </tr>
                             </template>
-                            
+
                             <!-- Empty State -->
                             <tr v-else-if="students.data.length === 0">
-                                <td colspan="6" class="px-6 py-16 text-center text-slate-500">
+                                <td colspan="7" class="px-6 py-16 text-center text-slate-500">
                                     <div class="flex flex-col items-center gap-3">
                                         <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
                                             <Shield class="w-8 h-8 text-slate-300 dark:text-zinc-600" />
@@ -292,9 +343,25 @@ const onUpdateStatus = (student: Student) => {
                                     </div>
                                 </td>
                             </tr>
-                            
+
                             <!-- Data Rows -->
-                            <tr v-else v-for="student in students.data" :key="student.id" class="group hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors">
+                            <tr
+                                v-else
+                                v-for="student in students.data"
+                                :key="student.id"
+                                class="group hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors"
+                                :class="{ 'bg-emerald-50/50 dark:bg-emerald-900/10': selectedIds.includes(student.id) }"
+                            >
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            :checked="selectedIds.includes(student.id)"
+                                            @change="toggleSelection(student.id)"
+                                            class="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 dark:border-zinc-600 dark:bg-zinc-700 dark:ring-offset-zinc-800"
+                                        >
+                                    </div>
+                                </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
                                         <img
@@ -317,7 +384,7 @@ const onUpdateStatus = (student: Student) => {
                                 </td>
                                 <td class="px-6 py-4 text-slate-600 dark:text-slate-400">{{ student.jenis_kelamin }}</td>
                                 <td class="px-6 py-4 text-slate-600 dark:text-slate-400">
-                                    {{ student.kelas_id || '-' }}
+                                    {{ student.kelas?.nama_lengkap || '-' }}
                                 </td>
                                 <td class="px-6 py-4">
                                     <span :class="['px-2.5 py-1 rounded-lg text-xs font-semibold border', getStatusBadgeClass(student.status)]">
@@ -359,62 +426,80 @@ const onUpdateStatus = (student: Student) => {
         <div class="md:hidden space-y-3">
             <!-- Loading State -->
             <div v-if="loading" class="p-4 text-center text-gray-500 animate-pulse">Memuat data...</div>
-            
+
             <!-- Empty State -->
             <div v-else-if="students.data.length === 0" class="p-8 text-center text-gray-500 bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800">
                 <Shield class="w-8 h-8 mx-auto text-gray-300 mb-2" />
                 <p>Belum ada siswa ditemukan</p>
             </div>
-            
+
             <!-- Data Cards -->
-            <div 
-                v-else 
-                v-for="student in students.data" 
+            <div
+                v-else
+                v-for="student in students.data"
                 :key="student.id"
-                class="bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 active:scale-[0.99] transition-transform"
+                class="bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border transition-all active:scale-[0.99]"
+                :class="selectedIds.includes(student.id) ? 'border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/10' : 'border-gray-100 dark:border-zinc-800'"
             >
                 <div class="flex justify-between items-start mb-3">
-                    <div>
-                        <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ student.nama_lengkap }}</h3>
-                        <p class="text-sm text-gray-500">{{ student.nis }}</p>
+                    <div class="flex items-start gap-3 flex-1 min-w-0">
+                        <div class="pt-1 shrink-0">
+                            <input
+                                type="checkbox"
+                                :checked="selectedIds.includes(student.id)"
+                                @change="toggleSelection(student.id)"
+                                class="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 dark:border-zinc-600 dark:bg-zinc-700 dark:ring-offset-zinc-800"
+                            >
+                        </div>
+                        <img
+                            :src="student.foto ? `/storage/${student.foto}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(student.nama_lengkap)}&background=random`"
+                            :alt="student.nama_lengkap"
+                            class="w-12 h-12 rounded-full object-cover bg-slate-100 ring-2 ring-white dark:ring-zinc-800 shrink-0"
+                            loading="lazy"
+                        />
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ student.nama_lengkap }}</h3>
+                            <p class="text-sm text-gray-500">{{ student.nis }}</p>
+                            <p class="text-xs text-gray-400" v-if="student.nama_panggilan">({{ student.nama_panggilan }})</p>
+                        </div>
                     </div>
-                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-medium border border-transparent', getStatusBadgeClass(student.status)]">
+                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-medium border border-transparent shrink-0', getStatusBadgeClass(student.status)]">
                         {{ getStatusLabel(student.status) }}
                     </span>
                 </div>
 
-                <div class="flex items-center gap-2 mb-4 text-sm text-gray-600 dark:text-gray-400">
+                <div class="flex items-center gap-2 mb-4 pl-20 text-sm text-gray-600 dark:text-gray-400">
                     <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300">
                         {{ student.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}
                     </span>
-                    <span class="text-xs text-gray-400">• Kelas {{ student.kelas_id || '-' }}</span>
+                    <span class="text-xs text-gray-400">• Kelas {{ student.kelas?.nama_lengkap || '-' }}</span>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t border-gray-50 dark:border-zinc-800">
-                    <button 
-                        @click="onView(student)" 
-                        class="p-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-lg" 
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-50 dark:border-zinc-800 pl-20">
+                    <button
+                        @click="onView(student)"
+                        class="p-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
                         title="Lihat"
                     >
                         <Eye class="w-4 h-4" />
                     </button>
-                    <button 
-                        @click="onEdit(student)" 
-                        class="p-2 text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-lg" 
+                    <button
+                        @click="onEdit(student)"
+                        class="p-2 text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-lg"
                         title="Edit"
                     >
                         <Edit class="w-4 h-4" />
                     </button>
-                    <button 
-                        @click="onUpdateStatus(student)" 
-                        class="p-2 text-gray-600 bg-gray-100 dark:bg-gray-800 rounded-lg" 
+                    <button
+                        @click="onUpdateStatus(student)"
+                        class="p-2 text-gray-600 bg-gray-100 dark:bg-gray-800 rounded-lg"
                         title="Update Status"
                     >
                         <RefreshCw class="w-4 h-4" />
                     </button>
-                    <button 
-                        @click="onDelete(student)" 
-                        class="p-2 text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg" 
+                    <button
+                        @click="onDelete(student)"
+                        class="p-2 text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg"
                         title="Hapus"
                     >
                         <Trash2 class="w-4 h-4" />
@@ -424,7 +509,7 @@ const onUpdateStatus = (student: Student) => {
         </div>
 
         <!-- Pagination -->
-        <Motion 
+        <Motion
             v-if="students.total > students.per_page"
             :initial="{ opacity: 0 }"
             :animate="{ opacity: 1 }"
@@ -442,8 +527,8 @@ const onUpdateStatus = (student: Student) => {
                             :href="students.links[0]?.url || '#'"
                             :class="[
                                 'flex items-center justify-center w-11 h-11 rounded-xl border transition-colors',
-                                students.links[0]?.url 
-                                    ? 'border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 active:bg-slate-100' 
+                                students.links[0]?.url
+                                    ? 'border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 active:bg-slate-100'
                                     : 'border-slate-100 dark:border-zinc-800 text-slate-300 dark:text-zinc-600 cursor-not-allowed'
                             ]"
                             preserve-scroll
@@ -452,19 +537,19 @@ const onUpdateStatus = (student: Student) => {
                             <ChevronLeft class="w-5 h-5" />
                         </Link>
                     </Motion>
-                    
+
                     <!-- Current Page Indicator -->
                     <div class="flex items-center justify-center px-4 h-11 bg-emerald-500 text-white rounded-xl font-semibold text-sm min-w-[44px]">
                         {{ students.current_page }}
                     </div>
-                    
+
                     <Motion :whileTap="{ scale: 0.95 }">
                         <Link
                             :href="students.links[students.links.length - 1]?.url || '#'"
                             :class="[
                                 'flex items-center justify-center w-11 h-11 rounded-xl border transition-colors',
-                                students.links[students.links.length - 1]?.url 
-                                    ? 'border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 active:bg-slate-100' 
+                                students.links[students.links.length - 1]?.url
+                                    ? 'border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 active:bg-slate-100'
                                     : 'border-slate-100 dark:border-zinc-800 text-slate-300 dark:text-zinc-600 cursor-not-allowed'
                             ]"
                             preserve-scroll
@@ -475,7 +560,7 @@ const onUpdateStatus = (student: Student) => {
                     </Motion>
                 </div>
             </div>
-            
+
             <!-- Desktop Pagination: Full pagination -->
             <div class="hidden md:flex items-center justify-between">
                 <div class="text-sm text-slate-500">

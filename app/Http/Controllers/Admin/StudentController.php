@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AssignClassRequest;
 use App\Http\Requests\Admin\BulkPromoteRequest;
 use App\Http\Requests\Admin\StoreStudentRequest;
 use App\Http\Requests\Admin\UpdateStudentRequest;
 use App\Http\Requests\Admin\UpdateStudentStatusRequest;
 use App\Models\ActivityLog;
+use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Services\StudentService;
 use Illuminate\Http\Request;
@@ -28,7 +30,7 @@ class StudentController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Student::query()->with(['guardians', 'primaryGuardian']);
+        $query = Student::query()->with(['guardians', 'primaryGuardian', 'kelas']);
 
         // Search by nama, NIS, atau NISN
         if ($search = $request->input('search')) {
@@ -60,9 +62,15 @@ class StudentController extends Controller
 
         $students = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
+        $classes = SchoolClass::active()
+            ->orderBy('tingkat')
+            ->orderBy('nama')
+            ->get();
+
         return Inertia::render('Admin/Students/Index', [
             'students' => $students,
             'filters' => $request->only(['search', 'kelas_id', 'status', 'tahun_ajaran', 'jenis_kelamin']),
+            'classes' => $classes,
         ]);
     }
 
@@ -167,10 +175,17 @@ class StudentController extends Controller
             'primaryGuardian',
             'classHistory',
             'statusHistory.changedBy',
+            'kelas',
         ]);
+
+        $classes = SchoolClass::active()
+            ->orderBy('tingkat')
+            ->orderBy('nama')
+            ->get();
 
         return Inertia::render('Admin/Students/Show', [
             'student' => $student,
+            'classes' => $classes,
         ]);
     }
 
@@ -348,6 +363,41 @@ class StudentController extends Controller
             Log::error('Failed to update student status', ['error' => $e->getMessage()]);
 
             return back()->withErrors(['error' => 'Gagal mengupdate status siswa.']);
+        }
+    }
+
+    /**
+     * Assign students to class (single or bulk)
+     */
+    public function assignClass(AssignClassRequest $request)
+    {
+        try {
+            $count = $this->studentService->assignStudentsToClass(
+                $request->student_ids,
+                $request->kelas_id,
+                $request->tahun_ajaran ?? '2024/2025', // Default fallback if not provided
+                $request->notes
+            );
+
+            // Log activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'assign_students_to_class',
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'new_values' => [
+                    'student_count' => $count,
+                    'kelas_id' => $request->kelas_id,
+                    'tahun_ajaran' => $request->tahun_ajaran,
+                ],
+                'status' => 'success',
+            ]);
+
+            return back()->with('success', "{$count} siswa berhasil dipindahkan ke kelas.");
+        } catch (\Exception $e) {
+            Log::error('Failed to assign class', ['error' => $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Gagal memindahkan siswa.']);
         }
     }
 

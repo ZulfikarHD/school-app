@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ChevronLeft, Edit, Trash2 } from 'lucide-vue-next';
+import { ChevronLeft, Edit, Trash2, ArrowRightLeft } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import StudentDetailTabs from '@/components/features/students/StudentDetailTabs.vue';
+import AssignClassModal from '@/components/features/students/AssignClassModal.vue';
 import { useModal } from '@/composables/useModal';
 import { useHaptics } from '@/composables/useHaptics';
 import { index as studentsIndex, edit as editStudent, destroy as deleteStudent } from '@/routes/admin/students';
@@ -16,15 +18,30 @@ interface Props {
         classHistory?: ClassHistory[];
         statusHistory?: StatusHistory[];
     };
+    classes?: Array<{ id: number; nama: string; nama_lengkap: string; tahun_ajaran: string }>;
 }
 
 const props = defineProps<Props>();
 const modal = useModal();
 const haptics = useHaptics();
 
+const showAssignModal = ref(false);
+
+// Fallback if classes not passed (TODO: ensure controller passes classes)
+const classesList = computed(() => props.classes || []);
+
 const handleEdit = () => {
     haptics.light();
     router.visit(editStudent(props.student.id).url);
+};
+
+const handleAssignClass = () => {
+    haptics.light();
+    showAssignModal.value = true;
+};
+
+const handleAssignSuccess = () => {
+    router.reload();
 };
 
 const handleDelete = async () => {
@@ -81,7 +98,17 @@ const handleDelete = async () => {
                                 </p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                             <Motion :whileTap="{ scale: 0.97 }" class="flex-1 sm:flex-none">
+                                <button
+                                    @click="handleAssignClass"
+                                    class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl font-medium hover:bg-emerald-100 dark:hover:bg-emerald-900/30 active:bg-emerald-200 transition-all border border-emerald-200 dark:border-emerald-800"
+                                >
+                                    <ArrowRightLeft class="w-4 h-4" />
+                                    <span>Pindah Kelas</span>
+                                </button>
+                            </Motion>
+
                             <Motion :whileTap="{ scale: 0.97 }" class="flex-1 sm:flex-none">
                                 <button
                                     @click="handleEdit"
@@ -113,5 +140,15 @@ const handleDelete = async () => {
                 <StudentDetailTabs :student="student" />
             </Motion>
         </div>
+
+         <!-- Assign Class Modal -->
+         <AssignClassModal
+            :show="showAssignModal"
+            :students="[student]"
+            :classes="classesList"
+            :current-class-id="student.kelas_id"
+            @close="showAssignModal = false"
+            @success="handleAssignSuccess"
+        />
     </AppLayout>
 </template>

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Guardian;
+use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentClassHistory;
 use App\Models\StudentStatusHistory;
@@ -280,6 +281,50 @@ class StudentService
             DB::commit();
 
             return $history;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Assign students ke kelas tertentu
+     *
+     * @return int Jumlah siswa yang berhasil dipindahkan
+     */
+    public function assignStudentsToClass(
+        array $studentIds,
+        int $kelasId,
+        string $tahunAjaran,
+        ?string $notes = null
+    ): int {
+        DB::beginTransaction();
+
+        try {
+            $students = Student::whereIn('id', $studentIds)->get();
+            $assignedCount = 0;
+
+            // Get wali kelas name for history
+            $kelas = SchoolClass::with('waliKelas')->find($kelasId);
+            $waliKelasNama = $kelas->waliKelas->name ?? null;
+
+            foreach ($students as $student) {
+                // Insert class history record
+                StudentClassHistory::create([
+                    'student_id' => $student->id,
+                    'kelas_id' => $kelasId,
+                    'tahun_ajaran' => $tahunAjaran,
+                    'wali_kelas' => $waliKelasNama,
+                ]);
+
+                // Update student current class
+                $student->update(['kelas_id' => $kelasId]);
+                $assignedCount++;
+            }
+
+            DB::commit();
+
+            return $assignedCount;
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;

@@ -23,6 +23,13 @@ export interface Student {
     email?: string;
     foto?: string;
     kelas_id?: number;
+    kelas?: {
+        id: number;
+        tingkat: number;
+        nama: string;
+        nama_lengkap: string;
+        tahun_ajaran: string;
+    };
     tahun_ajaran_masuk: string;
     tanggal_masuk: string;
     status: 'aktif' | 'mutasi' | 'do' | 'lulus';

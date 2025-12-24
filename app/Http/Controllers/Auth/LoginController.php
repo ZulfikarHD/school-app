@@ -55,7 +55,8 @@ class LoginController extends Controller
 
         // TIMING ATTACK MITIGATION: Always hash check even if user doesn't exist
         // untuk prevent user enumeration via response time analysis
-        $dummyHash = '$2y$12$dummyHashValueForTimingAttackPrevention1234567890';
+        // Menggunakan valid bcrypt hash untuk dummy value agar Laravel 12 tidak throw exception
+        $dummyHash = '$2y$12$S5lMU.whAh3/jJ7KDo66iOPFLAL1nFvVtxCFEjRGuDREkiUyIwkMu';
         $passwordToCheck = $user ? $user->password : $dummyHash;
         $passwordValid = Hash::check($password, $passwordToCheck);
 

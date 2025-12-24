@@ -39,6 +39,14 @@ class StudentClassHistory extends Model
     }
 
     /**
+     * Relationship dengan SchoolClass
+     */
+    public function kelas(): BelongsTo
+    {
+        return $this->belongsTo(SchoolClass::class, 'kelas_id');
+    }
+
+    /**
      * Scope query untuk filter history berdasarkan tahun ajaran
      */
     public function scopeByAcademicYear($query, $tahunAjaran)

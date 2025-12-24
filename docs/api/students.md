@@ -1,497 +1,648 @@
-# Student Management API Documentation
+# API Documentation: Students
 
-**Resource:** Students & Guardians  
-**Base Path:** `/admin/students`, `/parent/children`  
-**Authentication:** Required  
-**Last Updated:** 24 Desember 2025
+> **Resource:** Students Management
+> **Base Path:** `/admin/students`
+> **Authentication:** Required (Admin/Superadmin only)
+> **Last Updated:** 2025-12-24
 
 ---
 
-## Admin Endpoints
+## Table of Contents
 
-### List Students
+1. [Overview](#overview)
+2. [Authentication](#authentication)
+3. [Endpoints](#endpoints)
+4. [Data Structures](#data-structures)
+5. [Error Codes](#error-codes)
 
-**Endpoint:** `GET /admin/students`  
-**Permission:** `SUPERADMIN`, `ADMIN`  
-**Purpose:** Retrieve paginated list of students dengan filter dan search capabilities
+---
+
+## Overview
+
+Student API merupakan endpoint collection untuk mengelola data siswa yang mencakup CRUD operations, class assignment, status management, dan import/export functionality dengan role-based access control untuk Admin dan Superadmin.
+
+**Available Operations:**
+- List students dengan pagination & filtering
+- View student detail dengan relations
+- Create/Update student data
+- Delete student (soft delete)
+- Assign students to class (single/bulk)
+- Update student status
+- Import/Export students via Excel
+
+---
+
+## Authentication
+
+Semua endpoint memerlukan authentication token dan role validation.
+
+**Required Headers:**
+```http
+Cookie: laravel_session={session_token}
+X-CSRF-TOKEN: {csrf_token}
+X-Requested-With: XMLHttpRequest
+```
+
+**Authorized Roles:**
+- `SUPERADMIN` - Full access
+- `ADMIN` - Full access
+- `TEACHER` - Read-only access (limited)
+
+---
+
+## Endpoints
+
+### 1. List Students
+
+Mengambil daftar siswa dengan pagination, filtering, dan searching.
+
+**Endpoint:** `GET /admin/students`
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description | Example |
-|-----------|------|----------|-------------|---------|
-| `search` | string | No | Search by nama, NIS, atau NISN | `?search=Budi` |
-| `kelas_id` | integer | No | Filter by class ID | `?kelas_id=1` |
-| `status` | string | No | Filter by status (aktif/mutasi/do/lulus) | `?status=aktif` |
-| `tahun_ajaran` | string | No | Filter by academic year | `?tahun_ajaran=2024/2025` |
-| `jenis_kelamin` | string | No | Filter by gender (L/P) | `?jenis_kelamin=L` |
-| `page` | integer | No | Page number untuk pagination | `?page=2` |
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| page | integer | No | 1 | Nomor halaman |
+| per_page | integer | No | 15 | Items per page |
+| search | string | No | - | Search by nama/NIS/NISN |
+| status | string | No | - | Filter: ACTIVE, INACTIVE, GRADUATED, DROPPED_OUT |
+| kelas_id | integer | No | - | Filter by class ID |
+| tingkat | integer | No | - | Filter by grade level (1-6) |
+| tahun_ajaran | string | No | - | Filter by academic year |
 
-**Response:** `200 OK`
+**Success Response:** `200 OK`
 
 ```json
 {
-  "data": [
-    {
-      "id": 1,
-      "nis": "20240001",
-      "nisn": "1234567890",
-      "nik": "1234567890123456",
-      "nama_lengkap": "Budi Santoso",
-      "nama_panggilan": "Budi",
-      "jenis_kelamin": "L",
-      "tempat_lahir": "Jakarta",
-      "tanggal_lahir": "2015-01-15",
-      "agama": "Islam",
-      "kelas_id": 1,
-      "status": "aktif",
-      "foto": "students/photos/abc123.jpg",
-      "guardians": [
+    "students": {
+        "data": [
+            {
+                "id": 1,
+                "nis": "2024001",
+                "nisn": "1234567890",
+                "nama_lengkap": "Ahmad Rizki Maulana",
+                "nama_panggilan": "Rizki",
+                "tempat_lahir": "Jakarta",
+                "tanggal_lahir": "2010-05-15",
+                "jenis_kelamin": "L",
+                "agama": "ISLAM",
+                "kewarganegaraan": "WNI",
+                "anak_ke": 2,
+                "jumlah_saudara": 3,
+                "status": "ACTIVE",
+                "kelas_id": 5,
+                "kelas": {
+                    "id": 5,
+                    "nama_lengkap": "1A",
+                    "tahun_ajaran": "2024/2025"
+                },
+                "guardians": [
+                    {
+                        "id": 1,
+                        "nama": "Budi Maulana",
+                        "hubungan": "AYAH",
+                        "is_primary_contact": true
+                    }
+                ],
+                "primary_guardian": {
+                    "id": 1,
+                    "nama": "Budi Maulana",
+                    "no_hp": "081234567890"
+                },
+                "foto": "students/photo123.jpg",
+                "created_at": "2024-12-01T10:30:00.000000Z",
+                "updated_at": "2024-12-24T08:15:00.000000Z"
+            }
+        ],
+        "current_page": 1,
+        "last_page": 10,
+        "per_page": 15,
+        "total": 150
+    },
+    "filters": {
+        "search": null,
+        "status": null,
+        "kelas_id": null
+    },
+    "classes": [
         {
-          "id": 1,
-          "nama_lengkap": "Pak Budi",
-          "hubungan": "ayah",
-          "no_hp": "081234567890",
-          "pivot": {
-            "is_primary_contact": true
-          }
+            "id": 1,
+            "nama_lengkap": "1A",
+            "tahun_ajaran": "2024/2025"
         }
-      ],
-      "created_at": "2024-12-24T10:00:00.000000Z",
-      "updated_at": "2024-12-24T10:00:00.000000Z"
-    }
-  ],
-  "links": { ... },
-  "meta": {
-    "current_page": 1,
-    "per_page": 20,
-    "total": 150
-  }
+    ]
 }
 ```
 
 ---
 
-### Create Student
+### 2. Show Student Detail
 
-**Endpoint:** `POST /admin/students`  
-**Permission:** `SUPERADMIN`, `ADMIN`  
-**Purpose:** Create new student dengan auto-generate NIS dan auto-create parent account
+Mengambil detail lengkap siswa beserta guardians, class history, dan status history.
 
-**Request Body:**
+**Endpoint:** `GET /admin/students/{id}`
 
-```json
-{
-  "nisn": "1234567890",
-  "nik": "1234567890123456",
-  "nama_lengkap": "Budi Santoso",
-  "nama_panggilan": "Budi",
-  "jenis_kelamin": "L",
-  "tempat_lahir": "Jakarta",
-  "tanggal_lahir": "2015-01-15",
-  "agama": "Islam",
-  "anak_ke": 1,
-  "jumlah_saudara": 2,
-  "status_keluarga": "Anak Kandung",
-  "alamat": "Jl. Sudirman No. 123",
-  "rt_rw": "001/002",
-  "kelurahan": "Kebayoran Baru",
-  "kecamatan": "Kebayoran Baru",
-  "kota": "Jakarta Selatan",
-  "provinsi": "DKI Jakarta",
-  "kode_pos": "12345",
-  "no_hp": "081234567890",
-  "email": "budi@example.com",
-  "foto": "base64_or_file_upload",
-  "kelas_id": 1,
-  "tahun_ajaran_masuk": "2024/2025",
-  "tanggal_masuk": "2024-07-01",
-  "ayah": {
-    "nik": "1234567890123457",
-    "nama_lengkap": "Pak Budi Senior",
-    "pekerjaan": "PNS",
-    "pendidikan": "S1",
-    "penghasilan": "3-5jt",
-    "no_hp": "081234567890",
-    "email": "pakbudi@example.com",
-    "alamat": "Jl. Sudirman No. 123",
-    "is_primary_contact": true
-  },
-  "ibu": {
-    "nik": "1234567890123458",
-    "nama_lengkap": "Bu Siti",
-    "pekerjaan": "Ibu Rumah Tangga",
-    "pendidikan": "SMA",
-    "penghasilan": "<1jt",
-    "no_hp": "081234567891",
-    "email": "busiti@example.com"
-  },
-  "wali": {
-    "nik": "1234567890123459",
-    "nama_lengkap": "Pak Wali",
-    "pekerjaan": "Wiraswasta",
-    "pendidikan": "S1",
-    "penghasilan": "3-5jt",
-    "no_hp": "081234567892"
-  }
-}
-```
+**Path Parameters:**
 
-**Response:** `302 Redirect` to `/admin/students`
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| id | integer | Student ID |
 
-**Success Flash Message:**
-```
-"Siswa berhasil ditambahkan dengan NIS: 20240001"
-```
-
-**Validation Errors:** `422 Unprocessable Entity`
+**Success Response:** `200 OK`
 
 ```json
 {
-  "message": "The given data was invalid.",
-  "errors": {
-    "nik": ["NIK sudah terdaftar."],
-    "nisn": ["NISN harus 10 digit."],
-    "tanggal_lahir": ["Umur siswa tidak sesuai untuk jenjang SD."]
-  }
-}
-```
-
----
-
-### Show Student
-
-**Endpoint:** `GET /admin/students/{student}`  
-**Permission:** `SUPERADMIN`, `ADMIN`  
-**Purpose:** Get detailed student profile dengan guardians dan history
-
-**Response:** `200 OK`
-
-```json
-{
-  "id": 1,
-  "nis": "20240001",
-  "nama_lengkap": "Budi Santoso",
-  "guardians": [...],
-  "primary_guardian": {...},
-  "class_history": [
-    {
-      "id": 1,
-      "kelas_id": 1,
-      "tahun_ajaran": "2024/2025",
-      "wali_kelas": "Pak Guru",
-      "created_at": "2024-07-01T00:00:00.000000Z"
-    }
-  ],
-  "status_history": [
-    {
-      "id": 1,
-      "status_lama": "aktif",
-      "status_baru": "mutasi",
-      "tanggal": "2024-12-01",
-      "alasan": "Pindah tugas orang tua",
-      "changed_by": {
+    "student": {
         "id": 1,
-        "name": "Admin TU"
-      }
-    }
-  ]
+        "nis": "2024001",
+        "nisn": "1234567890",
+        "nama_lengkap": "Ahmad Rizki Maulana",
+        "kelas_id": 5,
+        "kelas": {
+            "id": 5,
+            "nama_lengkap": "1A",
+            "tahun_ajaran": "2024/2025",
+            "wali_kelas": {
+                "id": 10,
+                "name": "Siti Nurhaliza, S.Pd"
+            }
+        },
+        "guardians": [
+            {
+                "id": 1,
+                "nama": "Budi Maulana",
+                "hubungan": "AYAH",
+                "no_hp": "081234567890",
+                "email": "budi@example.com",
+                "pekerjaan": "Wiraswasta",
+                "is_primary_contact": true
+            }
+        ],
+        "class_history": [
+            {
+                "id": 1,
+                "kelas_id": 5,
+                "kelas": {
+                    "nama_lengkap": "1A"
+                },
+                "tahun_ajaran": "2024/2025",
+                "wali_kelas": "Siti Nurhaliza, S.Pd",
+                "notes": "Naik kelas dari TK",
+                "created_at": "2024-07-15T08:00:00.000000Z"
+            }
+        ],
+        "status_history": [
+            {
+                "id": 1,
+                "old_status": null,
+                "new_status": "ACTIVE",
+                "reason": "Pendaftaran baru",
+                "changed_by": {
+                    "id": 2,
+                    "name": "Admin User"
+                },
+                "created_at": "2024-07-15T08:00:00.000000Z"
+            }
+        ]
+    },
+    "classes": [...]
+}
+```
+
+**Error Response:** `404 Not Found`
+
+```json
+{
+    "message": "Student not found"
 }
 ```
 
 ---
 
-### Update Student
+### 3. Create Student
 
-**Endpoint:** `PUT/PATCH /admin/students/{student}`  
-**Permission:** `SUPERADMIN`, `ADMIN`  
-**Purpose:** Update student data dan guardians
+Membuat siswa baru dengan data lengkap.
 
-**Request Body:** Same as Create Student (without `tahun_ajaran_masuk`, `tanggal_masuk`)
-
-**Response:** `302 Redirect` to `/admin/students`
-
-**Success Flash Message:**
-```
-"Data siswa berhasil diupdate."
-```
-
----
-
-### Delete Student
-
-**Endpoint:** `DELETE /admin/students/{student}`  
-**Permission:** `SUPERADMIN`, `ADMIN`  
-**Purpose:** Soft delete student
-
-**Response:** `302 Redirect` to `/admin/students`
-
-**Success Flash Message:**
-```
-"Siswa berhasil dihapus."
-```
-
----
-
-### Update Student Status
-
-**Endpoint:** `POST /admin/students/{student}/update-status`  
-**Permission:** `SUPERADMIN`, `ADMIN`  
-**Purpose:** Change student status dengan history tracking
+**Endpoint:** `POST /admin/students`
 
 **Request Body:**
 
 ```json
 {
-  "status": "mutasi",
-  "tanggal": "2024-12-24",
-  "alasan": "Pindah ke luar kota karena orang tua pindah tugas",
-  "keterangan": "Siswa berprestasi, aktif di ekstrakurikuler",
-  "sekolah_tujuan": "SDN 01 Jakarta"
+    "nis": "2024050",
+    "nisn": "9876543210",
+    "nama_lengkap": "Siti Aisyah",
+    "nama_panggilan": "Aisyah",
+    "tempat_lahir": "Bandung",
+    "tanggal_lahir": "2011-03-20",
+    "jenis_kelamin": "P",
+    "agama": "ISLAM",
+    "kewarganegaraan": "WNI",
+    "anak_ke": 1,
+    "jumlah_saudara": 2,
+    "alamat": "Jl. Merdeka No. 123",
+    "rt": "001",
+    "rw": "005",
+    "kelurahan": "Kebon Jeruk",
+    "kecamatan": "Kebon Jeruk",
+    "kota": "Jakarta Barat",
+    "provinsi": "DKI Jakarta",
+    "kode_pos": "11530",
+    "no_hp": "081234567890",
+    "email": "aisyah@example.com",
+    "tahun_ajaran_masuk": "2024/2025",
+    "foto": "(file upload)",
+    "status": "ACTIVE"
 }
 ```
 
 **Validation Rules:**
 
-| Field | Required | Rules |
-|-------|----------|-------|
-| `status` | Yes | `in:aktif,mutasi,do,lulus` |
-| `tanggal` | Yes | `date`, `before_or_equal:today` |
-| `alasan` | Yes | `string`, `min:10` |
-| `keterangan` | No | `string` |
-| `sekolah_tujuan` | Conditional | Required jika status = `mutasi` |
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| nis | string | Yes | unique, max:20 |
+| nisn | string | No | unique, max:20 |
+| nama_lengkap | string | Yes | max:100 |
+| tanggal_lahir | date | Yes | before:today |
+| jenis_kelamin | string | Yes | enum: L, P |
+| agama | string | Yes | enum: ISLAM, KRISTEN, KATOLIK, HINDU, BUDDHA, KONGHUCU |
+| no_hp | string | No | numeric, min:10, max:15 |
+| email | string | No | email, unique |
+| foto | file | No | image, max:2MB |
 
-**Response:** `302 Redirect` back
+**Success Response:** `201 Created`
 
-**Success Flash Message:**
+```json
+{
+    "message": "Siswa berhasil ditambahkan",
+    "student": {
+        "id": 51,
+        "nis": "2024050",
+        "nama_lengkap": "Siti Aisyah",
+        ...
+    }
+}
 ```
-"Status siswa berhasil diupdate."
+
+**Error Response:** `422 Unprocessable Entity`
+
+```json
+{
+    "message": "The given data was invalid.",
+    "errors": {
+        "nis": ["NIS sudah digunakan"],
+        "email": ["Format email tidak valid"]
+    }
+}
 ```
 
 ---
 
-### Bulk Promote Students
+### 4. Update Student
 
-**Endpoint:** `POST /admin/students/promote`  
-**Permission:** `SUPERADMIN`, `ADMIN`  
-**Purpose:** Bulk naik kelas untuk multiple students
+Mengupdate data siswa existing.
+
+**Endpoint:** `PUT /admin/students/{id}`
+
+**Path Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| id | integer | Student ID |
+
+**Request Body:**
+(Same structure as Create, semua field optional)
+
+**Success Response:** `200 OK`
+
+```json
+{
+    "message": "Data siswa berhasil diperbarui",
+    "student": {...}
+}
+```
+
+---
+
+### 5. Delete Student
+
+Menghapus siswa (soft delete).
+
+**Endpoint:** `DELETE /admin/students/{id}`
+
+**Path Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| id | integer | Student ID |
+
+**Success Response:** `200 OK`
+
+```json
+{
+    "message": "Siswa berhasil dihapus"
+}
+```
+
+**Error Response:** `404 Not Found`
+
+```json
+{
+    "message": "Student not found"
+}
+```
+
+---
+
+### 6. Assign Students to Class ⭐
+
+Memindahkan satu atau multiple siswa ke kelas baru dengan riwayat.
+
+**Endpoint:** `POST /admin/students/assign-class`
 
 **Request Body:**
 
 ```json
 {
-  "student_ids": [1, 2, 3, 4, 5],
-  "kelas_id_baru": 2,
-  "tahun_ajaran_baru": "2025/2026",
-  "wali_kelas": "Pak Budi"
+    "student_ids": [1, 2, 3, 15],
+    "kelas_id": 8,
+    "tahun_ajaran": "2024/2025",
+    "notes": "Promosi kelas berdasarkan nilai"
 }
 ```
 
-**Response:** `302 Redirect` back
+**Validation Rules:**
 
-**Success Flash Message:**
-```
-"5 siswa berhasil dipindahkan ke kelas baru."
-```
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| student_ids | array | Yes | min:1, each must exist in students table |
+| kelas_id | integer | Yes | must exist in classes table |
+| tahun_ajaran | string | No | regex: `^\d{4}/\d{4}$` (default: 2024/2025) |
+| notes | string | No | max:255 |
 
----
-
-### Export Students (Placeholder)
-
-**Endpoint:** `GET /admin/students/export`  
-**Permission:** `SUPERADMIN`, `ADMIN`  
-**Purpose:** Export student data to Excel
-
-**Status:** 📝 Planned (Placeholder method exists)
-
-**Response:** `302 Redirect` back
-
-**Info Flash Message:**
-```
-"Fitur export akan segera tersedia."
-```
-
----
-
-### Import Students Preview (Placeholder)
-
-**Endpoint:** `POST /admin/students/import/preview`  
-**Permission:** `SUPERADMIN`, `ADMIN`  
-**Purpose:** Preview import data dari Excel
-
-**Status:** 📝 Planned (Placeholder method exists)
-
----
-
-### Import Students (Placeholder)
-
-**Endpoint:** `POST /admin/students/import`  
-**Permission:** `SUPERADMIN`, `ADMIN`  
-**Purpose:** Import student data dari Excel
-
-**Status:** 📝 Planned (Placeholder method exists)
-
----
-
-## Parent Portal Endpoints
-
-### List Children
-
-**Endpoint:** `GET /parent/children`  
-**Permission:** `PARENT`  
-**Purpose:** Get list of children untuk logged-in parent
-
-**Response:** `200 OK`
+**Success Response:** `302 Redirect` (back with success message)
 
 ```json
 {
-  "children": [
-    {
-      "id": 1,
-      "nis": "20240001",
-      "nama_lengkap": "Budi Santoso",
-      "nama_panggilan": "Budi",
-      "kelas_id": 1,
-      "status": "aktif",
-      "foto": "students/photos/abc123.jpg",
-      "guardians": [...],
-      "primary_guardian": {...}
+    "message": "4 siswa berhasil dipindahkan ke kelas."
+}
+```
+
+**Error Response:** `422 Unprocessable Entity`
+
+```json
+{
+    "message": "The given data was invalid.",
+    "errors": {
+        "student_ids": ["Pilih minimal 1 siswa untuk dipindahkan."],
+        "kelas_id": ["Kelas tujuan tidak ditemukan."]
     }
-  ]
 }
 ```
 
-**Note:** Hanya menampilkan children dengan status `aktif`
+**Business Logic:**
+- Hanya siswa yang `kelas_id`-nya berbeda yang dicatat di history
+- Wali kelas otomatis tercatat dari relasi `SchoolClass->waliKelas`
+- Semua operasi dalam database transaction
+- Activity log dicatat dengan `student_count` dan `kelas_id`
 
 ---
 
-### Show Child Detail
+### 7. Update Student Status
 
-**Endpoint:** `GET /parent/children/{student}`  
-**Permission:** `PARENT` (own children only)  
-**Purpose:** Get detailed profile untuk specific child
+Mengubah status siswa dengan alasan.
 
-**Authorization:** System verify bahwa student adalah anak dari logged-in parent
+**Endpoint:** `POST /admin/students/{id}/update-status`
 
-**Response:** `200 OK` (same structure as Admin Show Student)
+**Path Parameters:**
 
-**Error:** `403 Forbidden` jika bukan anak sendiri
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| id | integer | Student ID |
+
+**Request Body:**
 
 ```json
 {
-  "message": "Anda tidak memiliki akses ke data siswa ini."
+    "status": "INACTIVE",
+    "reason": "Sakit berkepanjangan, mengambil cuti"
+}
+```
+
+**Validation Rules:**
+
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| status | string | Yes | enum: ACTIVE, INACTIVE, GRADUATED, DROPPED_OUT |
+| reason | string | Yes | min:10, max:500 |
+
+**Success Response:** `200 OK`
+
+```json
+{
+    "message": "Status siswa berhasil diperbarui"
 }
 ```
 
 ---
 
-## Common Error Responses
+### 8. Export Students
 
-### 401 Unauthorized
+Export data siswa ke Excel.
+
+**Endpoint:** `GET /admin/students/export`
+
+**Query Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| kelas_id | integer | No | Filter by class |
+| status | string | No | Filter by status |
+| format | string | No | excel (default) |
+
+**Success Response:** `200 OK` (File Download)
+
+**Content-Type:** `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+
+**Filename:** `students_YYYY-MM-DD_HH-mm-ss.xlsx`
+
+---
+
+### 9. Import Students Preview
+
+Preview import data sebelum confirm.
+
+**Endpoint:** `POST /admin/students/import/preview`
+
+**Request Body (multipart/form-data):**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| file | file | Yes | Excel file (.xlsx, .xls) |
+
+**Success Response:** `200 OK`
+
 ```json
 {
-  "message": "Unauthenticated."
+    "preview": [
+        {
+            "row": 2,
+            "nis": "2024100",
+            "nama_lengkap": "John Doe",
+            "status": "valid"
+        },
+        {
+            "row": 3,
+            "nis": "2024101",
+            "nama_lengkap": "Jane Smith",
+            "status": "error",
+            "errors": ["NIS sudah digunakan"]
+        }
+    ],
+    "summary": {
+        "total": 50,
+        "valid": 48,
+        "errors": 2
+    }
 }
 ```
 
-### 403 Forbidden
+---
+
+### 10. Import Students Confirm
+
+Konfirmasi dan simpan import data.
+
+**Endpoint:** `POST /admin/students/import`
+
+**Request Body (multipart/form-data):**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| file | file | Yes | Excel file (.xlsx, .xls) |
+| skip_errors | boolean | No | Skip rows dengan error |
+
+**Success Response:** `200 OK`
+
 ```json
 {
-  "message": "This action is unauthorized."
+    "message": "48 siswa berhasil diimport",
+    "imported": 48,
+    "skipped": 2
 }
 ```
 
-### 404 Not Found
-```json
-{
-  "message": "No query results for model [App\\Models\\Student] {id}"
+---
+
+## Data Structures
+
+### Student Object
+
+```typescript
+interface Student {
+    id: number;
+    nis: string;
+    nisn: string | null;
+    nama_lengkap: string;
+    nama_panggilan: string | null;
+    tempat_lahir: string;
+    tanggal_lahir: string; // YYYY-MM-DD
+    jenis_kelamin: 'L' | 'P';
+    agama: 'ISLAM' | 'KRISTEN' | 'KATOLIK' | 'HINDU' | 'BUDDHA' | 'KONGHUCU';
+    kewarganegaraan: 'WNI' | 'WNA';
+    anak_ke: number;
+    jumlah_saudara: number;
+    alamat: string;
+    rt: string;
+    rw: string;
+    kelurahan: string;
+    kecamatan: string;
+    kota: string;
+    provinsi: string;
+    kode_pos: string;
+    no_hp: string | null;
+    email: string | null;
+    foto: string | null;
+    status: 'ACTIVE' | 'INACTIVE' | 'GRADUATED' | 'DROPPED_OUT';
+    kelas_id: number | null;
+    tahun_ajaran_masuk: string; // YYYY/YYYY
+    kelas?: SchoolClass;
+    guardians?: Guardian[];
+    primary_guardian?: Guardian;
+    class_history?: StudentClassHistory[];
+    status_history?: StudentStatusHistory[];
+    created_at: string;
+    updated_at: string;
 }
 ```
 
-### 422 Validation Error
-```json
-{
-  "message": "The given data was invalid.",
-  "errors": {
-    "field_name": ["Error message here"]
-  }
+### SchoolClass Object
+
+```typescript
+interface SchoolClass {
+    id: number;
+    tingkat: number; // 1-6
+    nama: string; // A, B, C, D
+    nama_lengkap: string; // e.g., "1A", "6D"
+    wali_kelas_id: number | null;
+    wali_kelas?: User;
+    kapasitas: number;
+    tahun_ajaran: string; // YYYY/YYYY
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
 }
 ```
 
-### 500 Server Error
-```json
-{
-  "message": "Server Error"
+### StudentClassHistory Object
+
+```typescript
+interface StudentClassHistory {
+    id: number;
+    student_id: number;
+    kelas_id: number;
+    kelas?: SchoolClass;
+    tahun_ajaran: string;
+    wali_kelas: string | null;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
 }
 ```
+
+---
+
+## Error Codes
+
+| Code | HTTP Status | Description | Solution |
+|------|-------------|-------------|----------|
+| `VALIDATION_ERROR` | 422 | Request body tidak valid | Check validation rules |
+| `UNAUTHORIZED` | 401 | Token tidak valid atau expired | Re-login |
+| `FORBIDDEN` | 403 | Tidak punya akses ke resource | Check user role |
+| `RESOURCE_NOT_FOUND` | 404 | Student/Class tidak ditemukan | Verify ID exists |
+| `CONFLICT` | 409 | NIS/NISN sudah digunakan | Use unique identifier |
+| `INTERNAL_ERROR` | 500 | Server error | Check logs, contact admin |
 
 ---
 
 ## Rate Limiting
 
-All endpoints inherit Laravel's default rate limiting:
-- **Web routes:** 60 requests per minute per IP
-- **API routes:** Not applicable (using web routes)
+| Endpoint | Rate Limit | Window |
+|----------|------------|--------|
+| All endpoints | 60 requests | 1 minute |
+| Import/Export | 5 requests | 1 minute |
 
 ---
 
-## Pagination
+## Changelog
 
-List endpoints return paginated results:
-- **Default per page:** 20 items
-- **Query parameter:** `?page=2`
-- **Response includes:** `links` (prev/next) dan `meta` (total, current_page, per_page)
-
----
-
-## File Uploads
-
-### Student Photo
-
-- **Field name:** `foto`
-- **Accepted formats:** `jpg`, `jpeg`, `png`
-- **Max size:** 2MB
-- **Storage path:** `storage/app/public/students/photos/`
-- **Access URL:** `/storage/students/photos/{filename}`
+| Date | Version | Changes |
+|------|---------|---------|
+| 2024-12-24 | 1.0.0 | Initial API documentation |
+| 2024-12-24 | 1.1.0 | Added assign-class endpoint |
 
 ---
 
-## Testing Examples
-
-### cURL Examples
-
-**List Students:**
-```bash
-curl -X GET "http://localhost/admin/students?search=Budi&status=aktif" \
-  -H "Cookie: laravel_session=..." \
-  -H "Accept: application/json"
-```
-
-**Create Student:**
-```bash
-curl -X POST "http://localhost/admin/students" \
-  -H "Cookie: laravel_session=..." \
-  -H "Content-Type: application/json" \
-  -d @student-data.json
-```
-
-**Bulk Promote:**
-```bash
-curl -X POST "http://localhost/admin/students/promote" \
-  -H "Cookie: laravel_session=..." \
-  -H "Content-Type: application/json" \
-  -d '{
-    "student_ids": [1,2,3],
-    "kelas_id_baru": 2,
-    "tahun_ajaran_baru": "2025/2026",
-    "wali_kelas": "Pak Budi"
-  }'
-```
-
----
-
-## Related Documentation
-
-- **Feature Documentation:** [STD Student Management](../features/admin/STD-student-management.md)
-- **Test Plan:** [STD Test Plan](../testing/STD-test-plan.md)
-- **Database Schema:** [Database Documentation](../architecture/DATABASE.md#student-management-tables)
-
+**Last Updated:** 2025-12-24
+**Maintained By:** Development Team
+**API Version:** v1
