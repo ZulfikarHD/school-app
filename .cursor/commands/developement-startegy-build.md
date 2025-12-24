@@ -106,5 +106,6 @@ CRITICAL REMINDERS:
 - Consider empty states: what if no data exists yet?
 - Think about filters: if searchable data exists, add search/filter UI
 - Don't assume: if it's not explicitly mentioned, flag it as missing
+- Don't Write the source code that i should write, you only offer suggestion of file, structure and architecture.
 
 Now analyze the file and provide the complete analysis.

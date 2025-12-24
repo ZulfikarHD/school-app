@@ -111,4 +111,51 @@ class User extends Authenticatable
             'id' // Local key on guardians table
         );
     }
+
+    /**
+     * Relationship one-to-many dengan TeacherAttendance untuk tracking
+     * presensi clock in/out guru
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<TeacherAttendance>
+     */
+    public function teacherAttendances()
+    {
+        return $this->hasMany(TeacherAttendance::class, 'teacher_id');
+    }
+
+    /**
+     * Relationship one-to-many dengan TeacherLeave untuk tracking
+     * permohonan cuti guru
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<TeacherLeave>
+     */
+    public function teacherLeaves()
+    {
+        return $this->hasMany(TeacherLeave::class, 'teacher_id');
+    }
+
+    /**
+     * Relationship many-to-many dengan Subject untuk tracking
+     * mata pelajaran yang diajar oleh guru
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Subject>
+     */
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'teacher_subjects', 'teacher_id', 'subject_id')
+            ->withPivot('class_id', 'tahun_ajaran')
+            ->withTimestamps();
+    }
+
+    /**
+     * Scope query untuk filter user dengan role TEACHER
+     * yang digunakan untuk listing guru
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<User>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<User>
+     */
+    public function scopeTeachers($query)
+    {
+        return $query->where('role', 'TEACHER');
+    }
 }

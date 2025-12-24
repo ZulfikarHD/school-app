@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SchoolClass extends Model
@@ -90,5 +91,30 @@ class SchoolClass extends Model
     public function scopeByLevel($query, $tingkat)
     {
         return $query->where('tingkat', $tingkat);
+    }
+
+    /**
+     * Relationship one-to-many dengan StudentAttendance untuk tracking
+     * presensi harian siswa dalam kelas ini
+     *
+     * @return HasMany<StudentAttendance>
+     */
+    public function studentAttendances(): HasMany
+    {
+        return $this->hasMany(StudentAttendance::class, 'class_id');
+    }
+
+    /**
+     * Relationship many-to-many dengan Subject untuk tracking
+     * mata pelajaran yang diajarkan di kelas ini
+     * melalui pivot table teacher_subjects
+     *
+     * @return BelongsToMany<Subject>
+     */
+    public function subjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Subject::class, 'teacher_subjects', 'class_id', 'subject_id')
+            ->withPivot('teacher_id', 'tahun_ajaran')
+            ->withTimestamps();
     }
 }

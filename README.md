@@ -308,6 +308,10 @@ php artisan route:list
 
 4. Follow [Documentation Guide](./docs/DOCUMENTATION_GUIDE.md)
 
+### 📖 Feature Documentation
+
+- **Attendance Management (AT01):** [Feature Doc](./docs/features/teacher/AT01-attendance-foundation.md) | [API](./docs/api/attendance.md) | [Test Plan](./docs/testing/AT01-attendance-test-plan.md)
+
 ### Git Workflow
 
 - Ikuti konvensi di `docs-v1/guides/GIT_WORKFLOW.md`

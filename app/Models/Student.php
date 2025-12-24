@@ -168,4 +168,58 @@ class Student extends Model
                 ->orWhere('nisn', 'like', "%{$search}%");
         });
     }
+
+    /**
+     * Relationship one-to-many dengan StudentAttendance untuk tracking
+     * presensi harian siswa
+     *
+     * @return HasMany<StudentAttendance>
+     */
+    public function dailyAttendances(): HasMany
+    {
+        return $this->hasMany(StudentAttendance::class);
+    }
+
+    /**
+     * Relationship one-to-many dengan SubjectAttendance untuk tracking
+     * presensi per mata pelajaran
+     *
+     * @return HasMany<SubjectAttendance>
+     */
+    public function subjectAttendances(): HasMany
+    {
+        return $this->hasMany(SubjectAttendance::class);
+    }
+
+    /**
+     * Relationship one-to-many dengan LeaveRequest untuk tracking
+     * permohonan izin/sakit siswa
+     *
+     * @return HasMany<LeaveRequest>
+     */
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    /**
+     * Helper method untuk mendapatkan summary attendance dalam periode tertentu
+     * yang mencakup jumlah hadir, izin, sakit, dan alpha
+     *
+     * @return array{hadir: int, izin: int, sakit: int, alpha: int, total: int}
+     */
+    public function getAttendanceSummary(string $startDate, string $endDate): array
+    {
+        $attendances = $this->dailyAttendances()
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->get();
+
+        return [
+            'hadir' => $attendances->where('status', 'H')->count(),
+            'izin' => $attendances->where('status', 'I')->count(),
+            'sakit' => $attendances->where('status', 'S')->count(),
+            'alpha' => $attendances->where('status', 'A')->count(),
+            'total' => $attendances->count(),
+        ];
+    }
 }

@@ -1,13 +1,20 @@
 <?php
 
+use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\StudentController;
+use App\Http\Controllers\Admin\TeacherAttendanceController as AdminTeacherAttendanceController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Dashboard\AdminDashboardController;
 use App\Http\Controllers\Dashboard\ParentDashboardController;
 use App\Http\Controllers\Dashboard\PrincipalDashboardController;
 use App\Http\Controllers\Dashboard\TeacherDashboardController;
 use App\Http\Controllers\Parent\ChildController;
+use App\Http\Controllers\Parent\LeaveRequestController as ParentLeaveRequestController;
+use App\Http\Controllers\Teacher\AttendanceController;
+use App\Http\Controllers\Teacher\ClockController;
+use App\Http\Controllers\Teacher\LeaveRequestController as TeacherLeaveRequestController;
+use App\Http\Controllers\Teacher\SubjectAttendanceController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -56,6 +63,14 @@ Route::middleware(['auth'])->group(function () {
             // Audit Log Routes
             Route::get('audit-logs', [AuditLogController::class, 'index'])
                 ->name('audit-logs.index');
+
+            // Attendance Management Routes
+            Route::get('attendance/students', [AdminAttendanceController::class, 'studentsIndex'])
+                ->name('attendance.students.index');
+            Route::get('attendance/students/correction', [AdminAttendanceController::class, 'correction'])
+                ->name('attendance.students.correction');
+            Route::get('attendance/teachers', [AdminTeacherAttendanceController::class, 'index'])
+                ->name('attendance.teachers.index');
         });
     });
 
@@ -71,16 +86,51 @@ Route::middleware(['auth'])->group(function () {
     // Teacher Dashboard
     Route::middleware('role:TEACHER')->group(function () {
         Route::get('/teacher/dashboard', [TeacherDashboardController::class, 'index'])->name('teacher.dashboard');
+
+        // Teacher Routes untuk Attendance Management
+        Route::prefix('teacher')->name('teacher.')->group(function () {
+            // Daily Attendance Routes
+            Route::get('attendance', [AttendanceController::class, 'index'])
+                ->name('attendance.index');
+            Route::get('attendance/daily', [AttendanceController::class, 'create'])
+                ->name('attendance.daily.create');
+            Route::post('attendance/daily', [AttendanceController::class, 'store'])
+                ->name('attendance.daily.store');
+
+            // Subject Attendance Routes
+            Route::get('attendance/subject', [SubjectAttendanceController::class, 'create'])
+                ->name('attendance.subject.create');
+            Route::post('attendance/subject', [SubjectAttendanceController::class, 'store'])
+                ->name('attendance.subject.store');
+
+            // Clock In/Out Routes (API endpoints)
+            Route::post('clock/in', [ClockController::class, 'clockIn'])
+                ->name('clock.in');
+            Route::post('clock/out', [ClockController::class, 'clockOut'])
+                ->name('clock.out');
+            Route::get('clock/status', [ClockController::class, 'status'])
+                ->name('clock.status');
+
+            // Leave Request Verification Routes
+            Route::get('leave-requests', [TeacherLeaveRequestController::class, 'index'])
+                ->name('leave-requests.index');
+            Route::post('leave-requests/{leaveRequest}/approve', [TeacherLeaveRequestController::class, 'approve'])
+                ->name('leave-requests.approve');
+        });
     });
 
     // Parent Dashboard
     Route::middleware('role:PARENT')->group(function () {
         Route::get('/parent/dashboard', [ParentDashboardController::class, 'index'])->name('parent.dashboard');
 
-        // Parent Portal - View Children
+        // Parent Portal - View Children & Leave Requests
         Route::prefix('parent')->name('parent.')->group(function () {
             Route::get('children', [ChildController::class, 'index'])->name('children.index');
             Route::get('children/{student}', [ChildController::class, 'show'])->name('children.show');
+
+            // Leave Request Routes
+            Route::resource('leave-requests', ParentLeaveRequestController::class)
+                ->only(['index', 'create', 'store']);
         });
     });
 
