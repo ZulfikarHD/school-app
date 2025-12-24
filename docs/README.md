@@ -41,6 +41,7 @@ docs/
 │
 └── guides/                       # User journeys dan how-to guides
     ├── auth-user-journeys.md     # Updated dengan P1-P5 flows
+    ├── student-management-user-journeys.md  # Student Management flows
     ├── ios-design-system.md
     ├── navigation-design-system.md
     └── wayfinder-migration.md
@@ -112,7 +113,7 @@ php artisan serve
 | AUTH-P3 | Password Reset Flow | ✅ Complete | [Feature Doc](./features/auth/AUTH-P3-password-reset.md) |
 | AUTH-P4 | Profile Management | ✅ Complete | [Feature Doc](./features/auth/AUTH-P4-profile-management.md) |
 | AUTH-P5 | Audit Log Viewing | ✅ Complete | [Feature Doc](./features/auth/AUTH-P5-audit-logs.md) |
-| STD | Student Management | 🔄 Backend Complete | [Feature Doc](./features/admin/STD-student-management.md) |
+| STD | Student Management | ✅ Core CRUD Complete | [Feature Doc](./features/admin/STD-student-management.md) |
 
 **Included in P1 Features:**
 - ✅ Force password change pada first login (AUTH-P1)
@@ -335,6 +336,7 @@ Project ini menggunakan Laravel Boost MCP server dengan tools:
 
 - [Wayfinder Migration Guide](./guides/wayfinder-migration.md) - Ziggy → Wayfinder migration documentation
 - [Auth User Journeys](./guides/auth-user-journeys.md) - Authentication user flows
+- [Student Management User Journeys](./guides/student-management-user-journeys.md) - Student Management flows
 
 ### External Documentation
 
@@ -366,15 +368,16 @@ Project ini menggunakan Laravel Boost MCP server dengan tools:
 - [ ] Password Strength Meter
 - [ ] Account Lockout Notifications
 
-### Sprint 2: Student Management (Backend Complete)
+### Sprint 2: Student Management (Core Complete)
 
-- [x] Student CRUD dengan auto-generate NIS ✅ **BACKEND COMPLETE**
-- [x] Parent Account Auto-Creation ✅ **BACKEND COMPLETE**
-- [x] Bulk Class Promotion ✅ **BACKEND COMPLETE**
-- [x] Status Change dengan History Tracking ✅ **BACKEND COMPLETE**
-- [x] Parent Portal (View Children) ✅ **BACKEND COMPLETE**
-- [ ] Frontend Vue Pages (Pending)
-- [ ] Excel Export/Import (Planned)
+- [x] Student CRUD dengan auto-generate NIS ✅ **COMPLETE**
+- [x] Parent Account Auto-Creation ✅ **COMPLETE**
+- [x] Parent Portal (View Children) ✅ **COMPLETE**
+- [x] Status Change dengan History Tracking ✅ **COMPLETE**
+- [x] Frontend Vue Pages (Index, Create, Edit, Show) ✅ **COMPLETE**
+- [x] Navigation Menu "Data Siswa" ✅ **COMPLETE**
+- [ ] Bulk Class Promotion UI (Backend Ready, UI Pending)
+- [ ] Excel Export/Import (Routes Exist, Methods TODO)
 
 ### Future Modules
 
@@ -402,5 +405,5 @@ Private project - All rights reserved.
 ---
 
 *Last Updated: 2025-12-24*  
-*Documentation Version: 2.1* - Added Student Management backend documentation (STD)
+*Documentation Version: 2.2* - Updated Student Management documentation with verification evidence (STD)
 

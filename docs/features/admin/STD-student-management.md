@@ -2,7 +2,7 @@
 
 **Feature Code:** `STD`  
 **Priority:** P0 (Critical)  
-**Status:** 🔄 Backend Complete, Frontend Pending  
+**Status:** ✅ Core CRUD Complete | ⚠️ Export/Import/Bulk Promote UI Pending  
 **Last Updated:** 24 Desember 2025
 
 ---
@@ -17,14 +17,14 @@ Student Management merupakan modul inti yang bertujuan untuk mengelola data sisw
 
 | ID | User Story | Priority | Status |
 |----|------------|----------|--------|
-| STD-001 | Sebagai TU, saya ingin menambahkan data siswa baru dengan auto-generate NIS dan auto-create parent account | P0 | ✅ Backend Complete |
-| STD-002 | Sebagai TU, saya ingin melihat daftar siswa dengan filter (kelas, status, tahun ajaran) dan search | P0 | ✅ Backend Complete |
-| STD-003 | Sebagai TU, saya ingin mengedit data siswa dan data orang tua/wali | P0 | ✅ Backend Complete |
-| STD-004 | Sebagai TU, saya ingin melakukan bulk naik kelas untuk siswa dengan preview dan konfirmasi | P0 | ✅ Backend Complete |
-| STD-005 | Sebagai TU, saya ingin mengubah status siswa (mutasi/DO/lulus) dengan tracking history | P0 | ✅ Backend Complete |
-| STD-006 | Sebagai Guru, saya ingin melihat profil siswa di kelas yang saya ajar | P1 | 📝 Planned |
-| STD-007 | Sebagai Kepala Sekolah, saya ingin melihat semua data siswa dengan summary statistics | P1 | 📝 Planned |
-| STD-008 | Sebagai Orang Tua, saya ingin melihat profil anak saya (read-only) | P0 | ✅ Backend Complete |
+| STD-001 | Sebagai TU, saya ingin menambahkan data siswa baru dengan auto-generate NIS dan auto-create parent account | P0 | ✅ Complete |
+| STD-002 | Sebagai TU, saya ingin melihat daftar siswa dengan filter (kelas, status, tahun ajaran) dan search | P0 | ✅ Complete |
+| STD-003 | Sebagai TU, saya ingin mengedit data siswa dan data orang tua/wali | P0 | ✅ Complete |
+| STD-004 | Sebagai TU, saya ingin melakukan bulk naik kelas untuk siswa dengan preview dan konfirmasi | P0 | ⚠️ Backend Ready, UI Pending |
+| STD-005 | Sebagai TU, saya ingin mengubah status siswa (mutasi/DO/lulus) dengan tracking history | P0 | ✅ Complete |
+| STD-006 | Sebagai Guru, saya ingin melihat profil siswa di kelas yang saya ajar | P1 | ✅ Filter Ready |
+| STD-007 | Sebagai Kepala Sekolah, saya ingin melihat semua data siswa dengan summary statistics | P1 | ✅ View Ready |
+| STD-008 | Sebagai Orang Tua, saya ingin melihat profil anak saya (read-only) | P0 | ✅ Complete |
 | STD-009 | Sebagai TU, saya ingin export data siswa ke Excel untuk reporting | P1 | 📝 Planned |
 | STD-010 | Sebagai TU, saya ingin import data siswa dari Excel dengan preview dan validation | P1 | 📝 Planned |
 
@@ -64,13 +64,26 @@ Student Management merupakan modul inti yang bertujuan untuk mengelola data sisw
 
 ### Backend Components
 
-| Component | File | Responsibility |
-|-----------|------|----------------|
-| **Controller** | `Admin/StudentController.php` | Handle HTTP requests, CRUD operations, bulk actions |
-| **Service** | `StudentService.php` | Business logic: NIS generation, parent account, bulk operations |
-| **Models** | `Student.php`, `Guardian.php`, `StudentClassHistory.php`, `StudentStatusHistory.php` | Eloquent models dengan relationships dan scopes |
-| **Form Requests** | `StoreStudentRequest.php`, `UpdateStudentRequest.php`, `UpdateStudentStatusRequest.php`, `BulkPromoteRequest.php` | Validation rules dengan custom error messages |
-| **Factories** | `StudentFactory.php`, `GuardianFactory.php` | Test data generation dengan states |
+| Component | File | Responsibility | Status |
+|-----------|------|----------------|--------|
+| **Controller** | `Admin/StudentController.php` | Handle HTTP requests, CRUD operations, bulk actions | ✅ Complete |
+| **Parent Controller** | `Parent/ChildController.php` | Parent portal view children | ✅ Complete |
+| **Service** | `StudentService.php` | Business logic: NIS generation, parent account, bulk operations | ✅ Complete |
+| **Models** | `Student.php`, `Guardian.php`, `StudentClassHistory.php`, `StudentStatusHistory.php` | Eloquent models dengan relationships dan scopes | ✅ Complete |
+| **Form Requests** | `StoreStudentRequest.php`, `UpdateStudentRequest.php`, `UpdateStudentStatusRequest.php`, `BulkPromoteRequest.php` | Validation rules dengan custom error messages | ✅ Complete |
+| **Factories** | `StudentFactory.php`, `GuardianFactory.php` | Test data generation dengan states | ✅ Complete |
+
+### Frontend Components
+
+| Component | File | Responsibility | Status |
+|-----------|------|----------------|--------|
+| **Admin Pages** | `Admin/Students/{Index,Create,Edit,Show}.vue` | CRUD interface untuk TU/Admin | ✅ Complete |
+| **Parent Pages** | `Parent/Children/{Index,Show}.vue` | Portal orang tua view anak | ✅ Complete |
+| **StudentTable** | `components/ui/StudentTable.vue` | List siswa dengan filter/search/pagination | ✅ Complete |
+| **StudentForm** | `components/ui/StudentForm.vue` | Multi-section form untuk create/edit siswa | ✅ Complete |
+| **StudentDetailTabs** | `components/ui/StudentDetailTabs.vue` | Tabs untuk biodata, orang tua, riwayat | ✅ Complete |
+| **PhotoUpload** | `components/ui/PhotoUpload.vue` | Drag-drop foto dengan preview | ✅ Complete |
+| **Navigation** | `layouts/AppLayout.vue` | Menu "Data Siswa" untuk Admin | ✅ Complete |
 
 ### Key Methods
 
@@ -79,6 +92,32 @@ Student Management merupakan modul inti yang bertujuan untuk mengelola data sisw
 - `attachGuardiansToStudent(Student $student, array $guardianData): void` - Attach guardians dan auto-create parent account
 - `bulkPromoteStudents(array $studentIds, int $kelasIdBaru, string $tahunAjaranBaru, ?string $waliKelas): int` - Bulk naik kelas dengan history
 - `updateStudentStatus(Student $student, string $statusBaru, array $additionalData, int $changedBy): StudentStatusHistory` - Update status dengan history tracking
+
+### Routes Summary
+
+**Admin Routes** (12 routes):
+
+| Method | Route | Action | Status |
+|--------|-------|--------|--------|
+| GET | `/admin/students` | List siswa dengan filter & search | ✅ |
+| GET | `/admin/students/create` | Form tambah siswa | ✅ |
+| POST | `/admin/students` | Store siswa baru | ✅ |
+| GET | `/admin/students/{id}` | Detail profil siswa | ✅ |
+| GET | `/admin/students/{id}/edit` | Form edit siswa | ✅ |
+| PUT | `/admin/students/{id}` | Update siswa | ✅ |
+| DELETE | `/admin/students/{id}` | Soft delete siswa | ✅ |
+| POST | `/admin/students/{id}/update-status` | Update status siswa | ✅ |
+| POST | `/admin/students/promote` | Bulk naik kelas | ⚠️ Backend Ready |
+| GET | `/admin/students/export` | Export Excel | 🔄 TODO |
+| POST | `/admin/students/import/preview` | Preview import | 🔄 TODO |
+| POST | `/admin/students/import` | Import Excel | 🔄 TODO |
+
+**Parent Routes** (2 routes):
+
+| Method | Route | Action | Status |
+|--------|-------|--------|--------|
+| GET | `/parent/children` | List anak (parent portal) | ✅ |
+| GET | `/parent/children/{id}` | Detail anak (parent portal) | ✅ |
 
 ---
 
@@ -159,15 +198,18 @@ Student Management merupakan modul inti yang bertujuan untuk mengelola data sisw
 
 ---
 
-## Known Limitations
+## Known Limitations & Missing Features
 
-| Limitation | Reason | Workaround |
-|------------|--------|------------|
-| **Export/Import Excel** | Placeholder methods only | Implement dengan Laravel Excel package |
-| **WhatsApp notification** | TODO comment di service | Integrate WhatsApp API |
-| **Classes table** | Not implemented yet | `kelas_id` masih integer placeholder |
-| **Frontend pages** | Backend-only implementation | Inertia pages belum dibuat |
-| **Photo compression** | Not implemented | Add image intervention library |
+| Limitation | Impact | Reason | Workaround |
+|------------|--------|--------|------------|
+| **Export Excel** | User tidak bisa export data | Controller method TODO | Manual copy-paste data |
+| **Import Excel** | Bulk insert harus manual | Controller method TODO | Entry satu-satu |
+| **Bulk Promote UI** | Backend ready tapi tidak accessible | UI page (`Promote.vue`) belum dibuat | Manual update kelas via Edit page |
+| **Import Preview UI** | - | UI page (`Import.vue`) belum dibuat | - |
+| **WhatsApp notification** | Parent tidak auto-tahu credentials | TODO di service | Manual inform via phone |
+| **Photo storage directory** | Upload error jika directory belum ada | Not auto-created | Manual `mkdir -p storage/app/public/students/photos` |
+| **Classes module** | Filter kelas pakai mock data | Module belum ada | Hardcode array kelas |
+| **Photo compression** | Large photos tidak di-compress | Not implemented | Upload foto yang sudah kecil |
 
 ---
 
@@ -220,13 +262,54 @@ Student Management merupakan modul inti yang bertujuan untuk mengelola data sisw
 
 ---
 
-**Verification Evidence:**
-- ✅ Routes verified: 12 student routes + 2 parent routes accessible
-- ✅ Service methods match controller calls (verified via grep)
-- ✅ Tested with tinker: All service methods exist and work
-- ✅ Migrations applied: 5 tables created successfully
-- ✅ Unit tests: 30/30 passed with 66 assertions
-- ✅ Code formatted: Laravel Pint passed
+**Verification Evidence (24 Desember 2025):**
 
-**Status:** Backend implementation complete dan fully tested. Frontend Vue pages pending untuk feature tests.
+```bash
+# Routes Verification
+php artisan route:list --path=admin/students
+# Result: 12 routes registered ✅
+
+php artisan route:list --path=parent/children
+# Result: 2 routes registered ✅
+
+# Migrations Verification
+php artisan migrate:status | grep -i student
+# Result: 4 migrations ran ✅
+# - students, student_guardian, student_class_history, student_status_history
+
+# Service Methods Verification
+php artisan tinker --execute="..."
+# Result: All methods exist and work ✅
+# - generateNis: OK
+# - attachGuardiansToStudent: OK
+# - bulkPromoteStudents: OK
+# - updateStudentStatus: OK
+
+# Frontend Files Verification
+ls resources/js/pages/Admin/Students/
+# Result: Index.vue, Create.vue, Edit.vue, Show.vue ✅
+
+ls resources/js/pages/Parent/Children/
+# Result: Index.vue, Show.vue ✅
+
+ls resources/js/components/ui/ | grep Student
+# Result: StudentTable.vue, StudentForm.vue, StudentDetailTabs.vue ✅
+
+# Navigation Verification
+grep -n "Data Siswa" resources/js/components/layouts/AppLayout.vue
+# Result: Line 136 - Menu item exists ✅
+
+# Unit Tests
+php artisan test --filter=Student --testsuite=Unit
+# Result: 30 tests, 66 assertions, all passed ✅
+```
+
+**Status Akurat:**
+- ✅ **Core CRUD:** Fully functional (Backend + Frontend)
+- ✅ **Parent Portal:** Fully functional (Backend + Frontend)
+- ✅ **Navigation:** Menu "Data Siswa" sudah ada
+- ⚠️ **Bulk Promote:** Backend ready, UI page missing
+- 🔄 **Export/Import:** Routes exist, methods TODO
+- ✅ **Unit Tests:** 100% passed
+- ⚠️ **Feature Tests:** Pending (need E2E test setup)
 

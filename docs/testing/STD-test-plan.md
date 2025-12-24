@@ -94,11 +94,7 @@ php artisan test --filter=StudentModelTest
 | `test_non_admin_cannot_access_student_management` | ⚠️ Pending | Verify access control |
 | `test_admin_can_upload_student_photo` | ⚠️ Pending | Verify photo upload |
 
-**Blocking Issue:** Requires Vue files:
-- `resources/js/pages/Admin/Students/Index.vue`
-- `resources/js/pages/Admin/Students/Create.vue`
-- `resources/js/pages/Admin/Students/Edit.vue`
-- `resources/js/pages/Admin/Students/Show.vue`
+**Note:** Vue files exist ✅, feature tests dapat dijalankan setelah E2E testing setup (Dusk/Playwright)
 
 ---
 
@@ -117,9 +113,7 @@ php artisan test --filter=StudentModelTest
 | `test_parent_child_detail_includes_class_history` | ⚠️ Pending | Verify history included |
 | `test_unauthenticated_user_cannot_access_parent_portal` | ⚠️ Pending | Verify auth middleware |
 
-**Blocking Issue:** Requires Vue files:
-- `resources/js/pages/Parent/Children/Index.vue`
-- `resources/js/pages/Parent/Children/Show.vue`
+**Note:** Vue files exist ✅, feature tests dapat dijalankan setelah E2E testing setup (Dusk/Playwright)
 
 ---
 
