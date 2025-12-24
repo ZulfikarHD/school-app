@@ -408,7 +408,66 @@ Memindahkan satu atau multiple siswa ke kelas baru dengan riwayat.
 
 ---
 
-### 7. Update Student Status
+### 7. Bulk Promote Students (Naik Kelas Massal) ⭐
+
+Menaikkan multiple siswa ke kelas berikutnya secara bersamaan dengan wizard.
+
+**Endpoint:** `POST /admin/students/promote`
+
+**Request Body:**
+
+```json
+{
+    "student_ids": [1, 2, 3, 5, 8, 10],
+    "kelas_id_baru": 12,
+    "tahun_ajaran_baru": "2025/2026",
+    "wali_kelas": "Ibu Siti Nurhaliza" // Optional, auto-detected
+}
+```
+
+**Validation Rules:**
+
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| student_ids | array | Yes | min:1, each must exist in students table |
+| kelas_id_baru | integer | Yes | must exist in classes table |
+| tahun_ajaran_baru | string | Yes | regex: `^\d{4}/\d{4}$` |
+| wali_kelas | string | No | max:100, auto-filled from SchoolClass relation |
+
+**Success Response:** `302 Redirect` (back with success message)
+
+```json
+{
+    "message": "6 siswa berhasil dipindahkan ke kelas baru."
+}
+```
+
+**Error Response:** `422 Unprocessable Entity`
+
+```json
+{
+    "message": "The given data was invalid.",
+    "errors": {
+        "student_ids": ["Pilih minimal 1 siswa untuk dipromote."],
+        "tahun_ajaran_baru": ["Format tahun ajaran harus YYYY/YYYY"]
+    }
+}
+```
+
+**Business Logic:**
+- Batch processing untuk efisiensi (multiple students dalam 1 transaction)
+- Wali kelas otomatis tercatat dari relasi `SchoolClass->waliKelas` jika tidak diisi
+- Student class history dibuat untuk setiap siswa yang dipromote
+- `students.kelas_id` diupdate ke kelas baru
+- Semua operasi atomic (rollback jika error)
+- Activity log dicatat dengan `student_count` dan metadata promosi
+
+**Wizard Page:** `GET /admin/students/promote`
+- Returns Inertia page dengan data classes untuk wizard
+
+---
+
+### 8. Update Student Status
 
 Mengubah status siswa dengan alasan.
 
@@ -446,7 +505,7 @@ Mengubah status siswa dengan alasan.
 
 ---
 
-### 8. Export Students
+### 9. Export Students
 
 Export data siswa ke Excel.
 
@@ -468,7 +527,7 @@ Export data siswa ke Excel.
 
 ---
 
-### 9. Import Students Preview
+### 10. Import Students Preview
 
 Preview import data sebelum confirm.
 
@@ -509,7 +568,7 @@ Preview import data sebelum confirm.
 
 ---
 
-### 10. Import Students Confirm
+### 11. Import Students Confirm
 
 Konfirmasi dan simpan import data.
 
@@ -640,6 +699,7 @@ interface StudentClassHistory {
 |------|---------|---------|
 | 2024-12-24 | 1.0.0 | Initial API documentation |
 | 2024-12-24 | 1.1.0 | Added assign-class endpoint |
+| 2024-12-24 | 1.2.0 | Added bulk promote endpoint (AD04) |
 
 ---
 

@@ -19,6 +19,7 @@ Dokumentasi ini merupakan collection untuk semua fitur yang tersedia untuk role 
 |------|--------------|----------|--------|---------------|
 | STD | Student Management (Core CRUD) | Critical | ✅ Complete | [View Docs](./STD-student-management.md) |
 | AD03 | Assign Student to Class | High | ✅ Complete | [View Docs](./AD03-assign-student-to-class.md) |
+| AD04 | Bulk Promote Students (Naik Kelas Massal) | High | ✅ Complete | [View Docs](./AD04-bulk-promote-students.md) |
 
 ---
 
@@ -29,6 +30,7 @@ Dokumentasi ini merupakan collection untuk semua fitur yang tersedia untuk role 
 **Student Management**
 - [STD - Student Management](./STD-student-management.md)
 - [AD03 - Assign Student to Class](./AD03-assign-student-to-class.md)
+- [AD04 - Bulk Promote Students](./AD04-bulk-promote-students.md)
 
 ### API Documentation
 - [Students API](../../api/students.md)
@@ -36,6 +38,7 @@ Dokumentasi ini merupakan collection untuk semua fitur yang tersedia untuk role 
 ### Test Plans
 - [STD Test Plan](../../testing/STD-test-plan.md)
 - [AD03 Test Plan](../../testing/AD03-assign-class-test-plan.md)
+- [AD04 Test Plan](../../testing/AD04-bulk-promote-test-plan.md)
 
 ---
 

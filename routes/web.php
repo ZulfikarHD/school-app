@@ -40,6 +40,8 @@ Route::middleware(['auth'])->group(function () {
                 ->name('students.assign-class');
             Route::post('students/{student}/update-status', [StudentController::class, 'updateStatus'])
                 ->name('students.update-status');
+            Route::get('students/promote', [StudentController::class, 'showPromotePage'])
+                ->name('students.promote.page');
             Route::post('students/promote', [StudentController::class, 'promote'])
                 ->name('students.promote');
             Route::get('students/export', [StudentController::class, 'export'])

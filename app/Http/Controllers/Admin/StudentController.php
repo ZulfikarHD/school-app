@@ -402,6 +402,23 @@ class StudentController extends Controller
     }
 
     /**
+     * Display promote page dengan wizard untuk bulk promote students
+     */
+    public function showPromotePage()
+    {
+        $classes = SchoolClass::query()
+            ->active()
+            ->orderBy('tahun_ajaran', 'desc')
+            ->orderBy('tingkat')
+            ->orderBy('nama')
+            ->get(['id', 'nama', 'nama_lengkap', 'tingkat', 'tahun_ajaran']);
+
+        return Inertia::render('Admin/Students/Promote', [
+            'classes' => $classes,
+        ]);
+    }
+
+    /**
      * Bulk promote students ke kelas yang lebih tinggi
      */
     public function promote(BulkPromoteRequest $request)

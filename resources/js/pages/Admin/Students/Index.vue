@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Plus, Download, ArrowRightLeft, X } from 'lucide-vue-next';
+import { Plus, Download, ArrowRightLeft, X, GraduationCap } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import StudentTable from '@/components/features/students/StudentTable.vue';
 import AssignClassModal from '@/components/features/students/AssignClassModal.vue';
 import { create as createStudent, edit as editStudent, show as showStudent, destroy as deleteStudent } from '@/routes/admin/students';
+import { page as promotePage } from '@/routes/admin/students/promote';
 import { useModal } from '@/composables/useModal';
 import { useHaptics } from '@/composables/useHaptics';
 import type { Student } from '@/types/student';
@@ -152,6 +153,19 @@ const academicYears = [
                             </template>
 
                             <template v-else>
+                                <!-- Promote Button -->
+                                <Motion :whileTap="{ scale: 0.97 }">
+                                    <Link
+                                        :href="promotePage()"
+                                        @click="haptics.light()"
+                                        class="flex items-center gap-2 px-3 sm:px-4 py-2.5 min-h-[44px] bg-sky-500 text-white rounded-xl hover:bg-sky-600 active:bg-sky-700 transition-all shadow-sm shadow-sky-500/25"
+                                        title="Naik Kelas"
+                                    >
+                                        <GraduationCap class="w-5 h-5" />
+                                        <span class="font-semibold hidden md:inline">Naik Kelas</span>
+                                    </Link>
+                                </Motion>
+
                                 <!-- Export Button -->
                                 <Motion :whileTap="{ scale: 0.97 }">
                                     <button
