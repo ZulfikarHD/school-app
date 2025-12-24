@@ -17,6 +17,7 @@ Dokumentasi ini merupakan collection untuk semua fitur yang tersedia untuk role 
 
 | Code | Feature Name | Priority | Status | Documentation |
 |------|--------------|----------|--------|---------------|
+| STD | Student Management (Core CRUD) | Critical | ✅ Complete | [View Docs](./STD-student-management.md) |
 | AD03 | Assign Student to Class | High | ✅ Complete | [View Docs](./AD03-assign-student-to-class.md) |
 
 ---
@@ -26,12 +27,14 @@ Dokumentasi ini merupakan collection untuk semua fitur yang tersedia untuk role 
 ### By Category
 
 **Student Management**
+- [STD - Student Management](./STD-student-management.md)
 - [AD03 - Assign Student to Class](./AD03-assign-student-to-class.md)
 
 ### API Documentation
 - [Students API](../../api/students.md)
 
 ### Test Plans
+- [STD Test Plan](../../testing/STD-test-plan.md)
 - [AD03 Test Plan](../../testing/AD03-assign-class-test-plan.md)
 
 ---

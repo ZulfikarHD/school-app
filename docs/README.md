@@ -22,7 +22,9 @@ docs/
 │   │   ├── AUTH-P4-profile-management.md
 │   │   └── AUTH-P5-audit-logs.md
 │   └── admin/
+│       ├── README.md
 │       ├── AUTH-authentication-authorization-backend.md
+│       ├── AD03-assign-student-to-class.md
 │       └── STD-student-management.md
 │
 ├── api/                          # API endpoint documentation
@@ -31,12 +33,14 @@ docs/
 │   └── students.md
 │
 ├── testing/                      # Test plans dan QA checklists
+│   ├── AUTH-test-plan.md
 │   ├── AUTH-P0-test-plan.md
 │   ├── AUTH-P1-first-login-test-plan.md
 │   ├── AUTH-P2-user-management-test-plan.md
 │   ├── AUTH-P3-password-reset-test-plan.md
 │   ├── AUTH-P4-profile-management-test-plan.md
 │   ├── AUTH-P5-audit-logs-test-plan.md
+│   ├── AD03-assign-class-test-plan.md
 │   └── STD-test-plan.md
 │
 └── guides/                       # User journeys dan how-to guides

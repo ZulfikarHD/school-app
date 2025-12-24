@@ -262,6 +262,11 @@ Student Management merupakan modul inti yang bertujuan untuk mengelola data sisw
 
 ---
 
+## Related Documentation
 
+- **Related Features:** [AD03 - Assign Student to Class](./AD03-assign-student-to-class.md)
+- **API Documentation:** [Students API](../../api/students.md)
+- **Test Plan:** [STD Test Plan](../../testing/STD-test-plan.md)
+- **User Journeys:** [Student Management User Journeys](../../guides/student-management-user-journeys.md)
 
-
+---

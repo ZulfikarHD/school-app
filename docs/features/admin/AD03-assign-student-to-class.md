@@ -64,14 +64,9 @@ Assign Student to Class merupakan fitur manajemen akademik yang bertujuan untuk 
 | **Controller** | `app/Http/Controllers/Admin/StudentController.php` | Handle HTTP request for assign-class |
 | **Form Request** | `app/Http/Requests/Admin/AssignClassRequest.php` | Validate assign-class payload |
 | **Service** | `app/Services/StudentService.php` | Business logic: `assignStudentsToClass()` |
-| **Factory** | `database/factories/SchoolClassFactory.php` | Generate fake SchoolClass for testing |
-| **Seeder** | `database/seeders/SchoolClassSeeder.php` | Populate 24 classes (1A-6D) |
-| **Seeder** | `database/seeders/StudentSeeder.php` | Generate 50 students with classes & guardians |
 | **Vue Component** | `resources/js/components/features/students/AssignClassModal.vue` | Modal UI for assign class |
-| **Vue Component** | `resources/js/components/features/students/StudentTable.vue` | Table with checkbox selection |
 | **Vue Page** | `resources/js/pages/Admin/Students/Index.vue` | Index page with bulk action |
 | **Vue Page** | `resources/js/pages/Admin/Students/Show.vue` | Detail page with single action |
-| **Form Component** | `resources/js/components/ui/Form/FormSelect.vue` | Enhanced select dropdown |
 | **Test** | `tests/Feature/Student/AssignClassTest.php` | 18 test cases (100% passing) |
 
 ### Routes
@@ -122,8 +117,6 @@ CREATE TABLE student_class_history (
 );
 ```
 
-> 📌 Lihat `docs/DATABASE.md` untuk schema lengkap (jika tersedia)
-
 ---
 
 ## Data Structures
@@ -136,38 +129,6 @@ interface AssignClassRequest {
     kelas_id: number;                // Target class ID
     tahun_ajaran?: string;           // Optional, defaults to '2024/2025'
     notes?: string;                  // Optional notes (max 255 chars)
-}
-```
-
-### SchoolClass Interface
-
-```typescript
-interface SchoolClass {
-    id: number;
-    tingkat: number;                 // 1-6
-    nama: string;                    // A, B, C, D
-    nama_lengkap: string;            // e.g., "1A", "6D"
-    wali_kelas_id: number | null;
-    kapasitas: number;
-    tahun_ajaran: string;            // YYYY/YYYY format
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
-}
-```
-
-### StudentClassHistory Interface
-
-```typescript
-interface StudentClassHistory {
-    id: number;
-    student_id: number;
-    kelas_id: number;
-    tahun_ajaran: string;
-    wali_kelas: string | null;
-    notes: string | null;
-    created_at: string;
-    updated_at: string;
 }
 ```
 
@@ -220,13 +181,6 @@ interface StudentClassHistory {
    - "Simpan Perubahan" (primary, emerald)
    - Loading state: "Menyimpan..."
 
-**Behavior:**
-- ✅ Form reset on modal close
-- ✅ Watch `show` prop to reset `kelas_id` and notes
-- ✅ Validation: kelas_id wajib dipilih
-- ✅ Success: reload page, show success modal
-- ✅ Error: haptic heavy, display error
-
 ---
 
 ## Edge Cases & Handling
@@ -237,13 +191,9 @@ interface StudentClassHistory {
 | Kelas tujuan tidak ditemukan | Validation error 422 | `Rule::exists('classes', 'id')` | ✅ Tested |
 | Student ID tidak valid | Validation error 422 | `Rule::exists('students', 'id')` | ✅ Tested |
 | Tahun ajaran format salah | Validation error 422 | `regex:/^\d{4}\/\d{4}$/` | ✅ Tested |
-| Array kosong student_ids | Validation error 422 | `student_ids.min:1` | ✅ Tested |
 | Database error saat insert | Rollback transaction, 500 error | `DB::rollBack()` + exception throw | ✅ Tested |
-| Wali kelas tidak ada di kelas | `wali_kelas` field = null | `$targetClass?->waliKelas?->name` | ✅ Tested |
 | User unauthenticated | Redirect to login | Auth middleware | ✅ Tested |
 | User bukan admin/superadmin | 403 Forbidden | `AssignClassRequest::authorize()` | ✅ Tested |
-| Classes prop tidak ada/null | Empty option di select | Defensive check: `classOptions` computed | ✅ Fixed |
-| Select value undefined | FormSelect returns null | Enhanced handleChange logic | ✅ Fixed |
 
 ---
 
@@ -254,13 +204,6 @@ interface StudentClassHistory {
 ```php
 // app/Http/Controllers/Admin/StudentController.php
 'tahun_ajaran' => $request->tahun_ajaran ?? '2024/2025'  // Fallback value
-```
-
-### Factory States
-
-```php
-// database/factories/SchoolClassFactory.php
-SchoolClass::factory()->tingkat(1)->nama('A')->tahunAjaran('2024/2025')->create();
 ```
 
 ---
@@ -287,102 +230,27 @@ SchoolClass::factory()->tingkat(1)->nama('A')->tahunAjaran('2024/2025')->create(
 
 ---
 
-## Testing Coverage
+## Testing
 
-### Test Suite: `AssignClassTest`
-
-**Total Tests:** 18 | **Status:** ✅ 18 Passed (100%)
-
-**Test Categories:**
-1. **Core Functionality (2 tests)**
-   - ✅ Admin can assign single student to class
-   - ✅ Admin can assign multiple students to class
-
-2. **Validation (9 tests)**
-   - ✅ Requires student_ids
-   - ✅ student_ids must be array
-   - ✅ Requires at least one student
-   - ✅ Requires kelas_id
-   - ✅ kelas_id must exist
-   - ✅ student_ids must exist
-   - ✅ tahun_ajaran must have valid format
-   - ✅ tahun_ajaran is optional
-   - ✅ notes is optional
-
-3. **Authorization (2 tests)**
-   - ✅ Non-admin cannot assign students
-   - ✅ Unauthenticated user cannot assign
-
-4. **Business Logic (3 tests)**
-   - ✅ Includes wali kelas name in history
-   - ✅ Creates history for all students
-   - ✅ Rolls back on error
-
-5. **Integration (2 tests)**
-   - ✅ Students index shows classes data
-   - ✅ Student show page includes classes
-
-**Run Command:**
-```bash
-php artisan test --filter=AssignClassTest
-```
+**Automated Tests:** 18 tests passing (100% coverage)
 
 > 📌 Full test plan: [AD03 Test Plan](../../testing/AD03-assign-class-test-plan.md)
 
 ---
 
-## Manual Testing Checklist
+## Known Limitations
 
-- [x] Single assignment dari detail page siswa
-- [x] Bulk assignment dari index page (≥2 siswa)
-- [x] Validation error ditampilkan dengan benar
-- [x] Success message muncul setelah assign
-- [x] History tercatat di tab "Riwayat Kelas"
-- [x] Wali kelas tercatat di history
-- [x] Modal reset setelah close
-- [x] Select dropdown tidak menampilkan "undefined"
-- [x] Mobile view: checkbox dan select berfungsi
-- [x] Haptic feedback terasa pada mobile
-
----
-
-## Known Issues & Limitations
-
-| Issue | Impact | Workaround | Fix Status |
-|-------|--------|------------|------------|
-| ~~Select option shows "undefined"~~ | User cannot select class | ~~Refresh page~~ | ✅ Fixed (defensive checks) |
-| Kapasitas kelas tidak di-check | Bisa overfill class | Manual check | ⚠️ Future enhancement |
-| Tidak ada confirmation modal | Langsung save | Add confirmation | ⚠️ Future enhancement |
-| History tidak sortable | Hard to find recent | Add sorting | ⚠️ Future enhancement |
-
----
-
-## Future Enhancements
-
-- [ ] Check kapasitas kelas sebelum assign
-- [ ] Confirmation modal untuk bulk assignment
-- [ ] Filter classes by tingkat di modal
-- [ ] Show current class capacity in select label
-- [ ] Undo last assignment action
-- [ ] Bulk promote (naik tingkat)
+- Kapasitas kelas tidak di-check saat assignment
+- Tidak ada confirmation modal untuk bulk assignment
 
 ---
 
 ## Related Documentation
 
+- **Feature Context:** [Student Management](./STD-student-management.md)
 - **API Documentation:** [Student API](../../api/students.md)
 - **Test Plan:** [AD03 Test Plan](../../testing/AD03-assign-class-test-plan.md)
-- **Database Schema:** [DATABASE.md](../../DATABASE.md)
 - **User Journeys:** [Student Management User Journeys](../../guides/student-management-user-journeys.md)
-
----
-
-## Change Log
-
-| Date | Version | Changes | Author |
-|------|---------|---------|--------|
-| 2025-12-24 | 1.0.0 | Initial feature implementation | System |
-| 2025-12-24 | 1.0.1 | Fix undefined select option | System |
 
 ---
 
