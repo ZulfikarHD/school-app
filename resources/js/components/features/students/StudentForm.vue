@@ -7,7 +7,7 @@
 import { ref, computed, watch } from 'vue';
 import { ChevronDown, User, MapPin, GraduationCap, Users, IdCard, Calendar, Heart, Info, Check } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
-import PhotoUpload from '@/components/ui/PhotoUpload.vue';
+import PhotoUpload from './PhotoUpload.vue';
 import { FormInput, FormSelect, FormTextarea, FormNumberInput, FormCheckbox } from '@/components/ui/Form';
 import { useHaptics } from '@/composables/useHaptics';
 

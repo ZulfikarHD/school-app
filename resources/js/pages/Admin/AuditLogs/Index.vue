@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
-import AuditLogTable from '@/components/ui/AuditLogTable.vue';
+import AuditLogTable from '@/components/features/audit/AuditLogTable.vue';
 import { Activity } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 
@@ -20,7 +20,7 @@ defineProps<Props>();
     <AppLayout>
         <div class="max-w-7xl mx-auto space-y-6">
             <!-- Header -->
-            <Motion 
+            <Motion
                 :initial="{ opacity: 0, y: -20 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
@@ -35,14 +35,14 @@ defineProps<Props>();
             </Motion>
 
             <!-- Content -->
-            <Motion 
+            <Motion
                 :initial="{ opacity: 0, y: 20 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 30, delay: 0.1 }"
             >
-                <AuditLogTable 
-                    :logs="logs" 
-                    :filters="filters" 
+                <AuditLogTable
+                    :logs="logs"
+                    :filters="filters"
                     :users="users"
                 />
             </Motion>

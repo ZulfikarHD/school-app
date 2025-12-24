@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
-import UserForm from '@/components/ui/UserForm.vue';
+import UserForm from '@/components/features/users/UserForm.vue';
 import { useHaptics } from '@/composables/useHaptics';
 import { useModal } from '@/composables/useModal';
 import { ChevronLeft, Edit } from 'lucide-vue-next';
@@ -55,14 +55,14 @@ const submit = () => {
     <AppLayout>
         <div class="max-w-4xl mx-auto space-y-6">
             <!-- Header -->
-            <Motion 
+            <Motion
                 :initial="{ opacity: 0, y: -20 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
                 class="flex items-center gap-4"
             >
-                <Link 
-                    :href="index()" 
+                <Link
+                    :href="index()"
                     class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                 >
                     <ChevronLeft class="w-6 h-6 text-gray-500" />
@@ -79,7 +79,7 @@ const submit = () => {
             </Motion>
 
             <!-- Form Card -->
-            <Motion 
+            <Motion
                 :initial="{ opacity: 0, y: 20 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 30, delay: 0.1 }"
@@ -89,13 +89,13 @@ const submit = () => {
                     <UserForm :form="form" :is-edit="true" />
 
                     <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800">
-                        <Link 
+                        <Link
                             :href="index()"
                             class="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                         >
                             Batal
                         </Link>
-                        <button 
+                        <button
                             type="submit"
                             :disabled="form.processing || !form.isDirty"
                             class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"

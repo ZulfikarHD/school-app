@@ -3,7 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ChevronLeft, Save } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
-import StudentForm from '@/components/ui/StudentForm.vue';
+import StudentForm from '@/components/features/students/StudentForm.vue';
 import { index as studentsIndex, update as updateStudent } from '@/routes/admin/students';
 import { useHaptics } from '@/composables/useHaptics';
 import { useModal } from '@/composables/useModal';

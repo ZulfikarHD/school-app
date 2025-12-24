@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { Head, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
-import UserTable from '@/components/ui/UserTable.vue';
+import UserTable from '@/components/features/users/UserTable.vue';
 import { useModal } from '@/composables/useModal';
 import { useHaptics } from '@/composables/useHaptics';
 import { UserPlus, Users } from 'lucide-vue-next';
@@ -106,7 +106,7 @@ const handleToggleStatus = async (user: any) => {
     <AppLayout>
         <div class="max-w-7xl mx-auto space-y-6">
             <!-- Header -->
-            <Motion 
+            <Motion
                 :initial="{ opacity: 0, y: -20 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
@@ -132,7 +132,7 @@ const handleToggleStatus = async (user: any) => {
             </Motion>
 
             <!-- Content -->
-            <Motion 
+            <Motion
                 :initial="{ opacity: 0, y: 20 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 30, delay: 0.1 }"

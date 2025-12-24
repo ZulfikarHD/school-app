@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { ChevronLeft } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
-import StudentDetailTabs from '@/components/ui/StudentDetailTabs.vue';
+import StudentDetailTabs from '@/components/features/students/StudentDetailTabs.vue';
 import { useHaptics } from '@/composables/useHaptics';
 import { index as childrenIndex } from '@/routes/parent/children';
 import type { Student, Guardian, ClassHistory } from '@/types/student';

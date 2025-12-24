@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
-import UserForm from '@/components/ui/UserForm.vue';
+import UserForm from '@/components/features/users/UserForm.vue';
 import { useHaptics } from '@/composables/useHaptics';
 import { useModal } from '@/composables/useModal';
 import { ChevronLeft, UserPlus } from 'lucide-vue-next';
@@ -41,7 +41,7 @@ const submit = () => {
     <AppLayout>
         <div class="max-w-4xl mx-auto space-y-6">
             <!-- Header -->
-            <Motion 
+            <Motion
                 :initial="{ opacity: 0, y: -20 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
@@ -65,7 +65,7 @@ const submit = () => {
             </Motion>
 
             <!-- Form Card -->
-            <Motion 
+            <Motion
                 :initial="{ opacity: 0, y: 20 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 30, delay: 0.1 }"

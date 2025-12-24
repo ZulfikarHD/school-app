@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { GraduationCap, Users } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
-import ChildCard from '@/components/ui/ChildCard.vue';
+import ChildCard from '@/components/features/parent/ChildCard.vue';
 import { useHaptics } from '@/composables/useHaptics';
 import { show as showChild } from '@/routes/parent/children';
 import type { Student } from '@/types/student';

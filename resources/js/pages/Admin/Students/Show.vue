@@ -3,7 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ChevronLeft, Edit, Trash2 } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
-import StudentDetailTabs from '@/components/ui/StudentDetailTabs.vue';
+import StudentDetailTabs from '@/components/features/students/StudentDetailTabs.vue';
 import { useModal } from '@/composables/useModal';
 import { useHaptics } from '@/composables/useHaptics';
 import { index as studentsIndex, edit as editStudent, destroy as deleteStudent } from '@/routes/admin/students';

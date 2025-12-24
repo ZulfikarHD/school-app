@@ -3,7 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { Plus, Download } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
-import StudentTable from '@/components/ui/StudentTable.vue';
+import StudentTable from '@/components/features/students/StudentTable.vue';
 import { create as createStudent, edit as editStudent, show as showStudent, destroy as deleteStudent } from '@/routes/admin/students';
 import { useModal } from '@/composables/useModal';
 import { useHaptics } from '@/composables/useHaptics';
