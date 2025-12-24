@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Dashboard\AdminDashboardController;
 use App\Http\Controllers\Dashboard\ParentDashboardController;
 use App\Http\Controllers\Dashboard\PrincipalDashboardController;
 use App\Http\Controllers\Dashboard\TeacherDashboardController;
+use App\Http\Controllers\Parent\ChildController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -32,6 +34,19 @@ Route::middleware(['auth'])->group(function () {
             Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
                 ->name('users.toggle-status');
 
+            // Student Management Routes
+            Route::resource('students', StudentController::class);
+            Route::post('students/{student}/update-status', [StudentController::class, 'updateStatus'])
+                ->name('students.update-status');
+            Route::post('students/promote', [StudentController::class, 'promote'])
+                ->name('students.promote');
+            Route::get('students/export', [StudentController::class, 'export'])
+                ->name('students.export');
+            Route::post('students/import/preview', [StudentController::class, 'importPreview'])
+                ->name('students.import.preview');
+            Route::post('students/import', [StudentController::class, 'import'])
+                ->name('students.import');
+
             // Audit Log Routes
             Route::get('audit-logs', [AuditLogController::class, 'index'])
                 ->name('audit-logs.index');
@@ -55,6 +70,12 @@ Route::middleware(['auth'])->group(function () {
     // Parent Dashboard
     Route::middleware('role:PARENT')->group(function () {
         Route::get('/parent/dashboard', [ParentDashboardController::class, 'index'])->name('parent.dashboard');
+
+        // Parent Portal - View Children
+        Route::prefix('parent')->name('parent.')->group(function () {
+            Route::get('children', [ChildController::class, 'index'])->name('children.index');
+            Route::get('children/{student}', [ChildController::class, 'show'])->name('children.show');
+        });
     });
 
     // Student Dashboard - DISABLED (untuk future implementation)

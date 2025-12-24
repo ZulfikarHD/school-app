@@ -22,11 +22,13 @@ docs/
 │   │   ├── AUTH-P4-profile-management.md
 │   │   └── AUTH-P5-audit-logs.md
 │   └── admin/
-│       └── AUTH-authentication-authorization-backend.md
+│       ├── AUTH-authentication-authorization-backend.md
+│       └── STD-student-management.md
 │
 ├── api/                          # API endpoint documentation
 │   ├── authentication.md
-│   └── users.md
+│   ├── users.md
+│   └── students.md
 │
 ├── testing/                      # Test plans dan QA checklists
 │   ├── AUTH-P0-test-plan.md
@@ -34,7 +36,8 @@ docs/
 │   ├── AUTH-P2-user-management-test-plan.md
 │   ├── AUTH-P3-password-reset-test-plan.md
 │   ├── AUTH-P4-profile-management-test-plan.md
-│   └── AUTH-P5-audit-logs-test-plan.md
+│   ├── AUTH-P5-audit-logs-test-plan.md
+│   └── STD-test-plan.md
 │
 └── guides/                       # User journeys dan how-to guides
     ├── auth-user-journeys.md     # Updated dengan P1-P5 flows
@@ -109,6 +112,7 @@ php artisan serve
 | AUTH-P3 | Password Reset Flow | ✅ Complete | [Feature Doc](./features/auth/AUTH-P3-password-reset.md) |
 | AUTH-P4 | Profile Management | ✅ Complete | [Feature Doc](./features/auth/AUTH-P4-profile-management.md) |
 | AUTH-P5 | Audit Log Viewing | ✅ Complete | [Feature Doc](./features/auth/AUTH-P5-audit-logs.md) |
+| STD | Student Management | 🔄 Backend Complete | [Feature Doc](./features/admin/STD-student-management.md) |
 
 **Included in P1 Features:**
 - ✅ Force password change pada first login (AUTH-P1)
@@ -132,6 +136,7 @@ php artisan serve
 |----------|-----------|---------------|
 | Authentication | Login, Logout, Dashboards, Password Reset, Profile | [API Doc](./api/authentication.md) |
 | Users | CRUD, Reset Password, Toggle Status | [API Doc](./api/users.md) |
+| Students | CRUD, Bulk Promote, Status Update, Parent Portal | [API Doc](./api/students.md) |
 
 ### Available Routes
 
@@ -171,6 +176,7 @@ php artisan test --coverage
 | Password Reset | [AUTH-P3 Test Plan](./testing/AUTH-P3-password-reset-test-plan.md) | ✅ Complete |
 | Profile Management | [AUTH-P4 Test Plan](./testing/AUTH-P4-profile-management-test-plan.md) | ✅ Complete |
 | Audit Logs | [AUTH-P5 Test Plan](./testing/AUTH-P5-audit-logs-test-plan.md) | ✅ Complete |
+| Student Management | [STD Test Plan](./testing/STD-test-plan.md) | ✅ 30/30 unit tests passing |
 
 ---
 
@@ -360,9 +366,18 @@ Project ini menggunakan Laravel Boost MCP server dengan tools:
 - [ ] Password Strength Meter
 - [ ] Account Lockout Notifications
 
+### Sprint 2: Student Management (Backend Complete)
+
+- [x] Student CRUD dengan auto-generate NIS ✅ **BACKEND COMPLETE**
+- [x] Parent Account Auto-Creation ✅ **BACKEND COMPLETE**
+- [x] Bulk Class Promotion ✅ **BACKEND COMPLETE**
+- [x] Status Change dengan History Tracking ✅ **BACKEND COMPLETE**
+- [x] Parent Portal (View Children) ✅ **BACKEND COMPLETE**
+- [ ] Frontend Vue Pages (Pending)
+- [ ] Excel Export/Import (Planned)
+
 ### Future Modules
 
-- [ ] Student Management
 - [ ] Payment Management
 - [ ] PSB (Penerimaan Siswa Baru)
 - [ ] Academic Management (Grades, Classes)
@@ -386,6 +401,6 @@ Private project - All rights reserved.
 
 ---
 
-*Last Updated: 2025-12-23*  
-*Documentation Version: 2.0* - Split authentication features into modular docs (AUTH-P0 through AUTH-P5)
+*Last Updated: 2025-12-24*  
+*Documentation Version: 2.1* - Added Student Management backend documentation (STD)
 

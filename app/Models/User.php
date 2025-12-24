@@ -86,4 +86,29 @@ class User extends Authenticatable
     {
         return $this->status === 'ACTIVE';
     }
+
+    /**
+     * Relationship dengan Guardian untuk parent portal
+     * dimana user dengan role PARENT akan ter-link ke guardian record
+     */
+    public function guardian()
+    {
+        return $this->hasOne(Guardian::class);
+    }
+
+    /**
+     * Helper method untuk mendapatkan students yang terhubung dengan parent user
+     * melalui guardian relationship
+     */
+    public function children()
+    {
+        return $this->hasManyThrough(
+            Student::class,
+            Guardian::class,
+            'user_id', // Foreign key on guardians table
+            'id', // Foreign key on students table (through pivot)
+            'id', // Local key on users table
+            'id' // Local key on guardians table
+        );
+    }
 }
