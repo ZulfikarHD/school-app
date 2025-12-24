@@ -7,9 +7,11 @@ import { useModal } from '@/composables/useModal';
 import { useSessionTimeout } from '@/composables/useSessionTimeout';
 import { dashboard, logout as logoutRoute } from '@/routes';
 import { index as adminUsersIndex } from '@/routes/admin/users';
+import { index as adminStudentsIndex } from '@/routes/admin/students';
 import { index as adminAuditLogsIndex } from '@/routes/admin/audit-logs';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { show as profileShow } from '@/routes/profile';
+import { index as parentChildrenIndex } from '@/routes/parent/children';
 import DialogModal from '@/components/ui/DialogModal.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import Alert from '@/components/ui/Alert.vue';
@@ -27,7 +29,8 @@ import {
     Settings,
     Bell,
     Search,
-    ChevronRight
+    ChevronRight,
+    GraduationCap
 } from 'lucide-vue-next';
 
 /**
@@ -60,13 +63,14 @@ const getRouteUrl = (routeName: string): string => {
     const routeMap: Record<string, string> = {
         'dashboard': dashboard().url,
         'admin.users.index': adminUsersIndex().url,
+        'admin.students.index': adminStudentsIndex().url,
         'admin.audit-logs.index': adminAuditLogsIndex().url,
         'audit-logs.index': auditLogsIndex().url,
         'profile.show': profileShow().url,
         'principal.reports': '/principal/reports',
         'teacher.classes': '/teacher/classes',
         'teacher.grades': '/teacher/grades',
-        'parent.children': '/parent/children',
+        'parent.children': parentChildrenIndex().url,
         'parent.payments': '/parent/payments',
     };
 
@@ -129,6 +133,7 @@ const menuItems = computed(() => {
         return [
             ...commonItems,
             { name: 'Manajemen User', route: 'admin.users.index', icon: Users },
+            { name: 'Data Siswa', route: 'admin.students.index', icon: GraduationCap },
             { name: 'Audit Log', route: 'admin.audit-logs.index', icon: Activity },
         ];
     }

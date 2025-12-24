@@ -13,6 +13,7 @@ interface DialogOptions {
     cancelText?: string;
     showCancel?: boolean;
     icon?: 'check' | 'warning' | 'error' | 'info' | 'question';
+    allowHtml?: boolean; // Enable sanitized HTML rendering
 }
 
 interface AlertOptions {

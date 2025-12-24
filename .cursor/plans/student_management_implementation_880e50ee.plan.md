@@ -399,5 +399,3 @@ student_status_history
 - `resources/js/pages/Parent/Children/Show.vue`
 - `resources/js/components/ui/StudentTable.vue`
 - `resources/js/components/ui/StudentForm.vue`
-- `resources/js/components/ui/StudentDetailTabs.vue`
-- `resources/js/components/ui/ParentFormSection.vue`

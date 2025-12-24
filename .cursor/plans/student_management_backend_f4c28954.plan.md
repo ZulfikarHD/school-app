@@ -286,4 +286,5 @@ $nis = $year . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 // 5. Return success count
 
 
+
 ```

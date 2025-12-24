@@ -12,7 +12,7 @@ alwaysApply: true
 ## 🎯 iOS Design Principles (Performance First)
 
 ### 1. Spring Physics (Selective)
-- Use `motion-v` sparingly.
+- Use `motion-v` sparingly (BUT DOESNT MEAN NOT AT ALL).
 - **DO NOT** animate long lists (>10 items) with complex springs.
 - **Preferred:** Simple Fade/Slide for page transitions.
 - **Spring Config:** Stiffness: 300, Damping: 25-30 (tighter, faster).
@@ -20,8 +20,9 @@ alwaysApply: true
 ### 2. Press Feedback (Crucial)
 - ALL clickable elements must respond.
 - **Buttons:** `:whileTap="{ scale: 0.97 }"`
+- **Primary Actions:** `bg-emerald-500 hover:bg-emerald-600` dengan `shadow-emerald-500/25`
 - **Cards/Lists:** `:whileHover="{ scale: 1.01 }"` (Desktop only)
-- **Mobile:** Active state `active:bg-gray-100`
+- **Mobile:** Active state `active:bg-slate-50`
 
 ### 3. "Fake Glass" (Performance Hack)
 Avoid heavy `backdrop-blur` which kills FPS on low-end Androids.
@@ -32,7 +33,8 @@ Avoid heavy `backdrop-blur` which kills FPS on low-end Androids.
 
 ### 4. Crisp Borders > Heavy Shadows
 Heavy shadows cause layout thrashing on mobile.
-- **Use:** `border border-gray-200 dark:border-gray-800` + `shadow-sm`
+- **Use:** `border border-slate-200 dark:border-zinc-800` + `shadow-sm`
+- **Accent Borders:** `border-emerald-200` untuk highlighted states
 - **Avoid:** Large spread shadows (`shadow-2xl`) on moving elements.
 
 ### 5. Haptic Feedback (The "Premium" Feel)
@@ -47,13 +49,66 @@ haptics.heavy();    // 40ms - Delete, Error
 ### 6. Typography & Clarity
 - **Font:** System Sans (San Francisco/Roboto) for 0ms load time.
 - **Whitespace:** Use generous padding (`p-4`, `p-6`) to let content breathe.
-- **Text:** High contrast. `text-gray-900` for primary, `text-gray-500` for secondary.
+- **Text:** High contrast. `text-slate-900` for primary, `text-slate-500` for secondary.
+- **Labels:** Uppercase `text-[11px] font-semibold tracking-wide` untuk form labels.
 
 ---
 
 ## 🎭 Reusable Components (Standard)
 
 **Path:** `resources/js/components/ui/`
+
+### Form Components (Emerald Accent)
+
+**Path:** `resources/js/components/ui/Form/`
+
+Semua form components menggunakan emerald accent dengan refined aesthetic:
+
+```vue
+<FormInput
+  v-model="form.name"
+  label="Nama Lengkap"
+  placeholder="Masukkan nama"
+  :error="form.errors.name"
+  :icon="User"
+  required
+/>
+
+<FormSelect
+  v-model="form.category"
+  label="Kategori"
+  :options="categories"
+  :error="form.errors.category"
+/>
+
+<FormTextarea
+  v-model="form.description"
+  label="Deskripsi"
+  :rows="4"
+  :error="form.errors.description"
+/>
+
+<FormNumberInput
+  v-model="form.quantity"
+  label="Jumlah"
+  :min="1"
+  :max="100"
+/>
+
+<FormCheckbox
+  v-model="form.agree"
+  label="Setuju dengan syarat"
+  description="Dengan mencentang ini, Anda menyetujui..."
+/>
+```
+
+**Design Specs:**
+- Background: `bg-slate-50/80` (unfocused) → `bg-white` (focused)
+- Border: `border-slate-200` → `border-emerald-500/50` (focused)
+- Ring: `ring-2 ring-emerald-500/20` on focus
+- Height: `h-[52px]` untuk consistency
+- Radius: `rounded-xl`
+- Label: Uppercase, 11px, semibold, tracking-wide
 
 ### useModal (RECOMMENDED)
 ```ts
@@ -86,9 +141,39 @@ const ok = await modal.confirm('Simpan Data?');
 - **Images:** `loading="lazy"`, proper sizing.
 
 ### Style Guide
-- **Colors:** `blue-600` (Primary), `gray-50` (Background).
+- **Colors:** `emerald-500` (Primary Accent), `slate-50/80` (Background), `slate-600` (Text Secondary).
+- **Focus States:** `border-emerald-500/50` + `ring-2 ring-emerald-500/20` untuk input fields.
 - **Dark Mode:** `dark:bg-zinc-950`, `dark:border-zinc-800`.
-- **Radius:** `rounded-2xl` (Modern) or `rounded-xl`.
+- **Radius:** `rounded-xl` (Refined) or `rounded-2xl` (Cards/Containers).
+
+---
+
+## 🎨 Color Palette Reference
+
+### Primary Accent (Emerald/Teal)
+- **Main:** `emerald-500` - Primary actions, focus states, icons
+- **Hover:** `emerald-600` - Button hover states
+- **Light:** `emerald-50/50` - Subtle backgrounds, highlights
+- **Border:** `emerald-200` - Accent borders
+- **Shadow:** `shadow-emerald-500/20` - Subtle elevation
+
+### Neutrals (Slate)
+- **Background:** `slate-50/80` - Form fields, cards
+- **Border:** `slate-200` - Default borders
+- **Text Primary:** `slate-900` - Headings, important text
+- **Text Secondary:** `slate-500` - Descriptions, hints
+- **Text Tertiary:** `slate-400` - Placeholders, disabled
+
+### Semantic Colors
+- **Success:** `emerald-500` (consistent with primary)
+- **Warning:** `amber-500`
+- **Error:** `red-500`
+- **Info:** `sky-500`
+
+### Gradients (Minimal Use)
+- **Primary:** `bg-linear-to-br from-emerald-500 to-teal-600`
+- **Sky:** `bg-linear-to-br from-sky-500 to-blue-600`
+- **Rose:** `bg-linear-to-br from-rose-500 to-pink-600`
 
 ---
 
@@ -101,8 +186,10 @@ const ok = await modal.confirm('Simpan Data?');
 - [ ] Skeleton loading for data fetching
 - [ ] Text contrast checked (Legibility)
 - [ ] Mobile test on low-end device simulation
+- [ ] Emerald accent used consistently for primary actions
+- [ ] Form components use refined aesthetic (slate bg, emerald focus)
 - [ ] `yarn run lint` & `yarn run build`
 
 ---
 
-**Formula:** Snappy Interactions + Haptic + High Contrast = Premium User Trust
+**Formula:** Snappy Interactions + Haptic + Emerald Accent + High Contrast = Premium User Trust

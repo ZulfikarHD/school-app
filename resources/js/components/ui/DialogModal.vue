@@ -20,6 +20,8 @@ interface Props {
     showCancel?: boolean;
     loading?: boolean;
     icon?: 'check' | 'warning' | 'error' | 'info' | 'question';
+    // Safe HTML rendering - only for trusted, sanitized content
+    allowHtml?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -29,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
     cancelText: 'Batal',
     showCancel: true,
     loading: false,
+    allowHtml: false, // Default to safe mode
 });
 
 const emit = defineEmits<{
@@ -38,6 +41,29 @@ const emit = defineEmits<{
 }>();
 
 const haptics = useHaptics();
+
+/**
+ * Sanitize HTML untuk keamanan - hanya allow basic formatting tags
+ * Mencegah XSS attacks dengan whitelist approach
+ */
+const sanitizedMessage = computed(() => {
+    if (!props.allowHtml) {
+        return props.message; // Return as-is for text interpolation
+    }
+
+    // Whitelist: hanya allow safe HTML tags untuk formatting
+    const allowedTags = ['b', 'strong', 'i', 'em', 'u', 'br'];
+    const tagPattern = new RegExp(`<(?!\/?(${allowedTags.join('|')})\\b)[^>]*>`, 'gi');
+
+    // Remove semua tags kecuali yang di whitelist
+    let sanitized = props.message.replace(tagPattern, '');
+
+    // Escape potential XSS dalam attributes (jaga-jaga)
+    sanitized = sanitized.replace(/on\w+\s*=\s*["'][^"']*["']/gi, '');
+    sanitized = sanitized.replace(/javascript:/gi, '');
+
+    return sanitized;
+});
 
 /**
  * Computed styling berdasarkan dialog type
@@ -185,15 +211,18 @@ const handleCancel = () => {
                 </h3>
             </Motion>
 
-            <!-- Message dengan fade in -->
+            <!-- Message dengan fade in - Conditional rendering untuk keamanan -->
             <Motion
                 :initial="{ opacity: 0, y: 10 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ delay: 0.25 }"
             >
-                <p class="mb-6 text-gray-600 dark:text-gray-400">
+                <!-- Safe mode: text interpolation (default) -->
+                <p v-if="!allowHtml" class="mb-6 text-gray-600 dark:text-gray-400">
                     {{ message }}
                 </p>
+                <!-- HTML mode: sanitized content only -->
+                <p v-else class="mb-6 text-gray-600 dark:text-gray-400" v-html="sanitizedMessage"></p>
             </Motion>
 
             <!-- Action Buttons dengan staggered animation -->
