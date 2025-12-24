@@ -408,8 +408,406 @@ Sistem verify authorization untuk child yang diklik
 
 ---
 
+## Journey 7: TU Assign Single Student to Class (US-AD03-001)
+
+**Actor:** TU/Admin  
+**Goal:** Memindahkan satu siswa ke kelas baru dengan riwayat lengkap  
+**Precondition:** User sudah login, siswa sudah terdaftar, kelas tujuan tersedia
+
+### Happy Path
+
+```
+1. TU login → Navigate to /admin/students
+   ↓
+2. TU klik nama siswa → Detail page (/admin/students/{id})
+   ↓
+3. Sistem tampilkan StudentDetailTabs:
+   - Tab Biodata active
+   - Tab Riwayat
+   - Tab Orang Tua
+   - Button "Pindah Kelas" visible (emerald, icon ArrowRightLeft)
+   ↓
+4. TU klik button "Pindah Kelas"
+   ↓
+5. Sistem buka AssignClassModal:
+   - Title: "Pindah Kelas Siswa"
+   - Kelas Saat Ini: 1A (read-only, gray badge)
+   - Dropdown Kelas Tujuan: [1B, 1C, 2A, 2B, ...] (all active classes)
+   - Textarea Catatan: (optional, max 255 chars)
+   - Button "Batal" (secondary)
+   - Button "Simpan" (primary, emerald)
+   ↓
+6. TU pilih Kelas Tujuan: 2A
+   ↓
+7. TU isi Catatan: "Naik kelas berdasarkan nilai"
+   ↓
+8. TU klik "Simpan"
+   ↓
+9. Sistem proses:
+   - Validate: kelas_id exists, not same as current
+   - Begin transaction
+   - Insert student_class_history:
+     • student_id: 1
+     • kelas_id: 12 (2A)
+     • tahun_ajaran: 2024/2025
+     • wali_kelas: "Ibu Siti" (auto from SchoolClass.waliKelas)
+     • notes: "Naik kelas berdasarkan nilai"
+   - Update students.kelas_id = 12
+   - Create activity_log
+   - Commit transaction
+   ↓
+10. Sistem response:
+    - Haptic feedback (medium vibration)
+    - Success toast: "Siswa berhasil dipindahkan ke kelas 2A"
+    - Modal close
+    - Page reload dengan data terbaru
+    ↓
+11. TU verify:
+    - Kelas Saat Ini: 2A (updated)
+    - Tab Riwayat → New entry:
+      "2024/2025 - Kelas 2A - Ibu Siti - Naik kelas berdasarkan nilai"
+```
+
+### Alternative Flow 1: Same Class Selected
+
+```
+6. TU pilih Kelas Tujuan: 1A (same as current)
+   ↓
+7. TU klik "Simpan"
+   ↓
+8. Sistem skip history insert (BR-AD03-02)
+   - Show info toast: "Siswa sudah berada di kelas tersebut"
+   - Modal tetap open untuk re-select
+```
+
+### Alternative Flow 2: Validation Error
+
+```
+8. Sistem validate → kelas_id invalid
+   ↓
+9. Sistem response:
+   - Error toast: "Kelas tujuan tidak ditemukan"
+   - Form tetap open, highlight field dengan error
+   - TU dapat retry
+```
+
+---
+
+## Journey 8: TU Bulk Assign Students to Class (US-AD03-002)
+
+**Actor:** TU/Admin  
+**Goal:** Memindahkan multiple siswa sekaligus ke kelas yang sama  
+**Precondition:** User sudah login, ada siswa yang perlu dipindahkan
+
+### Happy Path
+
+```
+1. TU login → Navigate to /admin/students
+   ↓
+2. Sistem tampilkan StudentTable dengan checkbox column
+   - Checkbox di header (Select All)
+   - Checkbox per row siswa
+   ↓
+3. TU check 5 siswa:
+   - Ahmad Zaki (1A)
+   - Siti Aisyah (1A)
+   - Budi Santoso (1B)
+   - Dewi Lestari (1B)
+   - Eko Prasetyo (1C)
+   ↓
+4. Sistem tampilkan selection bar (sticky header):
+   - "5 Siswa Dipilih"
+   - Button "Batal Memilih" (X icon)
+   - Button "Pindah Kelas" (emerald, ArrowRightLeft icon)
+   ↓
+5. TU klik "Pindah Kelas"
+   ↓
+6. Sistem buka AssignClassModal:
+   - Title: "Pindah Kelas (Bulk)"
+   - Count: "5 siswa dipilih"
+   - Dropdown Kelas Tujuan: [all active classes]
+   - Textarea Catatan: (optional)
+   ↓
+7. TU pilih Kelas Tujuan: 2A
+   ↓
+8. TU isi Catatan: "Reorganisasi kelas berdasarkan kapasitas"
+   ↓
+9. TU klik "Pindahkan"
+   ↓
+10. Sistem proses (loop through 5 students):
+    - Begin transaction
+    - For each student:
+      • Skip if kelas_id sama dengan kelas tujuan
+      • Insert student_class_history
+      • Update students.kelas_id
+    - Create activity_log dengan student_count: 5
+    - Commit transaction
+    ↓
+11. Sistem response:
+    - Haptic feedback (heavy vibration)
+    - Success toast: "5 siswa berhasil dipindahkan ke kelas 2A"
+    - Modal close
+    - Clear selection
+    - Page reload
+    ↓
+12. TU verify di table:
+    - All 5 siswa now show "2A" di kolom Kelas
+```
+
+---
+
+## Journey 9: TU Bulk Promote Students via Wizard (US-AD04-001)
+
+**Actor:** TU/Admin  
+**Goal:** Menaikkan siswa ke kelas berikutnya secara massal (naik kelas tahunan)  
+**Precondition:** User sudah login, ada siswa yang siap naik kelas, kelas tujuan tersedia
+
+### Happy Path - Full Wizard Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 1: PILIH TAHUN AJARAN                                  │
+└─────────────────────────────────────────────────────────────┘
+
+1. TU navigate to /admin/students
+   ↓
+2. TU klik button "Naik Kelas" (sky blue, GraduationCap icon)
+   - Button position: Sebelah "Export" dan "Tambah Siswa"
+   ↓
+3. Sistem redirect ke /admin/students/promote
+   ↓
+4. Sistem render Promote page:
+   - Header: "Naik Kelas Siswa"
+   - Info card (sky blue) dengan panduan:
+     • "Pilih tahun ajaran asal dan tujuan"
+     • "Pilih kelas asal dan tujuan"
+     • "Preview dan pilih siswa"
+   - PromoteWizard component loaded
+   ↓
+5. Wizard Step 1 active:
+   - Progress indicator: Step 1 (emerald), Step 2-3 (gray)
+   - Form fields:
+     • Tahun Ajaran Asal: Dropdown
+       Options: [2023/2024, 2024/2025, 2025/2026]
+     • Tahun Ajaran Tujuan: Dropdown
+       Options: [2023/2024, 2024/2025, 2025/2026]
+   - Button "Lanjut" (disabled)
+   ↓
+6. TU select Tahun Ajaran Asal: 2024/2025
+   - Dropdown closes dengan animation
+   - Field shows selected value
+   ↓
+7. TU select Tahun Ajaran Tujuan: 2025/2026
+   - Form validation passes
+   - Button "Lanjut" enabled (emerald, no opacity)
+   ↓
+8. TU klik "Lanjut"
+   - Haptic feedback (light vibration)
+   - Step 1 shows checkmark icon
+   - Step 2 becomes active (emerald border)
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 2: PILIH KELAS                                         │
+└─────────────────────────────────────────────────────────────┘
+
+9. Wizard Step 2 active:
+   - Progress: Step 1 (✓), Step 2 (emerald), Step 3 (gray)
+   - Form fields:
+     • Kelas Asal: Dropdown
+       Options: Filtered by tahun_ajaran = 2024/2025
+       [1A, 1B, 1C, 2A, 2B, 2C, ..., 6A, 6B]
+     • Kelas Tujuan: Dropdown (disabled initially)
+   - Button "Kembali" (visible, left)
+   - Button "Lanjut" (disabled, right)
+   ↓
+10. TU select Kelas Asal: 1A
+    - System fetch tingkat = 1 from SchoolClass
+    - Kelas Tujuan dropdown enabled
+    - Auto-filter: tingkat = 2 AND tahun_ajaran = 2025/2026
+    - Options: [2A, 2B, 2C]
+    ↓
+11. TU select Kelas Tujuan: 2A
+    - Form validation passes
+    - Button "Lanjut" enabled
+    ↓
+12. TU klik "Lanjut"
+    - Haptic feedback
+    - Step 2 shows checkmark
+    - Step 3 becomes active
+    - Loading spinner visible
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 3: PREVIEW & KONFIRMASI                                │
+└─────────────────────────────────────────────────────────────┘
+
+13. System fetch students:
+    - API call: GET /admin/students?kelas_id=5&per_page=1000
+    - Response: 28 students from kelas 1A
+    ↓
+14. Wizard Step 3 active:
+    - Progress: All steps emerald
+    - Header info:
+      • "28 dari 28 siswa"
+      • "1A → 2A"
+    - "Pilih Semua Siswa" checkbox (checked by default)
+    - Student list (scrollable, max-height 400px):
+      Row 1: [✓] Ahmad Zaki - NIS: 2024001 - L
+      Row 2: [✓] Siti Aisyah - NIS: 2024002 - P
+      Row 3: [✓] Budi Santoso - NIS: 2024003 - L
+      ... (25 more)
+    - Button "Kembali" (left)
+    - Button "Proses Naik Kelas" (emerald, Check icon)
+    ↓
+15. TU review list → Notice 3 siswa tidak naik kelas:
+    - TU uncheck Row 5: Dewi Lestari (tinggal kelas)
+    - TU uncheck Row 12: Eko Prasetyo (pindah sekolah)
+    - TU uncheck Row 20: Fitri Handayani (sakit berkepanjangan)
+    ↓
+16. Counter update: "25 dari 28 siswa"
+    - Visual feedback: Unchecked rows bg-gray
+    - Button tetap enabled (selection > 0)
+    ↓
+17. TU klik "Proses Naik Kelas"
+    ↓
+18. System show confirmation modal:
+    - Type: warning
+    - Icon: question mark
+    - Title: "Konfirmasi Naik Kelas"
+    - Message: "Yakin ingin menaikkan **25 siswa** dari kelas **1A** ke kelas **2A**?"
+    - Button "Batal" (secondary)
+    - Button "Ya, Proses" (primary, emerald)
+    ↓
+19. TU klik "Ya, Proses"
+    ↓
+20. System process (backend):
+    - POST /admin/students/promote
+    - Payload:
+      {
+        "student_ids": [1,2,3,4,6,7,8,9,10,11,13,...,28],
+        "kelas_id_baru": 12,
+        "tahun_ajaran_baru": "2025/2026"
+      }
+    - Service: bulkPromoteStudents()
+      • Begin transaction
+      • Loop 25 students:
+        - Insert student_class_history (kelas_id: 12, tahun: 2025/2026, wali: "Ibu Siti")
+        - Update students.kelas_id = 12
+      • Create activity_log (student_count: 25)
+      • Commit transaction
+    ↓
+21. System response:
+    - Haptic feedback (heavy vibration)
+    - Success modal: "Berhasil menaikkan 25 siswa ke kelas 2A!"
+    - Wizard reset to Step 1 (atau redirect ke /admin/students)
+    ↓
+22. TU verify di /admin/students:
+    - Filter Kelas: 2A
+    - 25 siswa baru muncul di kelas 2A
+    - 3 siswa tetap di kelas 1A (yang di-uncheck)
+```
+
+### Alternative Flow 1: No Target Class Available
+
+```
+10. TU select Kelas Asal: 6A (tingkat 6)
+    ↓
+11. System auto-filter: tingkat = 7 (tidak ada)
+    - Kelas Tujuan dropdown empty
+    - Warning message: "Tidak ada kelas tujuan yang tersedia untuk tingkat berikutnya"
+    - Button "Lanjut" disabled
+    ↓
+12. TU harus klik "Kembali" atau pilih kelas lain
+```
+
+### Alternative Flow 2: Empty Class
+
+```
+13. System fetch students dari kelas 5B
+    - Response: 0 students (empty array)
+    ↓
+14. Step 3 shows empty state:
+    - Icon: Users (gray)
+    - Message: "Tidak ada siswa di kelas ini"
+    - Button "Proses Naik Kelas" disabled
+    ↓
+15. TU must go back and select different class
+```
+
+### Alternative Flow 3: All Students Unchecked
+
+```
+15. TU uncheck "Pilih Semua Siswa"
+    - All 28 checkboxes unchecked
+    - Counter: "0 dari 28 siswa"
+    - Button "Proses Naik Kelas" disabled (opacity 50%)
+    ↓
+16. TU cannot proceed until at least 1 student checked
+```
+
+### Alternative Flow 4: Submit Error
+
+```
+20. System process → Server error (500)
+    ↓
+21. System response:
+    - Error modal: "Gagal memproses naik kelas"
+    - Transaction rollback (no partial data)
+    - Form state preserved (selections intact)
+    - TU can retry with same selections
+```
+
+### Mobile UX Optimizations
+
+```
+- Progress steps: Stack vertically on mobile (< 768px)
+- Form inputs: Full width dengan proper touch targets (44px min)
+- Student list: Optimized scrolling dengan virtual scroll (if > 100 items)
+- Buttons: Touch-friendly spacing (16px gap minimum)
+- "Naik Kelas" button di Index page: Icon only dengan tooltip
+```
+
+---
+
+## Journey 10: Principal Monitor Bulk Promote Activity
+
+**Actor:** Kepala Sekolah  
+**Goal:** Monitoring aktivitas naik kelas massal untuk audit  
+**Precondition:** TU sudah melakukan bulk promote
+
+### Happy Path
+
+```
+1. Principal login → Dashboard
+   ↓
+2. Principal navigate to Audit Logs
+   ↓
+3. Principal filter by action: "bulk_promote_students"
+   ↓
+4. Sistem tampilkan activity logs:
+   Row 1: 
+   - User: TU Siti (Admin)
+   - Action: Bulk Promote Students
+   - Time: 24 Des 2025, 10:30 WIB
+   - Details: "25 siswa dipindahkan ke kelas 2A"
+   - Metadata: {student_count: 25, kelas_id_baru: 12, tahun_ajaran: "2025/2026"}
+   - Status: Success
+   ↓
+5. Principal klik "View Details" → Modal dengan:
+   - List student IDs yang dipromote
+   - Kelas asal dan tujuan
+   - Timestamp detail
+```
+
+---
+
 ## Related Documentation
 
-- **Feature Documentation:** [STD Student Management](../features/admin/STD-student-management.md)
+- **Feature Documentation:** 
+  - [STD Student Management](../features/admin/STD-student-management.md)
+  - [AD03 Assign Student to Class](../features/admin/AD03-assign-student-to-class.md)
+  - [AD04 Bulk Promote Students](../features/admin/AD04-bulk-promote-students.md)
 - **API Documentation:** [Students API](../api/students.md)
-- **Test Plan:** [STD Test Plan](../testing/STD-test-plan.md)
+- **Test Plans:**
+  - [STD Test Plan](../testing/STD-test-plan.md)
+  - [AD03 Test Plan](../testing/AD03-assign-class-test-plan.md)
+  - [AD04 Test Plan](../testing/AD04-bulk-promote-test-plan.md)

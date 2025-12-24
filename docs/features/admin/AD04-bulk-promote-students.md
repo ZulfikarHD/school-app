@@ -15,6 +15,7 @@
 - [x] Following DOCUMENTATION_GUIDE.md template
 - [x] Frontend build success: `yarn run build`
 - [x] Linter passed for new files
+- [x] **All 21 Feature Tests Passing** (BulkPromoteTest)
 
 ---
 
@@ -233,10 +234,40 @@ public function bulkPromoteStudents(
 
 ---
 
+## Testing
+
+**Automated Tests:** 21 Feature Tests - 100% Passing ✅
+
+**Test File:** `tests/Feature/Student/BulkPromoteTest.php`
+
+**Test Coverage:**
+- ✅ Admin dapat view promote page
+- ✅ Admin dapat promote multiple students
+- ✅ Admin dapat promote single student
+- ✅ Validation: student_ids required, must be array, min:1
+- ✅ Validation: kelas_id_baru required
+- ✅ Validation: tahun_ajaran_baru required dengan format valid
+- ✅ Validation: wali_kelas optional
+- ✅ Authorization: Non-admin & unauthenticated blocked
+- ✅ History records created untuk setiap student
+- ✅ Activity log dengan metadata lengkap
+- ✅ Large batch handling (50 students)
+- ✅ Duplicate student_ids handling
+- ✅ Superadmin access granted
+- ✅ Parent access blocked
+
+**Run Tests:**
+```bash
+php artisan test --filter=BulkPromoteTest
+```
+
+---
+
 ## Related Documentation
 
 - **Feature Documentation (Prerequisite):** [AD03 - Assign Student to Class](./AD03-assign-student-to-class.md)
 - **Test Plan:** [AD04 Test Plan](../../testing/AD04-bulk-promote-test-plan.md)
+- **User Journeys:** [Student Management User Journeys](../../guides/student-management-user-journeys.md) (Journey 9)
 - **API Documentation:** [Students API](../../api/students.md)
 - **Student Management Overview:** [Student Management](./STD-student-management.md)
 
