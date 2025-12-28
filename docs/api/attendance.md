@@ -1,502 +1,444 @@
-# API Documentation: Attendance Management
+# Attendance API Documentation
+
+**Last Updated:** 2025-12-28  
+**Version:** 1.0
+
+---
 
 ## Overview
 
-API untuk mengelola attendance siswa dan guru yang mencakup daily attendance, subject attendance, leave requests, dan teacher clock in/out dengan GPS tracking untuk transparansi dan akurasi data kehadiran.
-
-Base URL: `{APP_URL}`
+API documentation untuk sistem attendance management yang mencakup daily attendance input, teacher clock in/out, dan leave request management.
 
 ---
 
 ## Authentication
 
-Semua endpoint memerlukan authentication Laravel Sanctum/Session:
+Semua endpoint memerlukan authentication via Laravel session dan CSRF token.
+
+```http
+Headers:
+  X-CSRF-TOKEN: {csrf_token}
+  Cookie: laravel_session={session_id}
 ```
-Cookie: laravel_session=...
-X-CSRF-TOKEN: ...
+
+---
+
+## Teacher Attendance Endpoints
+
+### 1. Get Attendance Form
+
+**Endpoint:** `GET /teacher/attendance/daily`  
+**Name:** `teacher.attendance.daily.create`  
+**Middleware:** `auth`, `role:TEACHER`
+
+**Response:**
+```json
+{
+  "title": "Input Presensi Harian",
+  "classes": [
+    {
+      "id": 1,
+      "tingkat": 4,
+      "nama": "A",
+      "nama_lengkap": "Kelas 4A",
+      "tahun_ajaran": "2024/2025",
+      "jumlah_siswa": 30
+    }
+  ]
+}
 ```
 
 ---
 
-## Endpoints
+### 2. Store Daily Attendance
 
-### Teacher: Student Attendance
-
-#### 1. View Attendance List
-
-Menampilkan daftar attendance records untuk monitoring.
-
-**Endpoint:** `GET /teacher/attendance`
-
-**Authorization:** `role:TEACHER`
-
-**Response:** Inertia page (`Teacher/Attendance/Index`)
-
----
-
-#### 2. Show Daily Attendance Form
-
-Form untuk input attendance harian.
-
-**Endpoint:** `GET /teacher/attendance/daily`
-
-**Authorization:** `role:TEACHER`
-
-**Response:** Inertia page (`Teacher/Attendance/Create`)
-
----
-
-#### 3. Store Daily Attendance
-
-Menyimpan attendance harian untuk multiple siswa.
-
-**Endpoint:** `POST /teacher/attendance/daily`
-
-**Authorization:** `role:TEACHER` + must be wali kelas or teach in class
+**Endpoint:** `POST /teacher/attendance/daily`  
+**Name:** `teacher.attendance.daily.store`  
+**Middleware:** `auth`, `role:TEACHER`
 
 **Request Body:**
 ```json
 {
   "class_id": 1,
-  "tanggal": "2025-12-24",
+  "tanggal": "2025-12-28",
   "attendances": [
     {
-      "student_id": 10,
+      "student_id": 1,
       "status": "H",
       "keterangan": null
     },
     {
-      "student_id": 11,
-      "status": "I",
-      "keterangan": "Izin sakit"
-    },
-    {
-      "student_id": 12,
+      "student_id": 2,
       "status": "A",
-      "keterangan": null
+      "keterangan": "Tidak ada kabar"
     }
   ]
 }
 ```
 
 **Validation Rules:**
+- `class_id`: required, exists:classes,id
+- `tanggal`: required, date, before_or_equal:today
+- `attendances`: required, array, min:1
+- `attendances.*.student_id`: required, exists:students,id
+- `attendances.*.status`: required, in:H,I,S,A
+- `attendances.*.keterangan`: nullable, string, max:500
 
-| Field | Type | Required | Rules |
-|-------|------|----------|-------|
-| class_id | integer | Yes | exists:classes,id |
-| tanggal | string | Yes | date, before_or_equal:today |
-| attendances | array | Yes | min:1 |
-| attendances.*.student_id | integer | Yes | exists:students,id |
-| attendances.*.status | string | Yes | in:H,I,S,A |
-| attendances.*.keterangan | string | No | max:500 |
-
-**Response:** `302 Redirect`
+**Success Response (302):**
 ```
-Redirect to: teacher.attendance.index
-Flash: "Berhasil menyimpan presensi untuk {count} siswa."
+Redirect to: /teacher/attendance
+Flash Message: "Berhasil menyimpan presensi untuk 30 siswa."
 ```
 
-**Error Response:** `422 Unprocessable Entity`
+**Error Response (403):**
 ```json
 {
-  "message": "The attendances.0.status field must be one of: H, I, S, A.",
-  "errors": {
-    "attendances.0.status": [
-      "Status hanya boleh H (Hadir), I (Izin), S (Sakit), atau A (Alpha)."
-    ]
+  "message": "Anda tidak memiliki akses untuk input attendance kelas ini."
+}
+```
+
+---
+
+### 3. Get Students by Class
+
+**Endpoint:** `GET /teacher/api/classes/{classId}/students`  
+**Name:** `teacher.api.classes.students`  
+**Middleware:** `auth`, `role:TEACHER`
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "nis": "2024001",
+      "nama_lengkap": "Ahmad Fauzi",
+      "jenis_kelamin": "L",
+      "kelas_id": 1,
+      "status": "aktif"
+    }
+  ]
+}
+```
+
+---
+
+## Teacher Clock Endpoints
+
+### 1. Get Clock Status
+
+**Endpoint:** `GET /teacher/clock/status`  
+**Name:** `teacher.clock.status`  
+**Middleware:** `auth`, `role:TEACHER`
+
+**Response:**
+```json
+{
+  "data": {
+    "is_clocked_in": true,
+    "is_clocked_out": false,
+    "clock_in": "07:15:34",
+    "clock_out": null,
+    "status": "TERLAMBAT",
+    "is_late": true,
+    "duration": null
   }
 }
 ```
 
 ---
 
-### Teacher: Subject Attendance
+### 2. Clock In
 
-#### 4. Show Subject Attendance Form
-
-Form untuk input attendance per mata pelajaran.
-
-**Endpoint:** `GET /teacher/attendance/subject`
-
-**Authorization:** `role:TEACHER`
-
-**Response:** Inertia page with teacher schedule
-
----
-
-#### 5. Store Subject Attendance
-
-Menyimpan attendance per mata pelajaran untuk satu sesi.
-
-**Endpoint:** `POST /teacher/attendance/subject`
-
-**Authorization:** `role:TEACHER` + must teach subject in class
+**Endpoint:** `POST /teacher/clock/in`  
+**Name:** `teacher.clock.in`  
+**Middleware:** `auth`, `role:TEACHER`
 
 **Request Body:**
 ```json
 {
-  "class_id": 1,
-  "subject_id": 3,
-  "tanggal": "2025-12-24",
-  "jam_ke": 2,
-  "attendances": [
-    {
-      "student_id": 10,
-      "status": "H",
-      "keterangan": null
-    }
-  ]
+  "latitude": -6.2088,
+  "longitude": 106.8456
 }
 ```
 
 **Validation Rules:**
+- `latitude`: required, numeric, between:-90,90
+- `longitude`: required, numeric, between:-180,180
 
-| Field | Type | Required | Rules |
-|-------|------|----------|-------|
-| class_id | integer | Yes | exists:classes,id |
-| subject_id | integer | Yes | exists:subjects,id |
-| tanggal | string | Yes | date, before_or_equal:today |
-| jam_ke | integer | Yes | min:1, max:10 |
-| attendances | array | Yes | min:1 |
-| attendances.*.student_id | integer | Yes | exists:students,id |
-| attendances.*.status | string | Yes | in:H,I,S,A |
-
-**Response:** `302 Redirect` with success message
-
----
-
-### Teacher: Clock In/Out
-
-#### 6. Clock In
-
-Teacher clock in dengan GPS coordinates.
-
-**Endpoint:** `POST /teacher/clock/in`
-
-**Authorization:** `role:TEACHER`
-
-**Content-Type:** `application/json`
-
-**Request Body:**
-```json
-{
-  "latitude": -6.200000,
-  "longitude": 106.816666
-}
-```
-
-**Validation Rules:**
-
-| Field | Type | Required | Rules |
-|-------|------|----------|-------|
-| latitude | numeric | Yes | between:-90,90 |
-| longitude | numeric | Yes | between:-180,180 |
-
-**Response:** `200 OK`
+**Success Response (200):**
 ```json
 {
   "success": true,
   "message": "Berhasil clock in",
   "data": {
-    "clock_in": "07:15:30",
-    "status": "HADIR",
-    "is_late": false
+    "clock_in": "07:15:34",
+    "status": "TERLAMBAT",
+    "is_late": true
   }
 }
 ```
 
-**Error Response:** `400 Bad Request`
+**Error Response (400):**
 ```json
 {
   "success": false,
-  "message": "Anda sudah clock in hari ini."
+  "message": "Anda sudah clock in hari ini"
 }
 ```
 
 ---
 
-#### 7. Clock Out
+### 3. Clock Out
 
-Teacher clock out dengan GPS coordinates.
-
-**Endpoint:** `POST /teacher/clock/out`
-
-**Authorization:** `role:TEACHER`
+**Endpoint:** `POST /teacher/clock/out`  
+**Name:** `teacher.clock.out`  
+**Middleware:** `auth`, `role:TEACHER`
 
 **Request Body:**
 ```json
 {
-  "latitude": -6.200000,
-  "longitude": 106.816666
+  "latitude": -6.2088,
+  "longitude": 106.8456
 }
 ```
 
-**Response:** `200 OK`
+**Success Response (200):**
 ```json
 {
   "success": true,
   "message": "Berhasil clock out",
   "data": {
-    "clock_in": "07:15:30",
-    "clock_out": "14:30:00",
-    "duration": "7 jam 14 menit"
+    "clock_out": "15:30:00",
+    "duration": "08:14:26"
   }
 }
 ```
 
 ---
 
-#### 8. Check Clock Status
+## Parent Leave Request Endpoints
 
-Mendapatkan status clock in hari ini untuk widget.
+### 1. Get Leave Requests
 
-**Endpoint:** `GET /teacher/clock/status`
+**Endpoint:** `GET /parent/leave-requests`  
+**Name:** `parent.leave-requests.index`  
+**Middleware:** `auth`, `role:PARENT`
 
-**Authorization:** `role:TEACHER`
-
-**Response:** `200 OK`
+**Response:**
 ```json
 {
-  "is_clocked_in": true,
-  "attendance": {
-    "id": 45,
-    "teacher_id": 5,
-    "tanggal": "2025-12-24",
-    "clock_in": "07:15:30",
-    "clock_out": null,
-    "status": "HADIR",
-    "is_late": false
-  }
+  "title": "Riwayat Permohonan Izin",
+  "leaveRequests": [
+    {
+      "id": 1,
+      "student_id": 15,
+      "jenis": "SAKIT",
+      "tanggal_mulai": "2025-12-28",
+      "tanggal_selesai": "2025-12-29",
+      "alasan": "Demam tinggi 39°C",
+      "attachment_path": "leave-attachments/abc123.jpg",
+      "status": "PENDING",
+      "created_at": "2025-12-28T06:30:00.000000Z",
+      "student": {
+        "id": 15,
+        "nama_lengkap": "Ahmad Fauzi",
+        "kelas": {
+          "nama_lengkap": "Kelas 4A"
+        }
+      }
+    }
+  ]
 }
 ```
 
 ---
 
-### Teacher: Leave Verification
+### 2. Create Leave Request Form
 
-#### 9. View Leave Requests
+**Endpoint:** `GET /parent/leave-requests/create`  
+**Name:** `parent.leave-requests.create`  
+**Middleware:** `auth`, `role:PARENT`
 
-List permohonan izin untuk siswa di kelas yang diampu.
-
-**Endpoint:** `GET /teacher/leave-requests`
-
-**Authorization:** `role:TEACHER`
-
-**Response:** Inertia page dengan pending leave requests
-
----
-
-#### 10. Approve/Reject Leave Request
-
-Approve atau reject permohonan izin.
-
-**Endpoint:** `POST /teacher/leave-requests/{leaveRequest}/approve`
-
-**Authorization:** `role:TEACHER` (wali kelas) or `role:ADMIN,PRINCIPAL`
-
-**Request Body:**
+**Response:**
 ```json
 {
-  "action": "approve",
-  "rejection_reason": null
+  "title": "Ajukan Permohonan Izin",
+  "children": [
+    {
+      "id": 15,
+      "nama_lengkap": "Ahmad Fauzi",
+      "kelas": {
+        "nama_lengkap": "Kelas 4A"
+      }
+    }
+  ]
 }
 ```
 
-OR
+---
 
+### 3. Store Leave Request
+
+**Endpoint:** `POST /parent/leave-requests`  
+**Name:** `parent.leave-requests.store`  
+**Middleware:** `auth`, `role:PARENT`
+
+**Request Body (multipart/form-data):**
+```
+student_id: 15
+jenis: SAKIT
+tanggal_mulai: 2025-12-28
+tanggal_selesai: 2025-12-29
+alasan: Demam tinggi 39°C
+attachment: [File]
+```
+
+**Validation Rules:**
+- `student_id`: required, exists:students,id
+- `jenis`: required, in:IZIN,SAKIT
+- `tanggal_mulai`: required, date, after_or_equal:today
+- `tanggal_selesai`: required, date, after_or_equal:tanggal_mulai
+- `alasan`: required, string, max:1000
+- `attachment`: nullable, file, max:2048, mimes:jpg,jpeg,png,pdf
+
+**Success Response (302):**
+```
+Redirect to: /parent/leave-requests
+Flash Message: "Permohonan izin berhasil diajukan dan menunggu persetujuan."
+```
+
+---
+
+## Teacher Leave Verification Endpoints
+
+### 1. Get Pending Leave Requests
+
+**Endpoint:** `GET /teacher/leave-requests`  
+**Name:** `teacher.leave-requests.index`  
+**Middleware:** `auth`, `role:TEACHER`
+
+**Response:**
+```json
+{
+  "title": "Verifikasi Permohonan Izin",
+  "leaveRequests": [
+    {
+      "id": 1,
+      "student": {
+        "nama_lengkap": "Ahmad Fauzi",
+        "kelas": {
+          "nama_lengkap": "Kelas 4A"
+        }
+      },
+      "jenis": "SAKIT",
+      "tanggal_mulai": "2025-12-28",
+      "tanggal_selesai": "2025-12-29",
+      "alasan": "Demam tinggi 39°C",
+      "attachment_path": "leave-attachments/abc123.jpg",
+      "status": "PENDING",
+      "submitted_by_user": {
+        "name": "Ibu Siti"
+      }
+    }
+  ]
+}
+```
+
+---
+
+### 2. Approve/Reject Leave Request
+
+**Endpoint:** `POST /teacher/leave-requests/{id}/approve`  
+**Name:** `teacher.leave-requests.approve`  
+**Middleware:** `auth`, `role:TEACHER`
+
+**Request Body (Approve):**
+```json
+{
+  "action": "approve"
+}
+```
+
+**Request Body (Reject):**
 ```json
 {
   "action": "reject",
-  "rejection_reason": "Tidak ada surat keterangan dokter"
+  "rejection_reason": "Dokumen tidak lengkap, mohon upload surat dokter"
 }
 ```
 
 **Validation Rules:**
+- `action`: required, in:approve,reject
+- `rejection_reason`: required_if:action,reject, string, max:1000
 
-| Field | Type | Required | Rules |
-|-------|------|----------|-------|
-| action | string | Yes | in:approve,reject |
-| rejection_reason | string | Conditional | required_if:action,reject, min:10, max:500 |
-
-**Response:** `302 Redirect`
+**Success Response (302):**
 ```
-Flash: "Permohonan izin berhasil disetujui." / "ditolak."
+Redirect to: /teacher/leave-requests
+Flash Message: "Permohonan izin berhasil disetujui." / "Permohonan izin berhasil ditolak."
 ```
 
-**Side Effect:** If approved, creates `StudentAttendance` records for date range with status I/S.
+**Auto-Sync Behavior (on approve):**
+- Creates `StudentAttendance` records for each date in range
+- Status set to 'I' (Izin) or 'S' (Sakit) based on `jenis`
+- Keterangan: "Auto-generated from leave request: {alasan}"
 
 ---
 
-### Parent: Leave Requests
+## Error Responses
 
-#### 11. View My Leave Requests
-
-List permohonan izin yang sudah diajukan.
-
-**Endpoint:** `GET /parent/leave-requests`
-
-**Authorization:** `role:PARENT`
-
-**Response:** Inertia page dengan leave requests history
-
----
-
-#### 12. Show Create Leave Form
-
-Form untuk ajukan permohonan izin baru.
-
-**Endpoint:** `GET /parent/leave-requests/create`
-
-**Authorization:** `role:PARENT`
-
-**Response:** Inertia page dengan list anak
-
----
-
-#### 13. Submit Leave Request
-
-Mengajukan permohonan izin/sakit untuk anak.
-
-**Endpoint:** `POST /parent/leave-requests`
-
-**Authorization:** `role:PARENT` + must be parent of student
-
-**Content-Type:** `multipart/form-data`
-
-**Request Body:**
-```
-student_id=10
-jenis=SAKIT
-tanggal_mulai=2025-12-25
-tanggal_selesai=2025-12-27
-alasan=Demam tinggi sejak semalam
-attachment=[FILE]
-```
-
-**Validation Rules:**
-
-| Field | Type | Required | Rules |
-|-------|------|----------|-------|
-| student_id | integer | Yes | exists:students,id |
-| jenis | string | Yes | in:IZIN,SAKIT |
-| tanggal_mulai | string | Yes | date, after_or_equal:today |
-| tanggal_selesai | string | Yes | date, after_or_equal:tanggal_mulai |
-| alasan | string | Yes | min:10, max:1000 |
-| attachment | file | No | mimes:pdf,jpg,jpeg,png, max:2048 |
-
-**Response:** `302 Redirect`
-```
-Redirect to: parent.leave-requests.index
-Flash: "Permohonan izin berhasil diajukan dan menunggu persetujuan."
-```
-
----
-
-### Admin: Reports
-
-#### 14. Student Attendance Report
-
-Rekap presensi siswa dengan filter.
-
-**Endpoint:** `GET /admin/attendance/students`
-
-**Authorization:** `role:SUPERADMIN,ADMIN`
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| class_id | integer | No | - | Filter by class |
-| date | string | No | - | Filter by date (Y-m-d) |
-| status | string | No | - | Filter by status (H/I/S/A) |
-| page | integer | No | 1 | Pagination |
-
-**Response:** Inertia page dengan paginated attendances
-
----
-
-#### 15. Teacher Attendance Report
-
-Rekap presensi guru.
-
-**Endpoint:** `GET /admin/attendance/teachers`
-
-**Authorization:** `role:SUPERADMIN,ADMIN`
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| date | string | No | today | Filter by date |
-| status | string | No | - | Filter by status |
-| is_late | boolean | No | - | Filter by lateness |
-| page | integer | No | 1 | Pagination |
-
-**Response:** Inertia page dengan summary statistics
-
----
-
-## Status Codes
-
-| Code | Description |
-|------|-------------|
-| 200 | OK - Request successful |
-| 302 | Redirect - Form submitted, redirecting |
-| 401 | Unauthorized - Not authenticated |
-| 403 | Forbidden - No permission |
-| 404 | Not Found - Resource not found |
-| 422 | Unprocessable Entity - Validation failed |
-| 500 | Internal Server Error |
-
----
-
-## Error Response Format
-
+### 400 Bad Request
 ```json
 {
-  "message": "The attendances.0.status field is required.",
+  "message": "Validation failed",
   "errors": {
-    "attendances.0.status": [
-      "Status attendance wajib diisi."
-    ]
+    "tanggal": ["Tanggal tidak boleh lebih dari hari ini."],
+    "attendances.0.status": ["Status hanya boleh H, I, S, atau A."]
   }
 }
 ```
 
----
+### 403 Forbidden
+```json
+{
+  "message": "Anda tidak memiliki akses untuk resource ini."
+}
+```
 
-## Attendance Status Values
+### 404 Not Found
+```json
+{
+  "message": "Resource tidak ditemukan."
+}
+```
 
-| Code | Label | Description |
-|------|-------|-------------|
-| H | Hadir | Student present |
-| I | Izin | Excused absence with permission |
-| S | Sakit | Sick leave |
-| A | Alpha | Unexcused absence |
-
----
-
-## Leave Request Status Values
-
-| Status | Description |
-|--------|-------------|
-| PENDING | Waiting for approval |
-| APPROVED | Approved by teacher/admin |
-| REJECTED | Rejected with reason |
-
----
-
-## Teacher Attendance Status Values
-
-| Status | Description |
-|--------|-------------|
-| HADIR | Present, on time |
-| TERLAMBAT | Present, but late (> 07:30) |
-| IZIN | Excused absence |
-| SAKIT | Sick leave |
-| ALPHA | Unexcused absence |
+### 422 Unprocessable Entity
+```json
+{
+  "message": "Terdapat siswa yang duplikat dalam daftar attendance."
+}
+```
 
 ---
 
-*Last Updated: 2025-12-24*
-*API Version: 1.0*
+## Rate Limiting
+
+| Endpoint Group | Limit | Window |
+|----------------|-------|--------|
+| Clock endpoints | 10 requests | 1 minute |
+| Attendance endpoints | 60 requests | 1 minute |
+| Leave request endpoints | 30 requests | 1 minute |
+
+---
+
+## File Storage
+
+**Leave Request Attachments:**
+- Path: `storage/app/public/leave-attachments/`
+- Public URL: `/storage/leave-attachments/{filename}`
+- Max Size: 2MB
+- Allowed Types: JPG, JPEG, PNG, PDF
+
+---
+
+**Last Updated:** 2025-12-28 21:45 WIB

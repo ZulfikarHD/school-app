@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
+import ClockWidget from '@/components/features/attendance/ClockWidget.vue';
 import { useHaptics } from '@/composables/useHaptics';
 
 /**
@@ -44,7 +45,12 @@ const handleCardClick = () => haptics.light();
             </Motion>
 
             <div class="mx-auto max-w-7xl px-6 py-8">
-                <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+                    <!-- Clock In/Out Widget (Full Width on Mobile, Span 2 columns on Desktop) -->
+                    <div class="sm:col-span-2">
+                        <ClockWidget :teacher-id="$page.props.auth.user.id" />
+                    </div>
+                    
                     <Motion
                         :initial="{ opacity: 0, y: 20, scale: 0.95 }"
                         :animate="{ opacity: 1, y: 0, scale: 1 }"

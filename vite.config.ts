@@ -24,4 +24,21 @@ export default defineConfig({
             formVariants: true,
         }),
     ],
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: false,
+        hmr: {
+            host: 'localhost',
+        },
+        cors: {
+            origin: '*',
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+            credentials: true,
+        },
+        watch: {
+            usePolling: true,
+        },
+    },
 });

@@ -21,26 +21,34 @@ class AttendanceController extends Controller
     /**
      * Display list attendance records untuk teacher
      * dengan filter berdasarkan kelas dan tanggal
-     *
-     * TODO Sprint 2: Implement UI dengan table attendance history
      */
     public function index(): Response
     {
+        $teacher = auth()->user();
+
+        // Get teacher's classes (wali kelas + kelas yang diajar)
+        $classes = $this->attendanceService->getTeacherClasses($teacher);
+
         return Inertia::render('Teacher/Attendance/Index', [
             'title' => 'Daftar Presensi Siswa',
+            'classes' => $classes,
         ]);
     }
 
     /**
      * Show form untuk input attendance harian
      * dengan list siswa dalam kelas yang dipilih
-     *
-     * TODO Sprint 2: Implement UI dengan form input per student
      */
     public function create(): Response
     {
+        $teacher = auth()->user();
+
+        // Get teacher's classes untuk dropdown selection
+        $classes = $this->attendanceService->getTeacherClasses($teacher);
+
         return Inertia::render('Teacher/Attendance/Create', [
             'title' => 'Input Presensi Harian',
+            'classes' => $classes,
         ]);
     }
 

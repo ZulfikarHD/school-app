@@ -30,7 +30,8 @@ import {
     Bell,
     Search,
     ChevronRight,
-    GraduationCap
+    GraduationCap,
+    CalendarCheck
 } from 'lucide-vue-next';
 
 /**
@@ -68,10 +69,11 @@ const getRouteUrl = (routeName: string): string => {
         'audit-logs.index': auditLogsIndex().url,
         'profile.show': profileShow().url,
         'principal.reports': '/principal/reports',
-        'teacher.classes': '/teacher/classes',
-        'teacher.grades': '/teacher/grades',
+        'teacher.attendance': '/teacher/attendance',
+        'teacher.leave-requests': '/teacher/leave-requests',
         'parent.children': parentChildrenIndex().url,
         'parent.payments': '/parent/payments',
+        'parent.leave-requests': '/parent/leave-requests',
     };
 
     return routeMap[routeName] || '#';
@@ -149,8 +151,8 @@ const menuItems = computed(() => {
     if (role === 'TEACHER') {
         return [
             ...commonItems,
-            { name: 'Kelas & Jadwal', route: 'teacher.classes', icon: BookOpen },
-            { name: 'Input Nilai', route: 'teacher.grades', icon: ClipboardList },
+            { name: 'Presensi Siswa', route: 'teacher.attendance', icon: CalendarCheck },
+            { name: 'Verifikasi Izin', route: 'teacher.leave-requests', icon: FileText },
         ];
     }
 
@@ -158,6 +160,7 @@ const menuItems = computed(() => {
         return [
             ...commonItems,
             { name: 'Data Anak', route: 'parent.children', icon: Users },
+            { name: 'Pengajuan Izin', route: 'parent.leave-requests', icon: FileText },
             { name: 'Tagihan SPP', route: 'parent.payments', icon: CreditCard },
         ];
     }

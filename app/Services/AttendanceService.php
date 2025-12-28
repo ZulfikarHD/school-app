@@ -458,4 +458,41 @@ class AttendanceService
             'details' => $attendances,
         ];
     }
+
+    /**
+     * Get list kelas yang dapat diakses oleh teacher
+     * yaitu kelas dimana teacher menjadi wali kelas atau mengajar
+     *
+     * @return Collection<int, SchoolClass>
+     */
+    public function getTeacherClasses(User $teacher): Collection
+    {
+        // Get kelas dimana teacher adalah wali kelas
+        $homeRoomClasses = SchoolClass::where('wali_kelas_id', $teacher->id)
+            ->where('is_active', true)
+            ->get();
+
+        // Get kelas dimana teacher mengajar
+        $teachingClassIds = DB::table('teacher_subjects')
+            ->where('teacher_id', $teacher->id)
+            ->pluck('class_id')
+            ->unique();
+
+        $teachingClasses = SchoolClass::whereIn('id', $teachingClassIds)
+            ->where('is_active', true)
+            ->get();
+
+        // Merge dan remove duplicates
+        $allClasses = $homeRoomClasses->merge($teachingClasses)->unique('id');
+
+        // Add computed fields
+        return $allClasses->map(function ($class) {
+            $class->nama_lengkap = "Kelas {$class->tingkat}{$class->nama}";
+            $class->jumlah_siswa = Student::where('kelas_id', $class->id)
+                ->where('status', 'aktif')
+                ->count();
+
+            return $class;
+        })->sortBy('tingkat')->sortBy('nama')->values();
+    }
 }

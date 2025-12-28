@@ -41,9 +41,17 @@ class SecurityHeaders
 
         // Content-Security-Policy: prevent XSS dan data injection attacks
         // Note: Customize sesuai kebutuhan aplikasi
+        // Untuk development, allow Vite dev server (localhost:5173)
+        $viteDevServer = config('app.env') === 'local' ? ' http://localhost:5173' : '';
+
         $response->headers->set(
             'Content-Security-Policy',
-            "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.bunny.net; img-src 'self' data: https:; font-src 'self' data: https://fonts.bunny.net; connect-src 'self'"
+            "default-src 'self'{$viteDevServer}; ".
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'{$viteDevServer}; ".
+            "style-src 'self' 'unsafe-inline' https://fonts.bunny.net{$viteDevServer}; ".
+            "img-src 'self' data: https:; ".
+            "font-src 'self' data: https://fonts.bunny.net; ".
+            "connect-src 'self'{$viteDevServer} ws://localhost:5173"
         );
 
         return $response;

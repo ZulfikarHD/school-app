@@ -97,6 +97,17 @@ Route::middleware(['auth'])->group(function () {
             Route::post('attendance/daily', [AttendanceController::class, 'store'])
                 ->name('attendance.daily.store');
 
+            // API untuk fetch students by class
+            Route::get('/api/classes/{class}/students', function ($classId) {
+                $class = \App\Models\SchoolClass::findOrFail($classId);
+                $students = \App\Models\Student::where('kelas_id', $classId)
+                    ->where('status', 'aktif')
+                    ->orderBy('nama_lengkap')
+                    ->get();
+
+                return response()->json(['data' => $students]);
+            })->name('api.classes.students');
+
             // Subject Attendance Routes
             Route::get('attendance/subject', [SubjectAttendanceController::class, 'create'])
                 ->name('attendance.subject.create');
