@@ -93,15 +93,91 @@ class ClockController extends Controller
         $isClockedIn = $this->attendanceService->isAlreadyClockedIn($request->user(), $today);
 
         $attendance = null;
+        $clockStatus = [
+            'is_clocked_in' => false,
+            'is_clocked_out' => false,
+            'clock_in' => null,
+            'clock_out' => null,
+            'status' => null,
+            'is_late' => false,
+            'duration' => null,
+        ];
+
         if ($isClockedIn) {
             $attendance = $request->user()->teacherAttendances()
                 ->whereDate('tanggal', $today)
                 ->first();
+
+            if ($attendance) {
+                $clockStatus = [
+                    'is_clocked_in' => true,
+                    'is_clocked_out' => $attendance->clock_out !== null,
+                    'clock_in' => $attendance->clock_in,
+                    'clock_out' => $attendance->clock_out,
+                    'status' => $attendance->status,
+                    'is_late' => $attendance->is_late ?? false,
+                    'duration' => $attendance->duration ? $attendance->duration.' menit' : null,
+                ];
+            }
         }
 
         return response()->json([
-            'is_clocked_in' => $isClockedIn,
-            'attendance' => $attendance,
+            'data' => $clockStatus,
+        ]);
+    }
+
+    /**
+     * Show teacher's own attendance history dengan summary dan filters
+     */
+    public function myAttendance(Request $request)
+    {
+        $month = $request->input('month', now()->month);
+        $year = $request->input('year', now()->year);
+
+        $teacher = $request->user();
+
+        // Get attendances for the month
+        $attendances = $teacher->teacherAttendances()
+            ->whereYear('tanggal', $year)
+            ->whereMonth('tanggal', $month)
+            ->orderBy('tanggal', 'desc')
+            ->paginate(31);
+
+        // Calculate summary
+        $allAttendances = $teacher->teacherAttendances()
+            ->whereYear('tanggal', $year)
+            ->whereMonth('tanggal', $month)
+            ->get();
+
+        // Calculate total hours from clock_in and clock_out
+        $totalMinutes = 0;
+        foreach ($allAttendances as $attendance) {
+            if ($attendance->clock_in && $attendance->clock_out) {
+                $dateStr = $attendance->tanggal->format('Y-m-d');
+                $clockIn = \Carbon\Carbon::parse($dateStr.' '.$attendance->clock_in);
+                $clockOut = \Carbon\Carbon::parse($dateStr.' '.$attendance->clock_out);
+                $totalMinutes += $clockOut->diffInMinutes($clockIn);
+            }
+        }
+
+        $summary = [
+            'total_days' => $allAttendances->count(),
+            'present_days' => $allAttendances->whereIn('status', ['HADIR', 'TERLAMBAT'])->count(),
+            'late_days' => $allAttendances->where('is_late', true)->count(),
+            'total_hours' => number_format($totalMinutes / 60, 1),
+            'present_percentage' => $allAttendances->count() > 0
+                ? number_format(($allAttendances->whereIn('status', ['HADIR', 'TERLAMBAT'])->count() / $allAttendances->count()) * 100, 1)
+                : '0',
+        ];
+
+        return inertia('Teacher/Attendance/MyAttendance', [
+            'title' => 'Riwayat Presensi Saya',
+            'attendances' => $attendances,
+            'summary' => $summary,
+            'filters' => [
+                'month' => (int) $month,
+                'year' => (int) $year,
+            ],
         ]);
     }
 }

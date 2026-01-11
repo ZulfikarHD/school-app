@@ -17,10 +17,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            UserSeeder::class,
-            SchoolClassSeeder::class,
-            // Uncomment untuk populate sample students (development only)
-            StudentSeeder::class,
+            SchoolClassSeeder::class,        // Must run FIRST - creates classes
+            SubjectSeeder::class,             // Creates subjects
+            UserSeeder::class,                // Creates users + guardian + children (needs classes to exist)
+            StudentSeeder::class,             // Creates additional test students
+            AttendanceQuickSeeder::class,     // Creates attendance test data
+            AttendanceTestSeeder::class,      // Creates more test data
+
         ]);
     }
 }

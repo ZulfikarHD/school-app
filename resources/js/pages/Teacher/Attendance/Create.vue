@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import { Motion } from 'motion-v';
@@ -23,26 +23,41 @@ interface SchoolClass {
     jumlah_siswa: number;
 }
 
+interface ExistingAttendance {
+    id: number;
+    student_id: number;
+    student_nama: string;
+    student_nis: string;
+    status: 'H' | 'I' | 'S' | 'A';
+    keterangan?: string;
+}
+
 interface Props {
     title: string;
     classes: SchoolClass[];
+    existingAttendance?: ExistingAttendance[] | null;
+    editMode?: {
+        kelas_id: number | null;
+        tanggal: string | null;
+    };
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const haptics = useHaptics();
 const modal = useModal();
 
-const selectedClassId = ref<number | null>(null);
+const selectedClassId = ref<number | null>(props.editMode?.kelas_id || null);
 const students = ref<Student[]>([]);
 const loadingStudents = ref(false);
+const isEditMode = ref(!!props.existingAttendance);
 
 /**
  * Form data untuk submission
  */
 const form = useForm({
-    class_id: null as number | null,
-    tanggal: new Date().toISOString().split('T')[0],
+    class_id: props.editMode?.kelas_id || null,
+    tanggal: props.editMode?.tanggal || new Date().toISOString().split('T')[0],
     attendances: [] as Array<{
         student_id: number;
         status: 'H' | 'I' | 'S' | 'A';
@@ -61,14 +76,14 @@ const summary = computed(() => {
         sakit: 0,
         alpha: 0
     };
-    
+
     form.attendances.forEach(att => {
         if (att.status === 'H') counts.hadir++;
         else if (att.status === 'I') counts.izin++;
         else if (att.status === 'S') counts.sakit++;
         else if (att.status === 'A') counts.alpha++;
     });
-    
+
     return counts;
 });
 
@@ -77,7 +92,7 @@ const summary = computed(() => {
  */
 const fetchStudents = async (classId: number) => {
     loadingStudents.value = true;
-    
+
     try {
         const response = await fetch(`/api/classes/${classId}/students`, {
             headers: {
@@ -85,18 +100,70 @@ const fetchStudents = async (classId: number) => {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         });
-        
+
         if (!response.ok) throw new Error('Failed to fetch students');
-        
+
         const data = await response.json();
         students.value = data.data || data;
-        
-        // Initialize form attendances dengan default "Hadir"
-        form.attendances = students.value.map(student => ({
-            student_id: student.id,
-            status: 'H',
-            keterangan: undefined
-        }));
+
+        // Check for existing attendance if date is selected
+        let existingData: ExistingAttendance[] = [];
+        if (form.tanggal && classId) {
+            try {
+                console.log('Checking existing attendance for:', { classId, tanggal: form.tanggal });
+                const existingResponse = await fetch(`/teacher/attendance/check-existing?class_id=${classId}&tanggal=${form.tanggal}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (existingResponse.ok) {
+                    const result = await existingResponse.json();
+                    existingData = result.data || [];
+                    console.log('Existing attendance data:', existingData);
+                } else {
+                    console.error('Failed to fetch existing attendance:', existingResponse.status);
+                }
+            } catch (err) {
+                console.warn('Could not fetch existing attendance:', err);
+            }
+        } else {
+            console.log('Skipping existing check - missing data:', { hasDate: !!form.tanggal, classId });
+        }
+
+        // Initialize form attendances
+        if (existingData.length > 0) {
+            // Has existing attendance: populate with existing data
+            console.log('Using existing attendance data from API');
+            form.attendances = students.value.map(student => {
+                const existing = existingData.find(a => a.student_id === student.id);
+                const status = existing?.status || 'H';
+                console.log(`Student ${student.nama_lengkap}: ${status}`, existing);
+                return {
+                    student_id: student.id,
+                    status,
+                    keterangan: existing?.keterangan
+                };
+            });
+        } else if (isEditMode.value && props.existingAttendance) {
+            // Edit mode from props: populate with props data
+            form.attendances = students.value.map(student => {
+                const existing = props.existingAttendance!.find(a => a.student_id === student.id);
+                return {
+                    student_id: student.id,
+                    status: existing?.status || 'H',
+                    keterangan: existing?.keterangan
+                };
+            });
+        } else {
+            // New mode: default all to "Hadir"
+            form.attendances = students.value.map(student => ({
+                student_id: student.id,
+                status: 'H',
+                keterangan: undefined
+            }));
+        }
     } catch (error) {
         console.error('Error fetching students:', error);
         modal.error('Gagal memuat daftar siswa');
@@ -121,6 +188,24 @@ watch(selectedClassId, (newClassId) => {
 });
 
 /**
+ * Handle date change - refetch students to load existing attendance
+ */
+watch(() => form.tanggal, () => {
+    if (selectedClassId.value) {
+        fetchStudents(selectedClassId.value);
+    }
+});
+
+/**
+ * Load students on mount if in edit mode
+ */
+onMounted(() => {
+    if (isEditMode.value && selectedClassId.value) {
+        fetchStudents(selectedClassId.value);
+    }
+});
+
+/**
  * Update attendance status untuk siswa
  */
 const updateStatus = (studentId: number, status: 'H' | 'I' | 'S' | 'A') => {
@@ -128,7 +213,7 @@ const updateStatus = (studentId: number, status: 'H' | 'I' | 'S' | 'A') => {
     const attendance = form.attendances.find(a => a.student_id === studentId);
     if (attendance) {
         attendance.status = status;
-        
+
         // Clear keterangan jika status = Hadir
         if (status === 'H') {
             attendance.keterangan = undefined;
@@ -155,14 +240,14 @@ const submitAttendance = () => {
         modal.error('Mohon pilih kelas terlebih dahulu');
         return;
     }
-    
+
     if (form.attendances.length === 0) {
         modal.error('Tidak ada siswa untuk diabsen');
         return;
     }
-    
+
     haptics.medium();
-    
+
     form.post('/teacher/attendance/daily', {
         preserveScroll: true,
         onSuccess: () => {
@@ -181,7 +266,7 @@ const submitAttendance = () => {
 <template>
     <AppLayout>
         <Head :title="title" />
-        
+
         <div class="min-h-screen bg-gray-50 dark:bg-zinc-950">
             <!-- Header -->
             <Motion
@@ -196,7 +281,7 @@ const submitAttendance = () => {
                     </div>
                 </div>
             </Motion>
-            
+
             <div class="mx-auto max-w-7xl px-6 py-8 space-y-6">
                 <!-- Class & Date Selection -->
                 <Motion
@@ -224,7 +309,7 @@ const submitAttendance = () => {
                                     </option>
                                 </select>
                             </div>
-                            
+
                             <!-- Date Selection -->
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide mb-2">
@@ -244,7 +329,7 @@ const submitAttendance = () => {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div v-if="form.errors.class_id || form.errors.tanggal" class="mt-4 p-3 bg-red-50/80 border border-red-200/50 rounded-lg flex items-start gap-2">
                             <AlertCircle :size="16" class="text-red-500 flex-shrink-0 mt-0.5" />
                             <div class="text-sm text-red-600">
@@ -254,7 +339,7 @@ const submitAttendance = () => {
                         </div>
                     </div>
                 </Motion>
-                
+
                 <!-- Summary Cards -->
                 <div v-if="students.length > 0" class="grid gap-4 grid-cols-2 md:grid-cols-5">
                     <Motion
@@ -276,14 +361,14 @@ const submitAttendance = () => {
                         </div>
                     </Motion>
                 </div>
-                
+
                 <!-- Loading Students -->
                 <div v-if="loadingStudents" class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm p-6">
                     <div class="space-y-3">
                         <div v-for="i in 5" :key="i" class="h-16 bg-slate-100 dark:bg-zinc-800 rounded-xl animate-pulse"></div>
                     </div>
                 </div>
-                
+
                 <!-- Student Attendance Table -->
                 <Motion
                     v-else-if="students.length > 0"
@@ -298,7 +383,7 @@ const submitAttendance = () => {
                                 <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Daftar Siswa</h2>
                             </div>
                         </div>
-                        
+
                         <div class="overflow-x-auto">
                             <table class="w-full">
                                 <thead class="bg-slate-50/80 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-800">
@@ -362,7 +447,7 @@ const submitAttendance = () => {
                                 </tbody>
                             </table>
                         </div>
-                        
+
                         <!-- Submit Button -->
                         <div class="p-6 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30">
                             <Motion :whileTap="{ scale: 0.97 }">
@@ -381,7 +466,7 @@ const submitAttendance = () => {
                         </div>
                     </div>
                 </Motion>
-                
+
                 <!-- Empty State -->
                 <div v-else-if="!loadingStudents && !selectedClassId" class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm p-12 text-center">
                     <Users :size="48" class="mx-auto text-slate-300 dark:text-zinc-700 mb-4" />

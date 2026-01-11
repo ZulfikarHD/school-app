@@ -1,318 +1,375 @@
+<template>
+  <AppLayout :title="title">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">{{ title }}</h1>
+        <p class="mt-1 text-sm text-gray-600">
+          Kelola permohonan izin/cuti dari guru
+        </p>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="mb-6 border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8">
+          <Link
+            :href="indexRoute().url"
+            :class="[
+              'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm',
+              !filters.status || filters.status === 'PENDING'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+            ]"
+          >
+            Pending
+            <span
+              v-if="!filters.status || filters.status === 'PENDING'"
+              class="ml-2 py-0.5 px-2 rounded-full text-xs font-medium bg-blue-100 text-blue-600"
+            >
+              {{ leaves.data.length }}
+            </span>
+          </Link>
+          <Link
+            :href="indexRoute({ query: { status: 'APPROVED' } }).url"
+            :class="[
+              'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm',
+              filters.status === 'APPROVED'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+            ]"
+          >
+            Disetujui
+          </Link>
+          <Link
+            :href="indexRoute({ query: { status: 'REJECTED' } }).url"
+            :class="[
+              'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm',
+              filters.status === 'REJECTED'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+            ]"
+          >
+            Ditolak
+          </Link>
+        </nav>
+      </div>
+
+      <!-- Leave Requests List -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div v-if="leaves.data.length === 0" class="p-8 text-center">
+          <p class="text-gray-500">Tidak ada permohonan izin</p>
+        </div>
+
+        <div v-else class="divide-y divide-gray-200">
+          <div
+            v-for="leave in leaves.data"
+            :key="leave.id"
+            class="p-6 hover:bg-gray-50"
+          >
+            <div class="flex items-start gap-4">
+              <!-- Teacher Info -->
+              <div class="flex-shrink-0">
+                <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                  <span class="text-lg font-medium text-gray-600">
+                    {{ leave.teacher.name.charAt(0) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Leave Details -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-3 mb-2">
+                  <p class="text-sm font-medium text-gray-900">
+                    {{ leave.teacher.name }}
+                  </p>
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full"
+                    :class="{
+                      'bg-blue-100 text-blue-800': leave.type === 'IZIN',
+                      'bg-red-100 text-red-800': leave.type === 'SAKIT',
+                      'bg-purple-100 text-purple-800': leave.type === 'CUTI',
+                    }"
+                  >
+                    {{ leave.type }}
+                  </span>
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full"
+                    :class="{
+                      'bg-yellow-100 text-yellow-800': leave.status === 'PENDING',
+                      'bg-green-100 text-green-800': leave.status === 'APPROVED',
+                      'bg-red-100 text-red-800': leave.status === 'REJECTED',
+                    }"
+                  >
+                    {{ leave.status }}
+                  </span>
+                </div>
+
+                <p class="text-sm text-gray-600 mb-1">
+                  📅 {{ formatDate(leave.start_date) }} - {{ formatDate(leave.end_date) }}
+                  <span class="text-gray-500">({{ calculateDays(leave.start_date, leave.end_date) }} hari)</span>
+                </p>
+
+                <p class="text-sm text-gray-700 mb-2">
+                  {{ leave.reason }}
+                </p>
+
+                <div v-if="leave.attachment_path" class="mb-2">
+                  <a
+                    :href="`/storage/${leave.attachment_path}`"
+                    target="_blank"
+                    class="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    📎 Lihat Lampiran
+                  </a>
+                </div>
+
+                <p class="text-xs text-gray-500">
+                  Diajukan pada {{ formatDateTime(leave.created_at) }}
+                </p>
+
+                <!-- Approval Info -->
+                <div v-if="leave.status === 'APPROVED' && leave.approved_by" class="mt-2 text-xs text-green-600">
+                  ✓ Disetujui oleh {{ leave.approved_by.name }} pada {{ formatDateTime(leave.approved_at) }}
+                </div>
+
+                <div v-if="leave.status === 'REJECTED'" class="mt-2 text-xs text-red-600">
+                  ✗ Ditolak: {{ leave.rejection_reason }}
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div v-if="leave.status === 'PENDING'" class="flex-shrink-0 flex gap-2">
+                <button
+                  @click="approveLeave(leave.id)"
+                  class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+                >
+                  ✓ Setujui
+                </button>
+                <button
+                  @click="openRejectModal(leave)"
+                  class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                >
+                  ✗ Tolak
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="leaves.links.length > 3" class="border-t border-gray-200 px-4 py-3">
+          <div class="flex justify-center gap-2">
+            <Link
+              v-for="link in leaves.links"
+              :key="link.label"
+              :href="link.url || ''"
+              :class="[
+                'px-3 py-1 text-sm rounded-md',
+                link.active
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300',
+                !link.url && 'opacity-50 cursor-not-allowed',
+              ]"
+              v-html="link.label"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div
+      v-if="showRejectModal"
+      class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50"
+      @click.self="closeRejectModal"
+    >
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="p-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">
+            Tolak Permohonan Izin
+          </h3>
+          <p class="text-sm text-gray-600 mb-4">
+            Berikan alasan penolakan untuk {{ selectedLeave?.teacher.name }}
+          </p>
+          <textarea
+            v-model="rejectForm.rejection_reason"
+            rows="4"
+            placeholder="Alasan penolakan..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          ></textarea>
+          <p v-if="rejectForm.errors.rejection_reason" class="mt-1 text-sm text-red-600">
+            {{ rejectForm.errors.rejection_reason }}
+          </p>
+        </div>
+        <div class="bg-gray-50 px-6 py-3 flex justify-end gap-3 rounded-b-lg">
+          <button
+            @click="closeRejectModal"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Batal
+          </button>
+          <button
+            @click="submitReject"
+            :disabled="rejectForm.processing"
+            class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
+          >
+            {{ rejectForm.processing ? 'Memproses...' : 'Tolak' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </AppLayout>
+</template>
+
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { CheckCircle, XCircle, Calendar, FileText, Filter } from 'lucide-vue-next';
-import { Motion } from 'motion-v';
-import AppLayout from '@/components/layouts/AppLayout.vue';
-import LeaveStatusBadge from '@/components/features/attendance/LeaveStatusBadge.vue';
-import { useModal } from '@/composables/useModal';
-import { useHaptics } from '@/composables/useHaptics';
+import { ref } from 'vue'
+import { useForm, router } from '@inertiajs/vue3'
+import AppLayout from '@/components/layouts/AppLayout.vue'
+import { Link } from '@inertiajs/vue3'
+import { index as indexRoute, approve as approveRoute, reject as rejectRoute } from '@/routes/principal/teacher-leaves'
 
 interface TeacherLeave {
-    id: number;
-    jenis: 'IZIN' | 'SAKIT' | 'CUTI';
-    tanggal_mulai: string;
-    tanggal_selesai: string;
-    jumlah_hari: number;
-    alasan: string;
-    attachment_path: string | null;
-    status: 'PENDING' | 'APPROVED' | 'REJECTED';
-    rejection_reason: string | null;
-    teacher: {
-        id: number;
-        name: string;
-        nip: string;
-    };
-    created_at: string;
+  id: number
+  teacher: {
+    name: string
+    email: string
+  }
+  type: 'IZIN' | 'SAKIT' | 'CUTI'
+  start_date: string | null
+  end_date: string | null
+  reason: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  attachment_path: string | null
+  approved_by?: {
+    name: string
+  } | null
+  approved_at?: string | null
+  rejection_reason?: string | null
+  created_at: string
 }
 
-interface Props {
-    title: string;
-    leaves: {
-        data: TeacherLeave[];
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-    };
-    filters: {
-        status?: string;
-    };
+interface PaginatedLeaves {
+  data: TeacherLeave[]
+  links: Array<{
+    url: string | null
+    label: string
+    active: boolean
+  }>
 }
 
-const props = defineProps<Props>();
+defineProps<{
+  title: string
+  leaves: PaginatedLeaves
+  filters: {
+    status?: string
+  }
+}>()
 
-const modal = useModal();
-const haptics = useHaptics();
+const showRejectModal = ref(false)
+const selectedLeave = ref<TeacherLeave | null>(null)
 
-// State
-const filterForm = ref({
-    status: props.filters.status || 'PENDING',
-});
-
-const showFilters = ref(false);
 const rejectForm = useForm({
-    rejection_reason: '',
-});
+  rejection_reason: '',
+})
 
-// Methods
-const applyFilters = () => {
-    haptics.light();
-    router.get('/principal/teacher-leaves', filterForm.value, {
-        preserveState: true,
+const formatDate = (date: string | null | undefined) => {
+  if (!date) return 'N/A'
+
+  try {
+    // Handle Laravel date format (YYYY-MM-DD)
+    const parsedDate = new Date(date)
+
+    // Check if date is valid
+    if (isNaN(parsedDate.getTime())) {
+      return 'Invalid date'
+    }
+
+    return parsedDate.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  } catch (error) {
+    console.error('Error formatting date:', error, date)
+    return 'Invalid date'
+  }
+}
+
+const formatDateTime = (datetime: string | null | undefined) => {
+  if (!datetime) return 'N/A'
+
+  try {
+    const parsedDate = new Date(datetime)
+
+    // Check if date is valid
+    if (isNaN(parsedDate.getTime())) {
+      return 'Invalid date'
+    }
+
+    return parsedDate.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch (error) {
+    console.error('Error formatting datetime:', error, datetime)
+    return 'Invalid date'
+  }
+}
+
+const calculateDays = (startDate: string, endDate: string) => {
+  try {
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+
+    // Check if dates are valid
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return 0
+    }
+
+    const diffTime = Math.abs(end.getTime() - start.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays + 1
+  } catch (error) {
+    console.error('Error calculating days:', error, startDate, endDate)
+    return 0
+  }
+}
+
+const approveLeave = (leaveId: number) => {
+  if (confirm('Apakah Anda yakin ingin menyetujui permohonan izin ini?')) {
+    router.post(
+      approveRoute(leaveId).url,
+      {},
+      {
         preserveScroll: true,
-    });
-};
+      }
+    )
+  }
+}
 
-const approveLeave = async (leave: TeacherLeave) => {
-    const confirmed = await modal.dialog({
-        type: 'success',
-        icon: 'check',
-        title: 'Setujui Izin Guru',
-        message: `Apakah Anda yakin ingin menyetujui pengajuan izin <b>${leave.teacher.name}</b> selama ${leave.jumlah_hari} hari?`,
-        confirmText: 'Ya, Setujui',
-        cancelText: 'Batal',
-        showCancel: true,
-        allowHtml: true
-    });
+const openRejectModal = (leave: TeacherLeave) => {
+  selectedLeave.value = leave
+  showRejectModal.value = true
+  rejectForm.reset()
+}
 
-    if (confirmed) {
-        haptics.medium();
-        router.post(`/principal/teacher-leaves/${leave.id}/approve`, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                modal.success('Pengajuan izin berhasil disetujui');
-            }
-        });
-    }
-};
+const closeRejectModal = () => {
+  showRejectModal.value = false
+  selectedLeave.value = null
+  rejectForm.reset()
+}
 
-const rejectLeave = async (leave: TeacherLeave) => {
-    const reason = await modal.prompt({
-        title: 'Tolak Izin Guru',
-        message: `Masukkan alasan penolakan untuk <b>${leave.teacher.name}</b>:`,
-        placeholder: 'Alasan penolakan...',
-        confirmText: 'Tolak',
-        cancelText: 'Batal',
-        allowHtml: true
-    });
+const submitReject = () => {
+  if (!selectedLeave.value) return
 
-    if (reason) {
-        haptics.medium();
-        rejectForm.rejection_reason = reason;
-        rejectForm.post(`/principal/teacher-leaves/${leave.id}/reject`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                modal.success('Pengajuan izin ditolak');
-                rejectForm.reset();
-            }
-        });
-    }
-};
-
-const viewAttachment = (url: string) => {
-    haptics.light();
-    window.open(url, '_blank');
-};
-
-const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
-};
-
-const getJenisColor = (jenis: string) => {
-    const colors = {
-        'IZIN': 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-        'SAKIT': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
-        'CUTI': 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-    };
-    return colors[jenis as keyof typeof colors] || 'bg-gray-100 text-gray-700';
-};
+  rejectForm.post(rejectRoute(selectedLeave.value.id).url, {
+    preserveScroll: true,
+    onSuccess: () => {
+      closeRejectModal()
+    },
+  })
+}
 </script>
-
-<template>
-    <AppLayout>
-        <Head :title="title" />
-
-        <div class="space-y-6">
-            <!-- Header -->
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-                        {{ title }}
-                    </h1>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Kelola pengajuan izin dan cuti guru
-                    </p>
-                </div>
-
-                <Motion
-                    tag="button"
-                    :animate="{ scale: showFilters ? 0.95 : 1 }"
-                    @click="showFilters = !showFilters"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                    <Filter :size="18" />
-                    Filter
-                </Motion>
-            </div>
-
-            <!-- Filters Panel -->
-            <Motion
-                v-if="showFilters"
-                :initial="{ opacity: 0, height: 0 }"
-                :animate="{ opacity: 1, height: 'auto' }"
-                :exit="{ opacity: 0, height: 0 }"
-                class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700"
-            >
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Status
-                        </label>
-                        <select
-                            v-model="filterForm.status"
-                            class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            <option value="">Semua Status</option>
-                            <option value="PENDING">Pending</option>
-                            <option value="APPROVED">Disetujui</option>
-                            <option value="REJECTED">Ditolak</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="mt-4">
-                    <button
-                        @click="applyFilters"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors"
-                    >
-                        Terapkan Filter
-                    </button>
-                </div>
-            </Motion>
-
-            <!-- Leave Requests List -->
-            <div class="space-y-4">
-                <Motion
-                    v-for="leave in leaves.data"
-                    :key="leave.id"
-                    :initial="{ opacity: 0, y: 20 }"
-                    :animate="{ opacity: 1, y: 0 }"
-                    class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700"
-                >
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-3 mb-3">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                    {{ leave.teacher.name }}
-                                </h3>
-                                <span :class="[
-                                    'px-3 py-1 rounded-full text-xs font-medium',
-                                    getJenisColor(leave.jenis)
-                                ]">
-                                    {{ leave.jenis }}
-                                </span>
-                                <LeaveStatusBadge :status="leave.status" />
-                            </div>
-
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                                NIP: {{ leave.teacher.nip }}
-                            </p>
-
-                            <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                <div class="flex items-center gap-2">
-                                    <Calendar :size="16" />
-                                    <span>{{ formatDate(leave.tanggal_mulai) }} - {{ formatDate(leave.tanggal_selesai) }}</span>
-                                </div>
-                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-xs font-medium">
-                                    {{ leave.jumlah_hari }} hari
-                                </span>
-                            </div>
-
-                            <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-3">
-                                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alasan:</p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ leave.alasan }}</p>
-                            </div>
-
-                            <div v-if="leave.attachment_path" class="mb-3">
-                                <button
-                                    @click="viewAttachment(leave.attachment_path)"
-                                    class="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                                >
-                                    <FileText :size="16" />
-                                    Lihat Lampiran
-                                </button>
-                            </div>
-
-                            <div v-if="leave.status === 'REJECTED' && leave.rejection_reason" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                                <p class="text-sm font-medium text-red-700 dark:text-red-300 mb-1">Alasan Penolakan:</p>
-                                <p class="text-sm text-red-600 dark:text-red-400">{{ leave.rejection_reason }}</p>
-                            </div>
-
-                            <p class="text-xs text-gray-400 mt-3">
-                                Diajukan pada {{ formatDate(leave.created_at) }}
-                            </p>
-                        </div>
-
-                        <div v-if="leave.status === 'PENDING'" class="flex items-center gap-2 ml-4">
-                            <Motion
-                                tag="button"
-                                :whileTap="{ scale: 0.95 }"
-                                @click="approveLeave(leave)"
-                                class="p-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors"
-                                title="Setujui"
-                            >
-                                <CheckCircle :size="20" />
-                            </Motion>
-                            <Motion
-                                tag="button"
-                                :whileTap="{ scale: 0.95 }"
-                                @click="rejectLeave(leave)"
-                                class="p-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors"
-                                title="Tolak"
-                            >
-                                <XCircle :size="20" />
-                            </Motion>
-                        </div>
-                    </div>
-                </Motion>
-
-                <div v-if="leaves.data.length === 0" class="bg-white dark:bg-gray-800 rounded-xl p-12 border border-gray-200 dark:border-gray-700 text-center">
-                    <Calendar :size="48" class="mx-auto mb-3 text-gray-400 opacity-50" />
-                    <p class="text-lg font-medium text-gray-500 dark:text-gray-400">Tidak ada pengajuan izin</p>
-                    <p class="text-sm text-gray-400 mt-1">Semua pengajuan sudah diproses</p>
-                </div>
-            </div>
-
-            <!-- Pagination -->
-            <div v-if="leaves.last_page > 1" class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center justify-between">
-                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                        Menampilkan {{ (leaves.current_page - 1) * leaves.per_page + 1 }} - 
-                        {{ Math.min(leaves.current_page * leaves.per_page, leaves.total) }} 
-                        dari {{ leaves.total }} data
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button
-                            v-for="page in leaves.last_page"
-                            :key="page"
-                            @click="router.get(`/principal/teacher-leaves?page=${page}`, filterForm)"
-                            :class="[
-                                'px-3 py-1 rounded-lg text-sm font-medium transition-colors',
-                                page === leaves.current_page
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                            ]"
-                        >
-                            {{ page }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </AppLayout>
-</template>

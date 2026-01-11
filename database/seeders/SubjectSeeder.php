@@ -2,108 +2,41 @@
 
 namespace Database\Seeders;
 
+use App\Models\Subject;
+use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class SubjectSeeder extends Seeder
 {
     /**
-     * Seed mata pelajaran standar untuk Sekolah Dasar (SD)
-     * yang mencakup mata pelajaran utama, muatan lokal, dan pengembangan diri
-     * sesuai dengan Kurikulum Merdeka
+     * Run the database seeds.
      */
     public function run(): void
     {
+        // Common subjects for Indonesian schools
         $subjects = [
-            // Mata Pelajaran Utama
-            [
-                'kode_mapel' => 'MAT',
-                'nama_mapel' => 'Matematika',
-                'tingkat' => null,
-                'kategori' => 'UTAMA',
-                'is_active' => true,
-            ],
-            [
-                'kode_mapel' => 'IPA',
-                'nama_mapel' => 'Ilmu Pengetahuan Alam',
-                'tingkat' => null,
-                'kategori' => 'UTAMA',
-                'is_active' => true,
-            ],
-            [
-                'kode_mapel' => 'IPS',
-                'nama_mapel' => 'Ilmu Pengetahuan Sosial',
-                'tingkat' => null,
-                'kategori' => 'UTAMA',
-                'is_active' => true,
-            ],
-            [
-                'kode_mapel' => 'BIN',
-                'nama_mapel' => 'Bahasa Indonesia',
-                'tingkat' => null,
-                'kategori' => 'UTAMA',
-                'is_active' => true,
-            ],
-            [
-                'kode_mapel' => 'BING',
-                'nama_mapel' => 'Bahasa Inggris',
-                'tingkat' => null,
-                'kategori' => 'UTAMA',
-                'is_active' => true,
-            ],
-            [
-                'kode_mapel' => 'PJOK',
-                'nama_mapel' => 'Pendidikan Jasmani, Olahraga, dan Kesehatan',
-                'tingkat' => null,
-                'kategori' => 'UTAMA',
-                'is_active' => true,
-            ],
-            [
-                'kode_mapel' => 'PAI',
-                'nama_mapel' => 'Pendidikan Agama Islam',
-                'tingkat' => null,
-                'kategori' => 'UTAMA',
-                'is_active' => true,
-            ],
-            [
-                'kode_mapel' => 'PPKn',
-                'nama_mapel' => 'Pendidikan Pancasila dan Kewarganegaraan',
-                'tingkat' => null,
-                'kategori' => 'UTAMA',
-                'is_active' => true,
-            ],
-            [
-                'kode_mapel' => 'SBK',
-                'nama_mapel' => 'Seni Budaya dan Keterampilan',
-                'tingkat' => null,
-                'kategori' => 'UTAMA',
-                'is_active' => true,
-            ],
-
-            // Muatan Lokal (contoh, bisa disesuaikan)
-            [
-                'kode_mapel' => 'BJW',
-                'nama_mapel' => 'Bahasa Jawa',
-                'tingkat' => null,
-                'kategori' => 'MUATAN_LOKAL',
-                'is_active' => true,
-            ],
-
-            // Pengembangan Diri
-            [
-                'kode_mapel' => 'BTA',
-                'nama_mapel' => 'Baca Tulis Al-Quran',
-                'tingkat' => null,
-                'kategori' => 'PENGEMBANGAN_DIRI',
-                'is_active' => true,
-            ],
+            ['kode_mapel' => 'MTK', 'nama_mapel' => 'Matematika', 'kategori' => 'UTAMA'],
+            ['kode_mapel' => 'IPA', 'nama_mapel' => 'Ilmu Pengetahuan Alam', 'kategori' => 'UTAMA'],
+            ['kode_mapel' => 'IPS', 'nama_mapel' => 'Ilmu Pengetahuan Sosial', 'kategori' => 'UTAMA'],
+            ['kode_mapel' => 'BHS-IND', 'nama_mapel' => 'Bahasa Indonesia', 'kategori' => 'UTAMA'],
+            ['kode_mapel' => 'BHS-ING', 'nama_mapel' => 'Bahasa Inggris', 'kategori' => 'UTAMA'],
+            ['kode_mapel' => 'PKN', 'nama_mapel' => 'Pendidikan Kewarganegaraan', 'kategori' => 'UTAMA'],
+            ['kode_mapel' => 'AGAMA', 'nama_mapel' => 'Pendidikan Agama', 'kategori' => 'UTAMA'],
+            ['kode_mapel' => 'PJOK', 'nama_mapel' => 'Pendidikan Jasmani dan Kesehatan', 'kategori' => 'UTAMA'],
+            ['kode_mapel' => 'SBK', 'nama_mapel' => 'Seni Budaya dan Keterampilan', 'kategori' => 'PENGEMBANGAN_DIRI'],
+            ['kode_mapel' => 'TIK', 'nama_mapel' => 'Teknologi Informasi dan Komunikasi', 'kategori' => 'MUATAN_LOKAL'],
         ];
 
-        DB::table('subjects')->insert(array_map(function ($subject) {
-            return array_merge($subject, [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }, $subjects));
+        foreach ($subjects as $subject) {
+            Subject::firstOrCreate(
+                ['kode_mapel' => $subject['kode_mapel']],
+                $subject
+            );
+        }
+
+        // Note: Teacher-subject assignments are done in UserSeeder
+        // after teachers are created to ensure proper assignment
+
+        $this->command->info('Created '.count($subjects).' subjects.');
     }
 }

@@ -9,11 +9,20 @@ use App\Models\StudentAttendance;
 use App\Models\TeacherAttendance;
 use App\Models\TeacherLeave;
 use App\Models\User;
+use App\Services\AttendanceService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PrincipalDashboardController extends Controller
 {
+    /**
+     * Constructor untuk inject AttendanceService dependency
+     */
+    public function __construct(
+        protected AttendanceService $attendanceService
+    ) {}
+
     /**
      * Menampilkan dashboard untuk Kepala Sekolah dengan akses ke
      * reports, analytics, dan monitoring keseluruhan sistem sekolah
@@ -38,19 +47,20 @@ class PrincipalDashboardController extends Controller
         $classesWithAttendance = StudentAttendance::whereDate('tanggal', $today)
             ->distinct('class_id')
             ->pluck('class_id');
-        
+
         $classesNotRecorded = SchoolClass::where('is_active', true)
             ->whereNotIn('id', $classesWithAttendance)
             ->get(['id', 'tingkat', 'nama'])
             ->map(function ($class) {
                 $class->nama_lengkap = "Kelas {$class->tingkat}{$class->nama}";
+
                 return $class;
             });
 
         // Get teacher presence data
         $teacherAttendances = TeacherAttendance::whereDate('tanggal', $today)->get();
         $clockedInCount = $teacherAttendances->count();
-        
+
         $lateTeachers = $teacherAttendances->where('is_late', true)
             ->map(function ($attendance) {
                 return [
@@ -76,6 +86,9 @@ class PrincipalDashboardController extends Controller
             ->with('teacher')
             ->count();
 
+        // Get attendance summary using service
+        $attendanceSummary = $this->attendanceService->getTodayAttendanceSummary();
+
         return Inertia::render('Dashboard/PrincipalDashboard', [
             'stats' => [
                 'total_students' => $totalStudents,
@@ -90,6 +103,7 @@ class PrincipalDashboardController extends Controller
                 'late' => 0, // Will be implemented when late tracking is added
                 'percentage' => $attendanceRate,
             ],
+            'attendanceSummary' => $attendanceSummary,
             'classesNotRecorded' => $classesNotRecorded,
             'teacherPresence' => [
                 'total_teachers' => $totalTeachers,
@@ -98,6 +112,26 @@ class PrincipalDashboardController extends Controller
                 'absent_teachers' => $absentTeachers,
             ],
             'pendingTeacherLeaves' => $pendingTeacherLeaves,
+        ]);
+    }
+
+    /**
+     * Get real-time attendance metrics API endpoint
+     * untuk auto-refresh dashboard data
+     */
+    public function getAttendanceMetrics(Request $request)
+    {
+        $summary = $this->attendanceService->getTodayAttendanceSummary();
+        $classesWithoutAttendance = $this->attendanceService->getClassesWithoutAttendance(
+            Carbon::today()->format('Y-m-d')
+        );
+        $absentTeachers = $this->attendanceService->getTeacherAbsenceToday();
+
+        return response()->json([
+            'summary' => $summary,
+            'classes_without_attendance' => $classesWithoutAttendance,
+            'absent_teachers' => $absentTeachers,
+            'last_updated' => now()->toIso8601String(),
         ]);
     }
 }

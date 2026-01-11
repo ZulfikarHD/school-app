@@ -12,8 +12,17 @@ export interface StudentAttendance {
     recorded_at: string;
     created_at: string;
     updated_at: string;
-    student?: Student;
-    recorded_by_user?: User;
+    student?: Student & {
+        nis: string;
+        nama_lengkap: string;
+    };
+    class?: {
+        id: number;
+        nama_lengkap: string;
+        tingkat: number;
+        nama: string;
+    };
+    recorded_by?: User;
 }
 
 export interface LeaveRequest {

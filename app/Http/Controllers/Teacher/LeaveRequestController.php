@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ApproveLeaveRequestRequest;
 use App\Models\LeaveRequest;
 use App\Services\AttendanceService;
 use Inertia\Inertia;
@@ -21,25 +20,34 @@ class LeaveRequestController extends Controller
     /**
      * Display list leave requests yang perlu diverifikasi
      * untuk siswa di kelas yang diampu teacher
-     *
-     * TODO Sprint 2: Implement UI dengan table leave requests
      */
     public function index(): Response
     {
         $teacher = auth()->user();
 
-        // Get pending leave requests untuk siswa di kelas yang diampu
+        // Get leave requests untuk siswa di kelas yang diampu
         $leaveRequests = LeaveRequest::with(['student', 'submittedBy'])
             ->whereHas('student.kelas', function ($query) use ($teacher) {
                 $query->where('wali_kelas_id', $teacher->id);
             })
-            ->pending()
             ->latest()
-            ->get();
+            ->paginate(20);
+
+        // Get stats
+        $baseQuery = LeaveRequest::whereHas('student.kelas', function ($query) use ($teacher) {
+            $query->where('wali_kelas_id', $teacher->id);
+        });
+
+        $stats = [
+            'pending' => (clone $baseQuery)->where('status', 'PENDING')->count(),
+            'approved' => (clone $baseQuery)->where('status', 'APPROVED_TEACHER')->count(),
+            'rejected' => (clone $baseQuery)->where('status', 'REJECTED')->count(),
+        ];
 
         return Inertia::render('Teacher/LeaveRequest/Index', [
             'title' => 'Verifikasi Permohonan Izin',
             'leaveRequests' => $leaveRequests,
+            'stats' => $stats,
         ]);
     }
 
@@ -49,27 +57,37 @@ class LeaveRequestController extends Controller
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function approve(ApproveLeaveRequestRequest $request, LeaveRequest $leaveRequest)
+    public function approve(LeaveRequest $leaveRequest)
     {
         try {
-            if ($request->input('action') === 'approve') {
-                $this->attendanceService->approveLeaveRequest(
-                    $leaveRequest,
-                    $request->user()
-                );
-                $message = 'Permohonan izin berhasil disetujui.';
-            } else {
-                $this->attendanceService->rejectLeaveRequest(
-                    $leaveRequest,
-                    $request->user(),
-                    $request->input('rejection_reason')
-                );
-                $message = 'Permohonan izin berhasil ditolak.';
-            }
+            $this->attendanceService->approveLeaveRequest(
+                $leaveRequest,
+                auth()->user()
+            );
 
-            return back()->with('success', $message);
+            return back()->with('success', 'Permohonan izin berhasil disetujui.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal memproses permohonan: '.$e->getMessage());
+            return back()->with('error', 'Gagal menyetujui permohonan: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Reject leave request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function reject(LeaveRequest $leaveRequest)
+    {
+        try {
+            $this->attendanceService->rejectLeaveRequest(
+                $leaveRequest,
+                auth()->user(),
+                null
+            );
+
+            return back()->with('success', 'Permohonan izin berhasil ditolak.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menolak permohonan: '.$e->getMessage());
         }
     }
 }

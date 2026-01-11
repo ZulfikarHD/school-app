@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSubjectAttendanceRequest;
-use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\SubjectAttendance;
 use App\Services\AttendanceService;

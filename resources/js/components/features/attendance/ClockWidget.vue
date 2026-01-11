@@ -25,6 +25,10 @@ const clockStatus = ref<ClockStatus | null>(null);
 const loading = ref(false);
 const gpsLoading = ref(false);
 
+// Check if running in browser (not SSR)
+const isBrowser = typeof window !== 'undefined';
+const hasGeolocation = isBrowser && 'geolocation' in navigator;
+
 /**
  * Format waktu ke format HH:mm WIB
  */
@@ -43,17 +47,17 @@ const formatTime = (time?: string) => {
  */
 const statusMessage = computed(() => {
     if (!clockStatus.value) return 'Loading...';
-    
+
     if (clockStatus.value.is_clocked_out) {
         return `Sudah Clock Out pada ${formatTime(clockStatus.value.clock_out)}`;
     }
-    
+
     if (clockStatus.value.is_clocked_in) {
         const time = formatTime(clockStatus.value.clock_in);
         const status = clockStatus.value.is_late ? '⚠️ Terlambat' : '✓ Tepat Waktu';
         return `Sudah Clock In pada ${time} ${status}`;
     }
-    
+
     return 'Belum Clock In Hari Ini';
 });
 
@@ -75,6 +79,8 @@ const canClockOut = computed(() => {
  * Fetch clock status dari backend
  */
 const fetchClockStatus = async () => {
+    if (!isBrowser) return;
+
     loading.value = true;
     try {
         const response = await fetch('/teacher/clock/status', {
@@ -83,9 +89,9 @@ const fetchClockStatus = async () => {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         });
-        
+
         if (!response.ok) throw new Error('Failed to fetch status');
-        
+
         const data = await response.json();
         clockStatus.value = data.data;
     } catch (error) {
@@ -102,13 +108,22 @@ const fetchClockStatus = async () => {
  */
 const getLocation = (): Promise<{ latitude: number; longitude: number }> => {
     return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
+        if (!hasGeolocation) {
             reject(new Error('Browser tidak mendukung GPS'));
             return;
         }
-        
+
         gpsLoading.value = true;
-        
+
+        // Try to get permission first
+        if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'geolocation' }).then((permissionStatus) => {
+                console.log('Geolocation permission:', permissionStatus.state);
+            }).catch(err => {
+                console.log('Permission query not supported:', err);
+            });
+        }
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 gpsLoading.value = false;
@@ -120,21 +135,22 @@ const getLocation = (): Promise<{ latitude: number; longitude: number }> => {
             (error) => {
                 gpsLoading.value = false;
                 let message = 'Gagal mendapatkan lokasi';
-                
-                if (error.code === error.PERMISSION_DENIED) {
-                    message = 'Izin GPS ditolak. Aktifkan GPS di pengaturan browser.';
-                } else if (error.code === error.POSITION_UNAVAILABLE) {
+
+                if (error.code === 1) { // PERMISSION_DENIED
+                    message = 'Izin GPS ditolak. Klik ikon kunci/info di address bar browser, lalu izinkan akses lokasi.';
+                } else if (error.code === 2) { // POSITION_UNAVAILABLE
                     message = 'Lokasi tidak tersedia. Pastikan GPS aktif.';
-                } else if (error.code === error.TIMEOUT) {
+                } else if (error.code === 3) { // TIMEOUT
                     message = 'Request GPS timeout. Coba lagi.';
                 }
-                
+
+                console.error('Geolocation error:', error);
                 reject(new Error(message));
             },
             {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
+                enableHighAccuracy: false, // Changed to false for faster response
+                timeout: 15000, // Increased timeout
+                maximumAge: 60000 // Allow cached position
             }
         );
     });
@@ -146,11 +162,13 @@ const getLocation = (): Promise<{ latitude: number; longitude: number }> => {
 const handleClockIn = async () => {
     try {
         haptics.light();
-        
+
+        console.log('Requesting GPS location...');
         const location = await getLocation();
-        
+        console.log('GPS location obtained:', location);
+
         loading.value = true;
-        
+
         router.post('/teacher/clock/in', {
             latitude: location.latitude,
             longitude: location.longitude
@@ -171,8 +189,9 @@ const handleClockIn = async () => {
             }
         });
     } catch (error: any) {
+        console.error('Clock in error:', error);
         haptics.error();
-        modal.error(error.message);
+        modal.error(error.message || 'Gagal melakukan clock in');
     }
 };
 
@@ -187,15 +206,15 @@ const handleClockOut = async () => {
             'Ya, Clock Out',
             'Batal'
         );
-        
+
         if (!confirmed) return;
-        
+
         haptics.light();
-        
+
         const location = await getLocation();
-        
+
         loading.value = true;
-        
+
         router.post('/teacher/clock/out', {
             latitude: location.latitude,
             longitude: location.longitude
@@ -242,7 +261,7 @@ onMounted(() => {
                         <Clock :size="20" />
                         <h3 class="text-sm font-semibold uppercase tracking-wide">Presensi Guru</h3>
                     </div>
-                    
+
                     <!-- Status Indicator -->
                     <div v-if="clockStatus?.is_clocked_in && !clockStatus?.is_clocked_out" class="flex items-center gap-1">
                         <span class="relative flex h-2 w-2">
@@ -252,13 +271,13 @@ onMounted(() => {
                         <span class="text-[10px] font-medium">Aktif</span>
                     </div>
                 </div>
-                
+
                 <!-- Loading State -->
                 <div v-if="loading && !clockStatus" class="space-y-3">
                     <div class="h-8 bg-white/20 rounded-lg animate-pulse"></div>
                     <div class="h-10 bg-white/20 rounded-xl animate-pulse"></div>
                 </div>
-                
+
                 <!-- Clock Status -->
                 <div v-else class="space-y-4">
                     <!-- Status Message -->
@@ -268,7 +287,7 @@ onMounted(() => {
                             Durasi Kerja: {{ clockStatus.duration }}
                         </p>
                     </div>
-                    
+
                     <!-- Action Buttons -->
                     <div class="flex gap-3">
                         <!-- Clock In Button -->
@@ -291,7 +310,7 @@ onMounted(() => {
                                 <span>{{ gpsLoading ? 'Mencari Lokasi...' : 'Masuk' }}</span>
                             </button>
                         </Motion>
-                        
+
                         <!-- Clock Out Button -->
                         <Motion
                             v-if="canClockOut"
@@ -313,20 +332,32 @@ onMounted(() => {
                                 <span>{{ gpsLoading ? 'Mencari Lokasi...' : 'Pulang' }}</span>
                             </button>
                         </Motion>
-                        
+
                         <!-- Already Clocked Out -->
                         <div v-if="clockStatus?.is_clocked_out" class="flex-1 px-4 py-3 bg-white/10 text-white rounded-xl font-semibold border border-white/30 flex items-center justify-center gap-2">
                             <CheckCircle2 :size="18" />
                             <span>Selesai Hari Ini</span>
                         </div>
                     </div>
-                    
+
                     <!-- GPS Warning -->
-                    <div v-if="!navigator.geolocation" class="flex items-start gap-2 p-3 bg-amber-50/10 border border-amber-200/30 rounded-lg">
+                    <div v-if="!hasGeolocation" class="flex items-start gap-2 p-3 bg-amber-50/10 border border-amber-200/30 rounded-lg">
                         <AlertCircle :size="16" class="text-amber-200 flex-shrink-0 mt-0.5" />
                         <p class="text-xs text-amber-50">
                             Browser tidak mendukung GPS. Hubungi admin untuk bantuan.
                         </p>
+                    </div>
+
+                    <!-- Link to Attendance History -->
+                    <div class="mt-3 pt-3 border-t border-white/20">
+                        <a
+                            href="/teacher/my-attendance"
+                            class="text-xs text-white/80 hover:text-white flex items-center justify-center gap-1 transition-colors"
+                            @click="haptics.light()"
+                        >
+                            <Clock :size="14" />
+                            <span>Lihat Riwayat Presensi Saya →</span>
+                        </a>
                     </div>
                 </div>
             </div>

@@ -28,6 +28,15 @@ class LeaveRequestController extends Controller
     {
         $parent = auth()->user();
 
+        // Check if parent has guardian record
+        if (! $parent->guardian) {
+            return Inertia::render('Parent/LeaveRequest/Index', [
+                'title' => 'Riwayat Permohonan Izin',
+                'leaveRequests' => [],
+                'error' => 'Data wali belum terdaftar. Silakan hubungi administrasi sekolah.',
+            ]);
+        }
+
         // Get student IDs dari children
         $studentIds = $parent->guardian->students()->pluck('students.id');
 
@@ -51,6 +60,16 @@ class LeaveRequestController extends Controller
     public function create(): Response
     {
         $parent = auth()->user();
+
+        // Check if parent has guardian record
+        if (! $parent->guardian) {
+            return Inertia::render('Parent/LeaveRequest/Create', [
+                'title' => 'Ajukan Permohonan Izin',
+                'children' => [],
+                'error' => 'Data wali belum terdaftar. Silakan hubungi administrasi sekolah.',
+            ]);
+        }
+
         $children = $parent->guardian->students;
 
         return Inertia::render('Parent/LeaveRequest/Create', [

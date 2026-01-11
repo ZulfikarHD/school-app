@@ -7,7 +7,8 @@ export const useHaptics = () => {
     /**
      * Check apakah browser support Vibration API
      */
-    const isSupported = 'vibrate' in navigator;
+    const isBrowser = typeof window !== 'undefined' && typeof navigator !== 'undefined';
+    const isSupported = isBrowser && 'vibrate' in navigator;
 
     /**
      * Light tap feedback untuk button press dan selections

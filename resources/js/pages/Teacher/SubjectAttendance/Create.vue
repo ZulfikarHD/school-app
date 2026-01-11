@@ -79,7 +79,12 @@ const loadStudents = async () => {
     haptics.light();
 
     try {
-        const response = await fetch(`/teacher/api/classes/${selectedClass.value}/students`);
+        const response = await fetch(`/api/classes/${selectedClass.value}/students`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
         const data = await response.json();
         students.value = data.data || [];
 
@@ -328,9 +333,9 @@ watch([selectedSubject, selectedClass, selectedDate, selectedJamKe], () => {
 
                 <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div class="text-sm text-gray-500 dark:text-gray-400">
-                        Hadir: {{ form.attendances.filter(a => a.status === 'H').length }} • 
-                        Izin: {{ form.attendances.filter(a => a.status === 'I').length }} • 
-                        Sakit: {{ form.attendances.filter(a => a.status === 'S').length }} • 
+                        Hadir: {{ form.attendances.filter(a => a.status === 'H').length }} •
+                        Izin: {{ form.attendances.filter(a => a.status === 'I').length }} •
+                        Sakit: {{ form.attendances.filter(a => a.status === 'S').length }} •
                         Alpha: {{ form.attendances.filter(a => a.status === 'A').length }}
                     </div>
                     <Motion

@@ -1,16 +1,18 @@
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
-import { Bell, FileText } from 'lucide-vue-next';
+import { Bell, FileText, RefreshCw } from 'lucide-vue-next';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import AttendanceSummaryCard from '@/components/dashboard/AttendanceSummaryCard.vue';
 import TeacherPresenceWidget from '@/components/dashboard/TeacherPresenceWidget.vue';
 import { useHaptics } from '@/composables/useHaptics';
+import axios from 'axios';
 
 /**
  * Dashboard untuk Kepala Sekolah dengan overview sistem
  * dan akses ke laporan serta monitoring
- * dengan iOS-like staggered animations dan haptic feedback
+ * dengan iOS-like staggered animations, haptic feedback, dan real-time polling
  */
 
 interface Props {
@@ -47,7 +49,7 @@ interface Props {
     pendingTeacherLeaves: number;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const haptics = useHaptics();
 const handleCardClick = () => haptics.light();
@@ -55,6 +57,74 @@ const handleCardClick = () => haptics.light();
 const viewTeacherLeaves = () => {
     haptics.light();
     router.visit('/principal/teacher-leaves');
+};
+
+// Real-time polling state
+const isRefreshing = ref(false);
+const lastUpdated = ref(new Date());
+const realtimeData = ref({
+    todayAttendance: props.todayAttendance,
+    classesNotRecorded: props.classesNotRecorded,
+    teacherPresence: props.teacherPresence,
+    pendingTeacherLeaves: props.pendingTeacherLeaves,
+});
+
+let pollingInterval: number | null = null;
+
+// Fetch latest attendance metrics
+const fetchAttendanceMetrics = async () => {
+    if (isRefreshing.value) return;
+    
+    isRefreshing.value = true;
+    
+    try {
+        const response = await axios.get('/principal/dashboard/attendance-metrics');
+        
+        if (response.data) {
+            realtimeData.value = {
+                todayAttendance: response.data.todayAttendance,
+                classesNotRecorded: response.data.classesNotRecorded,
+                teacherPresence: response.data.teacherPresence,
+                pendingTeacherLeaves: response.data.pendingTeacherLeaves,
+            };
+            lastUpdated.value = new Date();
+        }
+    } catch (error) {
+        console.error('Failed to fetch attendance metrics:', error);
+    } finally {
+        isRefreshing.value = false;
+    }
+};
+
+// Manual refresh
+const manualRefresh = () => {
+    haptics.light();
+    fetchAttendanceMetrics();
+};
+
+// Start polling on mount
+onMounted(() => {
+    // Poll every 60 seconds (1 minute)
+    pollingInterval = window.setInterval(() => {
+        fetchAttendanceMetrics();
+    }, 60000);
+});
+
+// Cleanup on unmount
+onUnmounted(() => {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
+});
+
+// Format last updated time
+const formatLastUpdated = () => {
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - lastUpdated.value.getTime()) / 1000);
+    
+    if (diff < 60) return 'Baru saja';
+    if (diff < 3600) return `${Math.floor(diff / 60)} menit yang lalu`;
+    return lastUpdated.value.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 };
 </script>
 
@@ -70,8 +140,28 @@ const viewTeacherLeaves = () => {
             >
                 <div class="bg-white px-6 py-8 border-b border-gray-100 dark:bg-zinc-900 dark:border-zinc-800">
                     <div class="mx-auto max-w-7xl">
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Dashboard Kepala Sekolah</h1>
-                        <p class="mt-2 text-gray-600 dark:text-gray-400">Monitoring dan laporan sistem sekolah</p>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Dashboard Kepala Sekolah</h1>
+                                <p class="mt-2 text-gray-600 dark:text-gray-400">Monitoring dan laporan sistem sekolah</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ formatLastUpdated() }}
+                                </span>
+                                <button
+                                    @click="manualRefresh"
+                                    :disabled="isRefreshing"
+                                    class="p-2 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                                    title="Refresh data"
+                                >
+                                    <RefreshCw
+                                        :size="20"
+                                        :class="['text-gray-600 dark:text-gray-400', isRefreshing && 'animate-spin']"
+                                    />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </Motion>
@@ -136,9 +226,9 @@ const viewTeacherLeaves = () => {
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Izin Pending</p>
-                                        <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ pendingTeacherLeaves }}</p>
+                                        <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ realtimeData.pendingTeacherLeaves }}</p>
                                     </div>
-                                    <div v-if="pendingTeacherLeaves > 0" class="p-2 bg-red-100 dark:bg-red-900 rounded-full">
+                                    <div v-if="realtimeData.pendingTeacherLeaves > 0" class="p-2 bg-red-100 dark:bg-red-900 rounded-full">
                                         <Bell :size="20" class="text-red-600 dark:text-red-300" />
                                     </div>
                                 </div>
@@ -150,12 +240,12 @@ const viewTeacherLeaves = () => {
                 <!-- Real-time Attendance Widgets -->
                 <div class="grid gap-6 lg:grid-cols-2">
                     <AttendanceSummaryCard
-                        :today-attendance="todayAttendance"
-                        :classes-not-recorded="classesNotRecorded"
+                        :today-attendance="realtimeData.todayAttendance"
+                        :classes-not-recorded="realtimeData.classesNotRecorded"
                     />
 
                     <TeacherPresenceWidget
-                        :teacher-presence="teacherPresence"
+                        :teacher-presence="realtimeData.teacherPresence"
                     />
                 </div>
 

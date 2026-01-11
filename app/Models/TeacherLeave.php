@@ -46,6 +46,65 @@ class TeacherLeave extends Model
     }
 
     /**
+     * Append accessors untuk serialization
+     * agar frontend bisa mengakses dengan nama English
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'start_date',
+        'end_date',
+        'type',
+        'reason',
+        'approved_at',
+    ];
+
+    /**
+     * Accessor untuk start_date (alias untuk tanggal_mulai)
+     * untuk konsistensi dengan frontend
+     */
+    public function getStartDateAttribute(): ?string
+    {
+        return $this->tanggal_mulai?->format('Y-m-d');
+    }
+
+    /**
+     * Accessor untuk end_date (alias untuk tanggal_selesai)
+     * untuk konsistensi dengan frontend
+     */
+    public function getEndDateAttribute(): ?string
+    {
+        return $this->tanggal_selesai?->format('Y-m-d');
+    }
+
+    /**
+     * Accessor untuk type (alias untuk jenis)
+     * untuk konsistensi dengan frontend
+     */
+    public function getTypeAttribute(): ?string
+    {
+        return $this->jenis;
+    }
+
+    /**
+     * Accessor untuk reason (alias untuk alasan)
+     * untuk konsistensi dengan frontend
+     */
+    public function getReasonAttribute(): ?string
+    {
+        return $this->alasan;
+    }
+
+    /**
+     * Accessor untuk approved_at (alias untuk reviewed_at)
+     * untuk konsistensi dengan frontend
+     */
+    public function getApprovedAtAttribute(): ?string
+    {
+        return $this->reviewed_at?->format('Y-m-d H:i:s');
+    }
+
+    /**
      * Relasi ke guru yang mengajukan cuti
      *
      * @return BelongsTo<User, TeacherLeave>
@@ -61,6 +120,16 @@ class TeacherLeave extends Model
      * @return BelongsTo<User, TeacherLeave>
      */
     public function reviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * Alias untuk reviewedBy - untuk backward compatibility
+     *
+     * @return BelongsTo<User, TeacherLeave>
+     */
+    public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }

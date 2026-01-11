@@ -98,9 +98,10 @@ class LoginController extends Controller
         // Redirect berdasarkan kondisi
         // Untuk first login, gunakan Inertia::location() untuk full page reload
         // untuk memastikan authentication state ter-update dengan benar
-        if ($user->is_first_login) {
-            return Inertia::location(route('auth.first-login'));
-        }
+        // TEMPORARILY DISABLED: First login password change requirement
+        // if ($user->is_first_login) {
+        //     return Inertia::location(route('auth.first-login'));
+        // }
 
         // Untuk login normal, gunakan redirect biasa untuk smooth Inertia navigation
         $dashboardRoute = $this->getDashboardRoute($user->role);

@@ -12,6 +12,15 @@ import { index as adminAuditLogsIndex } from '@/routes/admin/audit-logs';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { show as profileShow } from '@/routes/profile';
 import { index as parentChildrenIndex } from '@/routes/parent/children';
+import { index as parentLeaveRequestsIndex } from '@/routes/parent/leave-requests';
+import { index as adminAttendanceStudentsIndex } from '@/routes/admin/attendance/students';
+import { index as adminAttendanceTeachersIndex } from '@/routes/admin/attendance/teachers';
+import { index as principalTeacherLeavesIndex } from '@/routes/principal/teacher-leaves';
+import { index as teacherAttendanceIndex } from '@/routes/teacher/attendance';
+import { create as teacherAttendanceSubjectCreate, index as teacherAttendanceSubjectIndex } from '@/routes/teacher/attendance/subject';
+import { myAttendance as teacherMyAttendance } from '@/routes/teacher';
+import { index as teacherLeaveRequestsIndex } from '@/routes/teacher/leave-requests';
+import { index as teacherTeacherLeavesIndex } from '@/routes/teacher/teacher-leaves';
 import DialogModal from '@/components/ui/DialogModal.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import Alert from '@/components/ui/Alert.vue';
@@ -21,9 +30,7 @@ import {
     Users,
     Activity,
     FileText,
-    BookOpen,
     ClipboardList,
-    CreditCard,
     LogOut,
     User,
     Settings,
@@ -31,7 +38,10 @@ import {
     Search,
     ChevronRight,
     GraduationCap,
-    CalendarCheck
+    CalendarCheck,
+    Clock,
+    BookOpen,
+    History
 } from 'lucide-vue-next';
 
 /**
@@ -65,15 +75,20 @@ const getRouteUrl = (routeName: string): string => {
         'dashboard': dashboard().url,
         'admin.users.index': adminUsersIndex().url,
         'admin.students.index': adminStudentsIndex().url,
+        'admin.attendance.students.index': adminAttendanceStudentsIndex().url,
+        'admin.attendance.teachers.index': adminAttendanceTeachersIndex().url,
         'admin.audit-logs.index': adminAuditLogsIndex().url,
         'audit-logs.index': auditLogsIndex().url,
         'profile.show': profileShow().url,
-        'principal.reports': '/principal/reports',
-        'teacher.attendance': '/teacher/attendance',
-        'teacher.leave-requests': '/teacher/leave-requests',
+        'principal.teacher-leaves.index': principalTeacherLeavesIndex().url,
+        'teacher.attendance.index': teacherAttendanceIndex().url,
+        'teacher.attendance.subject.create': teacherAttendanceSubjectCreate().url,
+        'teacher.attendance.subject.index': teacherAttendanceSubjectIndex().url,
+        'teacher.my-attendance': teacherMyAttendance().url,
+        'teacher.leave-requests': teacherLeaveRequestsIndex().url,
+        'teacher.teacher-leaves.index': teacherTeacherLeavesIndex().url,
         'parent.children': parentChildrenIndex().url,
-        'parent.payments': '/parent/payments',
-        'parent.leave-requests': '/parent/leave-requests',
+        'parent.leave-requests': parentLeaveRequestsIndex().url,
     };
 
     return routeMap[routeName] || '#';
@@ -118,7 +133,27 @@ const handleNavClick = () => {
  * Check active route
  */
 const isActive = (route: string) => {
-    return page.url.startsWith(getRouteUrl(route));
+    const routeUrl = getRouteUrl(route);
+    const currentUrl = page.url.split('?')[0]; // Remove query params
+
+    // For exact matches or specific sub-routes
+    if (route === 'teacher.attendance.index') {
+        // Match /teacher/attendance exactly or /teacher/attendance/daily
+        return currentUrl === '/teacher/attendance' || currentUrl.startsWith('/teacher/attendance/daily');
+    }
+
+    if (route === 'teacher.attendance.subject.create') {
+        // Match /teacher/attendance/subject exactly (not history)
+        return currentUrl === '/teacher/attendance/subject';
+    }
+
+    if (route === 'teacher.attendance.subject.index') {
+        // Match /teacher/attendance/subject/history
+        return currentUrl.startsWith('/teacher/attendance/subject/history');
+    }
+
+    // Default: starts with
+    return currentUrl.startsWith(routeUrl);
 };
 
 /**
@@ -136,6 +171,8 @@ const menuItems = computed(() => {
             ...commonItems,
             { name: 'Manajemen User', route: 'admin.users.index', icon: Users },
             { name: 'Data Siswa', route: 'admin.students.index', icon: GraduationCap },
+            { name: 'Absensi Siswa', route: 'admin.attendance.students.index', icon: CalendarCheck },
+            { name: 'Presensi Guru', route: 'admin.attendance.teachers.index', icon: Clock },
             { name: 'Audit Log', route: 'admin.audit-logs.index', icon: Activity },
         ];
     }
@@ -143,7 +180,7 @@ const menuItems = computed(() => {
     if (role === 'PRINCIPAL') {
         return [
             ...commonItems,
-            { name: 'Laporan Sekolah', route: 'principal.reports', icon: FileText },
+            { name: 'Izin Guru', route: 'principal.teacher-leaves.index', icon: ClipboardList },
             { name: 'Audit Log', route: 'audit-logs.index', icon: Activity },
         ];
     }
@@ -151,8 +188,12 @@ const menuItems = computed(() => {
     if (role === 'TEACHER') {
         return [
             ...commonItems,
-            { name: 'Presensi Siswa', route: 'teacher.attendance', icon: CalendarCheck },
+            { name: 'Presensi Siswa', route: 'teacher.attendance.index', icon: CalendarCheck },
+            { name: 'Presensi Mapel', route: 'teacher.attendance.subject.create', icon: BookOpen },
+            { name: 'Riwayat Presensi Mapel', route: 'teacher.attendance.subject.index', icon: History },
+            { name: 'Riwayat Presensi Saya', route: 'teacher.my-attendance', icon: History },
             { name: 'Verifikasi Izin', route: 'teacher.leave-requests', icon: FileText },
+            { name: 'Izin Saya', route: 'teacher.teacher-leaves.index', icon: ClipboardList },
         ];
     }
 
@@ -161,7 +202,6 @@ const menuItems = computed(() => {
             ...commonItems,
             { name: 'Data Anak', route: 'parent.children', icon: Users },
             { name: 'Pengajuan Izin', route: 'parent.leave-requests', icon: FileText },
-            { name: 'Tagihan SPP', route: 'parent.payments', icon: CreditCard },
         ];
     }
 

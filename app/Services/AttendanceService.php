@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendAlphaNotification;
 use App\Models\LeaveRequest;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -12,6 +13,7 @@ use App\Models\TeacherLeave;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceService
@@ -36,22 +38,27 @@ class AttendanceService
 
         DB::transaction(function () use ($data, $teacher, &$attendances) {
             foreach ($data['attendances'] as $item) {
-                // Check duplicate
-                if ($this->isDuplicateAttendance($item['student_id'], $data['tanggal'])) {
-                    continue; // Skip duplicate, or throw exception based on requirement
-                }
-
-                $attendance = StudentAttendance::create([
-                    'student_id' => $item['student_id'],
-                    'class_id' => $data['class_id'],
-                    'tanggal' => $data['tanggal'],
-                    'status' => $item['status'],
-                    'keterangan' => $item['keterangan'] ?? null,
-                    'recorded_by' => $teacher->id,
-                    'recorded_at' => now(),
-                ]);
+                // Use updateOrCreate to handle both create and update
+                $attendance = StudentAttendance::updateOrCreate(
+                    [
+                        'student_id' => $item['student_id'],
+                        'tanggal' => $data['tanggal'],
+                    ],
+                    [
+                        'class_id' => $data['class_id'],
+                        'status' => $item['status'],
+                        'keterangan' => $item['keterangan'] ?? null,
+                        'recorded_by' => $teacher->id,
+                        'recorded_at' => now(),
+                    ]
+                );
 
                 $attendances->push($attendance);
+
+                // Dispatch notification job jika status Alpha
+                if ($item['status'] === 'A') {
+                    SendAlphaNotification::dispatch($attendance);
+                }
             }
         });
 
@@ -494,5 +501,258 @@ class AttendanceService
 
             return $class;
         })->sortBy('tingkat')->sortBy('nama')->values();
+    }
+
+    // ==================== ADVANCED REPORTING ====================
+
+    /**
+     * Get comprehensive attendance report dengan filters
+     * untuk admin/principal dengan pagination dan sorting
+     * Menggunakan eager loading untuk prevent N+1 queries
+     *
+     * @param  array{start_date?: string, end_date?: string, class_id?: int, status?: string, student_id?: int}  $filters
+     * @return Collection<int, StudentAttendance>
+     */
+    public function getAttendanceReport(array $filters): Collection
+    {
+        $query = StudentAttendance::with([
+            'student:id,nis,nama_lengkap,kelas_id',
+            'class:id,tingkat,nama',
+            'recordedBy:id,name',
+        ]);
+
+        if (isset($filters['start_date'])) {
+            $query->whereDate('tanggal', '>=', $filters['start_date']);
+        }
+
+        if (isset($filters['end_date'])) {
+            $query->whereDate('tanggal', '<=', $filters['end_date']);
+        }
+
+        if (isset($filters['class_id'])) {
+            $query->where('class_id', $filters['class_id']);
+        }
+
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (isset($filters['student_id'])) {
+            $query->where('student_id', $filters['student_id']);
+        }
+
+        return $query->orderBy('tanggal', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->limit(1000) // Limit untuk performance
+            ->get();
+    }
+
+    /**
+     * Calculate attendance statistics untuk satu siswa dalam periode tertentu
+     * dengan persentase kehadiran dan breakdown per status
+     *
+     * @return array{hadir: int, izin: int, sakit: int, alpha: int, total: int, persentase_hadir: float}
+     */
+    public function calculateAttendanceStatistics(int $studentId, string $startDate, string $endDate): array
+    {
+        $attendances = StudentAttendance::where('student_id', $studentId)
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->get();
+
+        $hadir = $attendances->where('status', 'H')->count();
+        $izin = $attendances->where('status', 'I')->count();
+        $sakit = $attendances->where('status', 'S')->count();
+        $alpha = $attendances->where('status', 'A')->count();
+        $total = $attendances->count();
+
+        $persentaseHadir = $total > 0 ? round(($hadir / $total) * 100, 2) : 0;
+
+        return [
+            'hadir' => $hadir,
+            'izin' => $izin,
+            'sakit' => $sakit,
+            'alpha' => $alpha,
+            'total' => $total,
+            'persentase_hadir' => $persentaseHadir,
+        ];
+    }
+
+    /**
+     * Get attendance trend untuk satu kelas dalam periode tertentu
+     * untuk visualisasi chart dengan data per tanggal
+     *
+     * @return array<string, array{date: string, hadir: int, izin: int, sakit: int, alpha: int}>
+     */
+    public function getClassAttendanceTrend(int $classId, string $startDate, string $endDate): array
+    {
+        $attendances = StudentAttendance::where('class_id', $classId)
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->orderBy('tanggal')
+            ->get()
+            ->groupBy(function ($attendance) {
+                return Carbon::parse($attendance->tanggal)->format('Y-m-d');
+            });
+
+        $trend = [];
+        foreach ($attendances as $date => $dayAttendances) {
+            $trend[$date] = [
+                'date' => $date,
+                'hadir' => $dayAttendances->where('status', 'H')->count(),
+                'izin' => $dayAttendances->where('status', 'I')->count(),
+                'sakit' => $dayAttendances->where('status', 'S')->count(),
+                'alpha' => $dayAttendances->where('status', 'A')->count(),
+            ];
+        }
+
+        return $trend;
+    }
+
+    /**
+     * Get teacher attendance report dengan filters
+     * untuk admin/principal dengan calculation work hours
+     * Menggunakan eager loading untuk prevent N+1 queries
+     *
+     * @param  array{start_date?: string, end_date?: string, teacher_id?: int}  $filters
+     * @return Collection<int, TeacherAttendance>
+     */
+    public function getTeacherAttendanceReport(array $filters): Collection
+    {
+        $query = TeacherAttendance::with(['teacher:id,name,email']);
+
+        if (isset($filters['start_date'])) {
+            $query->whereDate('tanggal', '>=', $filters['start_date']);
+        }
+
+        if (isset($filters['end_date'])) {
+            $query->whereDate('tanggal', '<=', $filters['end_date']);
+        }
+
+        if (isset($filters['teacher_id'])) {
+            $query->where('teacher_id', $filters['teacher_id']);
+        }
+
+        return $query->orderBy('tanggal', 'desc')
+            ->orderBy('clock_in', 'asc')
+            ->limit(1000) // Limit untuk performance
+            ->get();
+    }
+
+    /**
+     * Calculate work hours untuk satu teacher dalam satu bulan
+     * dengan total hours, late days, dan absent days
+     *
+     * @return array{total_days: int, present_days: int, late_days: int, total_hours: float, average_hours: float}
+     */
+    public function calculateTeacherWorkHours(int $teacherId, string $month): array
+    {
+        $startDate = Carbon::parse($month)->startOfMonth();
+        $endDate = Carbon::parse($month)->endOfMonth();
+
+        $attendances = TeacherAttendance::where('teacher_id', $teacherId)
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->get();
+
+        $totalDays = $startDate->diffInWeekdays($endDate) + 1;
+        $presentDays = $attendances->count();
+        $lateDays = $attendances->where('is_late', true)->count();
+
+        $totalHours = 0;
+        foreach ($attendances as $attendance) {
+            if ($attendance->clock_in && $attendance->clock_out) {
+                $clockIn = Carbon::parse($attendance->clock_in);
+                $clockOut = Carbon::parse($attendance->clock_out);
+                $totalHours += $clockOut->diffInHours($clockIn, true);
+            }
+        }
+
+        $averageHours = $presentDays > 0 ? round($totalHours / $presentDays, 2) : 0;
+
+        return [
+            'total_days' => $totalDays,
+            'present_days' => $presentDays,
+            'late_days' => $lateDays,
+            'total_hours' => round($totalHours, 2),
+            'average_hours' => $averageHours,
+        ];
+    }
+
+    /**
+     * Get today's attendance summary untuk dashboard
+     * dengan total students, attendance rate, dan breakdown per status
+     * Cached for 5 minutes untuk performance
+     *
+     * @return array{total_students: int, total_present: int, total_absent: int, attendance_rate: float, by_status: array}
+     */
+    public function getTodayAttendanceSummary(): array
+    {
+        $today = Carbon::today()->format('Y-m-d');
+        $cacheKey = "attendance.summary.{$today}";
+
+        return Cache::remember($cacheKey, 300, function () use ($today) {
+            $totalStudents = Student::where('status', 'aktif')->count();
+            $attendances = StudentAttendance::whereDate('tanggal', $today)->get();
+
+            $totalPresent = $attendances->where('status', 'H')->count();
+            $totalAbsent = $attendances->whereIn('status', ['A'])->count();
+            $attendanceRate = $totalStudents > 0 ? round(($totalPresent / $totalStudents) * 100, 2) : 0;
+
+            return [
+                'total_students' => $totalStudents,
+                'total_present' => $totalPresent,
+                'total_absent' => $totalAbsent,
+                'attendance_rate' => $attendanceRate,
+                'by_status' => [
+                    'hadir' => $attendances->where('status', 'H')->count(),
+                    'izin' => $attendances->where('status', 'I')->count(),
+                    'sakit' => $attendances->where('status', 'S')->count(),
+                    'alpha' => $attendances->where('status', 'A')->count(),
+                ],
+            ];
+        });
+    }
+
+    /**
+     * Get classes yang belum input attendance untuk tanggal tertentu
+     * untuk alert principal/admin
+     *
+     * @return Collection<int, SchoolClass>
+     */
+    public function getClassesWithoutAttendance(string $date): Collection
+    {
+        $classesWithAttendance = StudentAttendance::whereDate('tanggal', $date)
+            ->distinct()
+            ->pluck('class_id');
+
+        return SchoolClass::where('is_active', true)
+            ->whereNotIn('id', $classesWithAttendance)
+            ->with('waliKelas')
+            ->get()
+            ->map(function ($class) {
+                $class->nama_lengkap = "Kelas {$class->tingkat}{$class->nama}";
+                $class->jumlah_siswa = Student::where('kelas_id', $class->id)
+                    ->where('status', 'aktif')
+                    ->count();
+
+                return $class;
+            });
+    }
+
+    /**
+     * Get teachers yang belum clock in untuk tanggal tertentu
+     * untuk alert principal
+     *
+     * @return Collection<int, User>
+     */
+    public function getTeacherAbsenceToday(): Collection
+    {
+        $today = Carbon::today()->format('Y-m-d');
+
+        $clockedInTeacherIds = TeacherAttendance::whereDate('tanggal', $today)
+            ->pluck('teacher_id');
+
+        return User::where('role', 'TEACHER')
+            ->where('is_active', true)
+            ->whereNotIn('id', $clockedInTeacherIds)
+            ->get();
     }
 }

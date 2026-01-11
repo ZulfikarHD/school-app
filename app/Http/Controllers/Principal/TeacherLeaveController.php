@@ -24,7 +24,7 @@ class TeacherLeaveController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = TeacherLeave::with('teacher');
+        $query = TeacherLeave::with(['teacher', 'approvedBy']);
 
         // Filter by status
         if ($request->filled('status')) {
