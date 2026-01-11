@@ -11,6 +11,7 @@ use App\Http\Controllers\Dashboard\PrincipalDashboardController;
 use App\Http\Controllers\Dashboard\TeacherDashboardController;
 use App\Http\Controllers\Parent\ChildController;
 use App\Http\Controllers\Parent\LeaveRequestController as ParentLeaveRequestController;
+use App\Http\Controllers\Principal\TeacherLeaveController as PrincipalTeacherLeaveController;
 use App\Http\Controllers\Teacher\AttendanceController;
 use App\Http\Controllers\Teacher\ClockController;
 use App\Http\Controllers\Teacher\LeaveRequestController as TeacherLeaveRequestController;
@@ -67,16 +68,35 @@ Route::middleware(['auth'])->group(function () {
             // Attendance Management Routes
             Route::get('attendance/students', [AdminAttendanceController::class, 'studentsIndex'])
                 ->name('attendance.students.index');
+            Route::get('attendance/students/export', [AdminAttendanceController::class, 'exportStudents'])
+                ->name('attendance.students.export');
             Route::get('attendance/students/correction', [AdminAttendanceController::class, 'correction'])
                 ->name('attendance.students.correction');
+            Route::put('attendance/{attendance}', [AdminAttendanceController::class, 'update'])
+                ->name('attendance.update');
+            Route::delete('attendance/{attendance}', [AdminAttendanceController::class, 'destroy'])
+                ->name('attendance.destroy');
             Route::get('attendance/teachers', [AdminTeacherAttendanceController::class, 'index'])
                 ->name('attendance.teachers.index');
+            Route::get('attendance/teachers/export', [AdminTeacherAttendanceController::class, 'exportTeachers'])
+                ->name('attendance.teachers.export');
         });
     });
 
     // Principal Dashboard - can also view audit logs
     Route::middleware('role:PRINCIPAL')->group(function () {
         Route::get('/principal/dashboard', [PrincipalDashboardController::class, 'index'])->name('principal.dashboard');
+
+        // Principal Routes
+        Route::prefix('principal')->name('principal.')->group(function () {
+            // Teacher Leave Approval Routes
+            Route::get('teacher-leaves', [PrincipalTeacherLeaveController::class, 'index'])
+                ->name('teacher-leaves.index');
+            Route::post('teacher-leaves/{leave}/approve', [PrincipalTeacherLeaveController::class, 'approve'])
+                ->name('teacher-leaves.approve');
+            Route::post('teacher-leaves/{leave}/reject', [PrincipalTeacherLeaveController::class, 'reject'])
+                ->name('teacher-leaves.reject');
+        });
 
         // Audit Log Routes (read-only for Principal)
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
@@ -108,11 +128,39 @@ Route::middleware(['auth'])->group(function () {
                 return response()->json(['data' => $students]);
             })->name('api.classes.students');
 
+            // API untuk search students (for correction page)
+            Route::get('/api/students/search', function (\Illuminate\Http\Request $request) {
+                $query = $request->input('q');
+                $students = \App\Models\Student::with('kelas')
+                    ->where('status', 'aktif')
+                    ->where(function ($q) use ($query) {
+                        $q->where('nama_lengkap', 'like', "%{$query}%")
+                          ->orWhere('nis', 'like', "%{$query}%");
+                    })
+                    ->limit(10)
+                    ->get();
+
+                return response()->json(['data' => $students]);
+            })->name('api.students.search');
+
+            // API untuk get student attendance history
+            Route::get('/api/students/{student}/attendance', function (\App\Models\Student $student) {
+                $attendances = $student->dailyAttendances()
+                    ->with(['recordedBy'])
+                    ->orderBy('tanggal', 'desc')
+                    ->limit(50)
+                    ->get();
+
+                return response()->json(['data' => $attendances]);
+            })->name('api.students.attendance');
+
             // Subject Attendance Routes
             Route::get('attendance/subject', [SubjectAttendanceController::class, 'create'])
                 ->name('attendance.subject.create');
             Route::post('attendance/subject', [SubjectAttendanceController::class, 'store'])
                 ->name('attendance.subject.store');
+            Route::get('attendance/subject/history', [SubjectAttendanceController::class, 'index'])
+                ->name('attendance.subject.index');
 
             // Clock In/Out Routes (API endpoints)
             Route::post('clock/in', [ClockController::class, 'clockIn'])
@@ -138,6 +186,8 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('parent')->name('parent.')->group(function () {
             Route::get('children', [ChildController::class, 'index'])->name('children.index');
             Route::get('children/{student}', [ChildController::class, 'show'])->name('children.show');
+            Route::get('children/{student}/attendance', [ChildController::class, 'attendance'])->name('children.attendance');
+            Route::get('children/{student}/attendance/export', [ChildController::class, 'exportAttendance'])->name('children.attendance.export');
 
             // Leave Request Routes
             Route::resource('leave-requests', ParentLeaveRequestController::class)

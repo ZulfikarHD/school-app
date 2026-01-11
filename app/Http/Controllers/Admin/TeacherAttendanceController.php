@@ -53,11 +53,25 @@ class TeacherAttendanceController extends Controller
                 ->count(),
         ];
 
-        return Inertia::render('Admin/Attendance/TeachersIndex', [
+        return Inertia::render('Admin/Attendance/Teachers/Index', [
             'title' => 'Rekap Presensi Guru',
             'attendances' => $attendances,
             'summary' => $summary,
             'filters' => $request->only(['date', 'status', 'is_late']),
+        ]);
+    }
+
+    /**
+     * Export teacher attendance to Excel for payroll
+     * dengan filter tanggal dan status
+     *
+     * TODO Sprint 2: Implement Excel export for payroll
+     */
+    public function exportTeachers(Request $request)
+    {
+        // This will be implemented in Phase 5: Export Functionality
+        return response()->json([
+            'message' => 'Export functionality will be implemented in Phase 5'
         ]);
     }
 }

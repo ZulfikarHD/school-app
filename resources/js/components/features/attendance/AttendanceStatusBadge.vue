@@ -46,7 +46,7 @@ const statusConfig = computed(() => {
             iconClass: 'text-red-500'
         }
     };
-    
+
     return configs[props.status];
 });
 
@@ -56,7 +56,7 @@ const sizeClasses = computed(() => {
         md: 'text-xs px-2.5 py-1 gap-1.5',
         lg: 'text-sm px-3 py-1.5 gap-2'
     };
-    
+
     return sizes[props.size];
 });
 
@@ -66,7 +66,7 @@ const iconSize = computed(() => {
         md: 14,
         lg: 16
     };
-    
+
     return sizes[props.size];
 });
 </script>

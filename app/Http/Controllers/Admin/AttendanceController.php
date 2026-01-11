@@ -48,7 +48,7 @@ class AttendanceController extends Controller
 
         $classes = SchoolClass::active()->get();
 
-        return Inertia::render('Admin/Attendance/StudentsIndex', [
+        return Inertia::render('Admin/Attendance/Students/Index', [
             'title' => 'Rekap Presensi Siswa',
             'attendances' => $attendances,
             'classes' => $classes,
@@ -64,8 +64,53 @@ class AttendanceController extends Controller
      */
     public function correction(): Response
     {
-        return Inertia::render('Admin/Attendance/Correction', [
+        return Inertia::render('Admin/Attendance/Students/Correction', [
             'title' => 'Koreksi Data Presensi',
+        ]);
+    }
+
+    /**
+     * Update attendance record untuk koreksi data
+     * dengan audit trail
+     */
+    public function update(Request $request, StudentAttendance $attendance)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:H,I,S,A',
+            'keterangan' => 'nullable|string|max:255',
+        ]);
+
+        $attendance->update([
+            'status' => $validated['status'],
+            'keterangan' => $validated['keterangan'],
+            'recorded_by' => auth()->id(),
+            'recorded_at' => now(),
+        ]);
+
+        return back()->with('success', 'Data presensi berhasil diperbarui');
+    }
+
+    /**
+     * Delete attendance record
+     */
+    public function destroy(StudentAttendance $attendance)
+    {
+        $attendance->delete();
+
+        return back()->with('success', 'Data presensi berhasil dihapus');
+    }
+
+    /**
+     * Export student attendance to Excel
+     * untuk reporting dan analisis
+     *
+     * TODO Sprint 2: Implement Excel export with filters
+     */
+    public function exportStudents(Request $request)
+    {
+        // This will be implemented in Phase 5: Export Functionality
+        return response()->json([
+            'message' => 'Export functionality will be implemented in Phase 5'
         ]);
     }
 }
