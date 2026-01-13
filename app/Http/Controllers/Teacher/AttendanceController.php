@@ -34,33 +34,44 @@ class AttendanceController extends Controller
         $kelasId = request('kelas_id');
         $startDate = request('start_date');
         $endDate = request('end_date');
+        $search = request('search');
 
         // Query attendance records grouped by date and class
         $query = \DB::table('student_attendances')
             ->select(
-                \DB::raw('CONCAT(tanggal, "-", class_id) as id'),
-                'tanggal',
-                'class_id',
-                \DB::raw('MAX(recorded_at) as recorded_at'),
-                \DB::raw('COUNT(DISTINCT student_id) as total_siswa'),
-                \DB::raw('SUM(CASE WHEN status = "H" THEN 1 ELSE 0 END) as hadir'),
-                \DB::raw('SUM(CASE WHEN status = "I" THEN 1 ELSE 0 END) as izin'),
-                \DB::raw('SUM(CASE WHEN status = "S" THEN 1 ELSE 0 END) as sakit'),
-                \DB::raw('SUM(CASE WHEN status = "A" THEN 1 ELSE 0 END) as alpha')
+                \DB::raw('CONCAT(student_attendances.tanggal, "-", student_attendances.class_id) as id'),
+                'student_attendances.tanggal',
+                'student_attendances.class_id',
+                \DB::raw('MAX(student_attendances.recorded_at) as recorded_at'),
+                \DB::raw('COUNT(DISTINCT student_attendances.student_id) as total_siswa'),
+                \DB::raw('SUM(CASE WHEN student_attendances.status = "H" THEN 1 ELSE 0 END) as hadir'),
+                \DB::raw('SUM(CASE WHEN student_attendances.status = "I" THEN 1 ELSE 0 END) as izin'),
+                \DB::raw('SUM(CASE WHEN student_attendances.status = "S" THEN 1 ELSE 0 END) as sakit'),
+                \DB::raw('SUM(CASE WHEN student_attendances.status = "A" THEN 1 ELSE 0 END) as alpha')
             )
-            ->where('recorded_by', $teacher->id)
-            ->groupBy('tanggal', 'class_id')
-            ->orderBy('tanggal', 'desc');
+            ->where('student_attendances.recorded_by', $teacher->id);
+
+        // Apply search filter untuk student NIS atau nama
+        if ($search) {
+            $query->join('students', 'student_attendances.student_id', '=', 'students.id')
+                ->where(function ($q) use ($search) {
+                    $q->where('students.nis', 'like', "%{$search}%")
+                      ->orWhere('students.nama_lengkap', 'like', "%{$search}%");
+                });
+        }
+
+        $query->groupBy('student_attendances.tanggal', 'student_attendances.class_id')
+            ->orderBy('student_attendances.tanggal', 'desc');
 
         // Apply filters
         if ($kelasId) {
-            $query->where('class_id', $kelasId);
+            $query->where('student_attendances.class_id', $kelasId);
         }
         if ($startDate) {
-            $query->where('tanggal', '>=', $startDate);
+            $query->where('student_attendances.tanggal', '>=', $startDate);
         }
         if ($endDate) {
-            $query->where('tanggal', '<=', $endDate);
+            $query->where('student_attendances.tanggal', '<=', $endDate);
         }
 
         $attendances = $query->paginate(20);
@@ -83,23 +94,32 @@ class AttendanceController extends Controller
         // Calculate summary statistics
         $summaryQuery = \DB::table('student_attendances')
             ->select(
-                \DB::raw('COUNT(DISTINCT CONCAT(tanggal, "-", class_id)) as total_records'),
-                \DB::raw('SUM(CASE WHEN status = "H" THEN 1 ELSE 0 END) as total_hadir'),
-                \DB::raw('SUM(CASE WHEN status = "I" THEN 1 ELSE 0 END) as total_izin'),
-                \DB::raw('SUM(CASE WHEN status = "S" THEN 1 ELSE 0 END) as total_sakit'),
-                \DB::raw('SUM(CASE WHEN status = "A" THEN 1 ELSE 0 END) as total_alpha'),
+                \DB::raw('COUNT(DISTINCT CONCAT(student_attendances.tanggal, "-", student_attendances.class_id)) as total_records'),
+                \DB::raw('SUM(CASE WHEN student_attendances.status = "H" THEN 1 ELSE 0 END) as total_hadir'),
+                \DB::raw('SUM(CASE WHEN student_attendances.status = "I" THEN 1 ELSE 0 END) as total_izin'),
+                \DB::raw('SUM(CASE WHEN student_attendances.status = "S" THEN 1 ELSE 0 END) as total_sakit'),
+                \DB::raw('SUM(CASE WHEN student_attendances.status = "A" THEN 1 ELSE 0 END) as total_alpha'),
                 \DB::raw('COUNT(*) as total_students')
             )
-            ->where('recorded_by', $teacher->id);
+            ->where('student_attendances.recorded_by', $teacher->id);
+
+        // Apply search filter untuk summary juga
+        if ($search) {
+            $summaryQuery->join('students', 'student_attendances.student_id', '=', 'students.id')
+                ->where(function ($q) use ($search) {
+                    $q->where('students.nis', 'like', "%{$search}%")
+                      ->orWhere('students.nama_lengkap', 'like', "%{$search}%");
+                });
+        }
 
         if ($kelasId) {
-            $summaryQuery->where('class_id', $kelasId);
+            $summaryQuery->where('student_attendances.class_id', $kelasId);
         }
         if ($startDate) {
-            $summaryQuery->where('tanggal', '>=', $startDate);
+            $summaryQuery->where('student_attendances.tanggal', '>=', $startDate);
         }
         if ($endDate) {
-            $summaryQuery->where('tanggal', '<=', $endDate);
+            $summaryQuery->where('student_attendances.tanggal', '<=', $endDate);
         }
 
         $summary = $summaryQuery->first();
@@ -116,6 +136,7 @@ class AttendanceController extends Controller
                 'kelas_id' => $kelasId ? (int) $kelasId : null,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
+                'search' => $search,
             ],
             'summary' => [
                 'total_records' => $summary->total_records,

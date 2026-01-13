@@ -2,7 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import { Motion } from 'motion-v';
-import { Plus, Calendar, Edit2, Filter } from 'lucide-vue-next';
+import { Plus, Calendar, Edit2, Filter, Search, X } from 'lucide-vue-next';
 import { useHaptics } from '@/composables/useHaptics';
 import { ref, watch } from 'vue';
 
@@ -55,6 +55,7 @@ interface Props {
         kelas_id: number | null;
         start_date: string | null;
         end_date: string | null;
+        search: string | null;
     };
     summary: {
         total_records: number;
@@ -74,9 +75,11 @@ const filters = ref({
     kelas_id: props.filters.kelas_id,
     start_date: props.filters.start_date,
     end_date: props.filters.end_date,
+    search: props.filters.search,
 });
 
 const showFilters = ref(false);
+const searchQuery = ref(props.filters.search || '');
 
 const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('id-ID', {
@@ -105,6 +108,7 @@ const applyFilters = () => {
             kelas_id: filters.value.kelas_id,
             start_date: filters.value.start_date,
             end_date: filters.value.end_date,
+            search: filters.value.search,
         },
         {
             preserveState: true,
@@ -119,9 +123,22 @@ const resetFilters = () => {
         kelas_id: null,
         start_date: null,
         end_date: null,
+        search: null,
     };
+    searchQuery.value = '';
     applyFilters();
 };
+
+const clearSearch = () => {
+    haptics.light();
+    searchQuery.value = '';
+    filters.value.search = null;
+};
+
+// Watch search query dan sync dengan filters
+watch(searchQuery, (newValue) => {
+    filters.value.search = newValue || null;
+});
 
 // Watch filters and apply automatically (debounced)
 let filterTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -335,11 +352,37 @@ const getStatusColor = (status: 'hadir' | 'izin' | 'sakit' | 'alpha') => {
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.3 }"
                 >
                     <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-                        <div class="p-6 border-b border-slate-200 dark:border-zinc-800">
-                            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Riwayat Presensi</h2>
-                            <p class="text-sm text-slate-600 dark:text-zinc-400 mt-1">
-                                Klik "Edit" untuk mengubah data presensi
-                            </p>
+                        <div class="p-6 border-b border-slate-200 dark:border-zinc-800 space-y-4">
+                            <div>
+                                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Riwayat Presensi</h2>
+                                <p class="text-sm text-slate-600 dark:text-zinc-400 mt-1">
+                                    Klik "Edit" untuk mengubah data presensi
+                                </p>
+                            </div>
+
+                            <!-- Search Input -->
+                            <div class="relative">
+                                <Search class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" :size="20" />
+                                <input
+                                    v-model="searchQuery"
+                                    type="text"
+                                    placeholder="Cari siswa berdasarkan NIS atau nama..."
+                                    class="w-full h-[52px] pl-12 pr-12 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700
+                                           rounded-xl text-slate-900 dark:text-white placeholder-slate-400
+                                           focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 focus:bg-white
+                                           transition-all duration-150"
+                                />
+                                <Motion :whileTap="{ scale: 0.97 }">
+                                    <button
+                                        v-if="searchQuery"
+                                        @click="clearSearch"
+                                        class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300
+                                               transition-colors duration-150"
+                                    >
+                                        <X :size="20" />
+                                    </button>
+                                </Motion>
+                            </div>
                         </div>
 
                         <div class="overflow-x-auto">

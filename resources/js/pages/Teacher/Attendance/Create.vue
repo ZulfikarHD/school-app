@@ -6,7 +6,7 @@ import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
 import { useModal } from '@/composables/useModal';
 import AttendanceStatusBadge from '@/components/features/attendance/AttendanceStatusBadge.vue';
-import { Save, Calendar, Users, AlertCircle } from 'lucide-vue-next';
+import { Save, Calendar, Users, AlertCircle, Search, X } from 'lucide-vue-next';
 import type { Student } from '@/types/student';
 
 /**
@@ -51,6 +51,7 @@ const selectedClassId = ref<number | null>(props.editMode?.kelas_id || null);
 const students = ref<Student[]>([]);
 const loadingStudents = ref(false);
 const isEditMode = ref(!!props.existingAttendance);
+const searchQuery = ref<string>('');
 
 /**
  * Form data untuk submission
@@ -63,6 +64,23 @@ const form = useForm({
         status: 'H' | 'I' | 'S' | 'A';
         keterangan?: string;
     }>
+});
+
+/**
+ * Filtered students berdasarkan search query
+ * dengan filtering by NIS atau nama siswa (case-insensitive)
+ */
+const filteredStudents = computed(() => {
+    if (!searchQuery.value.trim()) {
+        return students.value;
+    }
+
+    const query = searchQuery.value.toLowerCase().trim();
+    return students.value.filter(student => {
+        const nama = student.nama_lengkap?.toLowerCase() || '';
+        const nis = student.nis?.toLowerCase() || '';
+        return nama.includes(query) || nis.includes(query);
+    });
 });
 
 /**
@@ -231,6 +249,14 @@ const updateKeterangan = (studentId: number, keterangan: string) => {
     }
 };
 
+/**
+ * Clear search query untuk reset filter
+ */
+const clearSearch = () => {
+    haptics.light();
+    searchQuery.value = '';
+};
+
 
 /**
  * Submit attendance
@@ -378,9 +404,36 @@ const submitAttendance = () => {
                 >
                     <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
                         <div class="p-6 border-b border-slate-200 dark:border-zinc-800">
-                            <div class="flex items-center gap-2">
-                                <Users :size="20" class="text-slate-600 dark:text-zinc-400" />
-                                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Daftar Siswa</h2>
+                            <div class="flex items-center justify-between gap-4 mb-4">
+                                <div class="flex items-center gap-2">
+                                    <Users :size="20" class="text-slate-600 dark:text-zinc-400" />
+                                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Daftar Siswa</h2>
+                                </div>
+                                <div class="text-sm text-slate-600 dark:text-zinc-400">
+                                    {{ filteredStudents.length }} dari {{ students.length }} siswa
+                                </div>
+                            </div>
+
+                            <!-- Search Input -->
+                            <div class="relative">
+                                <Search class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" :size="20" />
+                                <input
+                                    v-model="searchQuery"
+                                    type="text"
+                                    placeholder="Cari siswa berdasarkan NIS atau nama..."
+                                    class="w-full h-[52px] pl-12 pr-12 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700
+                                           rounded-xl text-slate-900 dark:text-white placeholder-slate-400
+                                           focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 focus:bg-white
+                                           transition-all duration-150"
+                                />
+                                <button
+                                    v-if="searchQuery"
+                                    @click="clearSearch"
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300
+                                           transition-colors duration-150"
+                                >
+                                    <X :size="20" />
+                                </button>
                             </div>
                         </div>
 
@@ -395,7 +448,35 @@ const submitAttendance = () => {
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-200 dark:divide-zinc-800">
-                                    <tr v-for="(student, index) in students" :key="student.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                                    <!-- Empty State - No Results -->
+                                    <tr v-if="filteredStudents.length === 0" class="hover:bg-transparent">
+                                        <td colspan="4" class="px-6 py-12 text-center">
+                                            <div class="flex flex-col items-center gap-3">
+                                                <Search :size="48" class="text-slate-300 dark:text-zinc-700" />
+                                                <div>
+                                                    <p class="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+                                                        Tidak ada hasil
+                                                    </p>
+                                                    <p class="text-sm text-slate-600 dark:text-zinc-400">
+                                                        Tidak ditemukan siswa dengan pencarian "{{ searchQuery }}"
+                                                    </p>
+                                                    <Motion :whileTap="{ scale: 0.97 }">
+                                                        <button
+                                                            @click="clearSearch"
+                                                            class="mt-4 px-4 py-2 text-sm font-medium text-emerald-600 hover:text-emerald-700
+                                                                   bg-emerald-50/50 hover:bg-emerald-50 rounded-lg
+                                                                   transition-colors duration-150"
+                                                        >
+                                                            Hapus pencarian
+                                                        </button>
+                                                    </Motion>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Student List -->
+                                    <tr v-for="(student, index) in filteredStudents" :key="student.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors">
                                         <td class="px-6 py-4 text-sm text-slate-600 dark:text-zinc-400">{{ index + 1 }}</td>
                                         <td class="px-6 py-4">
                                             <p class="font-medium text-slate-900 dark:text-white">{{ student.nama_lengkap }}</p>
@@ -417,7 +498,7 @@ const submitAttendance = () => {
                                                         class="sr-only"
                                                     />
                                                     <AttendanceStatusBadge
-                                                        :status="status as 'H' | 'I' | 'S' | 'A'"
+                                                        :status="(status as 'H' | 'I' | 'S' | 'A')"
                                                         size="sm"
                                                         :class="[
                                                             'transition-all duration-150',
