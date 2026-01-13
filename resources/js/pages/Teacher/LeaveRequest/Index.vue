@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import { Motion } from 'motion-v';
-import { FileText, CheckCircle, XCircle, Calendar, User } from 'lucide-vue-next';
+import { FileText, CheckCircle, XCircle, Calendar, User, X } from 'lucide-vue-next';
 import { useHaptics } from '@/composables/useHaptics';
 import { useModal } from '@/composables/useModal';
 import LeaveStatusBadge from '@/components/features/attendance/LeaveStatusBadge.vue';
@@ -50,6 +51,11 @@ defineProps<Props>();
 const haptics = useHaptics();
 const modal = useModal();
 
+const showRejectModal = ref(false);
+const selectedRequest = ref<LeaveRequest | null>(null);
+const rejectionReason = ref('');
+const isSubmitting = ref(false);
+
 const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -76,8 +82,11 @@ const approveRequest = async (requestId: number) => {
     if (!confirmed) return;
 
     haptics.light();
+    isSubmitting.value = true;
 
-    router.post(`/teacher/leave-requests/${requestId}/approve`, {}, {
+    router.post(`/teacher/leave-requests/${requestId}/approve`, {
+        action: 'approve'
+    }, {
         preserveScroll: true,
         onSuccess: () => {
             haptics.success();
@@ -87,31 +96,59 @@ const approveRequest = async (requestId: number) => {
             haptics.error();
             modal.error('Gagal menyetujui izin');
         },
+        onFinish: () => {
+            isSubmitting.value = false;
+        }
     });
 };
 
-const rejectRequest = async (requestId: number) => {
-    const confirmed = await modal.confirm(
-        'Tolak Izin',
-        'Apakah Anda yakin ingin menolak pengajuan izin ini?',
-        'Ya, Tolak',
-        'Batal'
-    );
-
-    if (!confirmed) return;
-
+const openRejectModal = (request: LeaveRequest) => {
     haptics.light();
+    selectedRequest.value = request;
+    rejectionReason.value = '';
+    showRejectModal.value = true;
+};
 
-    router.post(`/teacher/leave-requests/${requestId}/reject`, {}, {
+const closeRejectModal = () => {
+    showRejectModal.value = false;
+    selectedRequest.value = null;
+    rejectionReason.value = '';
+};
+
+const submitRejection = () => {
+    if (!rejectionReason.value.trim()) {
+        modal.error('Mohon berikan alasan penolakan');
+        return;
+    }
+
+    if (rejectionReason.value.length < 10) {
+        modal.error('Alasan penolakan minimal 10 karakter');
+        return;
+    }
+
+    if (!selectedRequest.value) return;
+
+    haptics.medium();
+    isSubmitting.value = true;
+
+    router.post(`/teacher/leave-requests/${selectedRequest.value.id}/approve`, {
+        action: 'reject',
+        rejection_reason: rejectionReason.value
+    }, {
         preserveScroll: true,
         onSuccess: () => {
             haptics.success();
             modal.success('Izin berhasil ditolak');
+            closeRejectModal();
         },
-        onError: () => {
+        onError: (errors: any) => {
             haptics.error();
-            modal.error('Gagal menolak izin');
+            const message = errors.rejection_reason?.[0] || errors.message || 'Gagal menolak izin';
+            modal.error(message);
         },
+        onFinish: () => {
+            isSubmitting.value = false;
+        }
     });
 };
 </script>
@@ -243,8 +280,10 @@ const rejectRequest = async (requestId: number) => {
                                         <Motion :whileTap="{ scale: 0.97 }">
                                             <button
                                                 @click="approveRequest(request.id)"
+                                                :disabled="isSubmitting"
                                                 class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium
-                                                       flex items-center gap-2 transition-colors"
+                                                       flex items-center gap-2 transition-colors
+                                                       disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 <CheckCircle :size="18" />
                                                 <span class="hidden sm:inline">Setujui</span>
@@ -253,9 +292,11 @@ const rejectRequest = async (requestId: number) => {
 
                                         <Motion :whileTap="{ scale: 0.97 }">
                                             <button
-                                                @click="rejectRequest(request.id)"
+                                                @click="openRejectModal(request)"
+                                                :disabled="isSubmitting"
                                                 class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium
-                                                       flex items-center gap-2 transition-colors"
+                                                       flex items-center gap-2 transition-colors
+                                                       disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 <XCircle :size="18" />
                                                 <span class="hidden sm:inline">Tolak</span>
@@ -290,5 +331,99 @@ const rejectRequest = async (requestId: number) => {
                 </Motion>
             </div>
         </div>
+
+        <!-- Rejection Modal -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition-opacity duration-200"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
+                leave-active-class="transition-opacity duration-200"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="showRejectModal"
+                    class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+                    @click="closeRejectModal"
+                >
+                    <Motion
+                        :initial="{ opacity: 0, scale: 0.95, y: 20 }"
+                        :animate="{ opacity: 1, scale: 1, y: 0 }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
+                        @click.stop
+                    >
+                        <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+                            <!-- Header -->
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Tolak Permohonan Izin</h3>
+                                    <p class="text-sm text-slate-600 dark:text-zinc-400 mt-1">
+                                        {{ selectedRequest?.student.nama }}
+                                    </p>
+                                </div>
+                                <button
+                                    @click="closeRejectModal"
+                                    class="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                                >
+                                    <X :size="20" class="text-slate-500" />
+                                </button>
+                            </div>
+                            
+                            <!-- Description -->
+                            <p class="text-sm text-slate-600 dark:text-zinc-400">
+                                Mohon berikan alasan penolakan yang jelas (minimal 10 karakter):
+                            </p>
+                            
+                            <!-- Textarea -->
+                            <textarea
+                                v-model="rejectionReason"
+                                rows="4"
+                                placeholder="Contoh: Dokumen tidak lengkap, perlu konfirmasi lebih lanjut..."
+                                class="w-full px-4 py-3 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700
+                                       rounded-xl text-slate-900 dark:text-white placeholder-slate-400
+                                       focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50
+                                       transition-all duration-150 resize-none"
+                            ></textarea>
+                            
+                            <!-- Character count -->
+                            <div class="text-xs text-slate-500 dark:text-zinc-500 text-right">
+                                {{ rejectionReason.length }} / 500 karakter
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex gap-3 pt-2">
+                                <Motion :whileTap="{ scale: 0.97 }" class="flex-1">
+                                    <button
+                                        @click="closeRejectModal"
+                                        :disabled="isSubmitting"
+                                        class="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700
+                                               text-slate-700 dark:text-zinc-300 rounded-xl font-semibold
+                                               transition-colors duration-150
+                                               disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Batal
+                                    </button>
+                                </Motion>
+                                
+                                <Motion :whileTap="{ scale: 0.97 }" class="flex-1">
+                                    <button
+                                        @click="submitRejection"
+                                        :disabled="isSubmitting || !rejectionReason.trim() || rejectionReason.length < 10"
+                                        class="w-full px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold
+                                               flex items-center justify-center gap-2
+                                               disabled:opacity-50 disabled:cursor-not-allowed
+                                               transition-colors duration-150"
+                                    >
+                                        <XCircle :size="18" />
+                                        <span>Tolak</span>
+                                    </button>
+                                </Motion>
+                            </div>
+                        </div>
+                    </Motion>
+                </div>
+            </Transition>
+        </Teleport>
     </AppLayout>
 </template>

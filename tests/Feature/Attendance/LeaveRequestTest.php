@@ -102,7 +102,9 @@ class LeaveRequestTest extends TestCase
             'status' => 'PENDING',
         ]);
 
-        $response = $this->actingAs($this->teacher)->post("/teacher/leave-requests/{$leaveRequest->id}/approve");
+        $response = $this->actingAs($this->teacher)->post("/teacher/leave-requests/{$leaveRequest->id}/approve", [
+            'action' => 'approve',
+        ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('leave_requests', [
@@ -120,7 +122,8 @@ class LeaveRequestTest extends TestCase
             'status' => 'PENDING',
         ]);
 
-        $response = $this->actingAs($this->teacher)->post("/teacher/leave-requests/{$leaveRequest->id}/reject", [
+        $response = $this->actingAs($this->teacher)->post("/teacher/leave-requests/{$leaveRequest->id}/approve", [
+            'action' => 'reject',
             'rejection_reason' => 'Alasan tidak valid',
         ]);
 
@@ -147,7 +150,9 @@ class LeaveRequestTest extends TestCase
             'status' => 'PENDING',
         ]);
 
-        $this->actingAs($this->teacher)->post("/teacher/leave-requests/{$leaveRequest->id}/approve");
+        $this->actingAs($this->teacher)->post("/teacher/leave-requests/{$leaveRequest->id}/approve", [
+            'action' => 'approve',
+        ]);
 
         // Should create attendance records for weekdays only
         $expectedDays = 0;
@@ -181,7 +186,9 @@ class LeaveRequestTest extends TestCase
             'status' => 'PENDING',
         ]);
 
-        $this->actingAs($this->teacher)->post("/teacher/leave-requests/{$leaveRequest->id}/approve");
+        $this->actingAs($this->teacher)->post("/teacher/leave-requests/{$leaveRequest->id}/approve", [
+            'action' => 'approve',
+        ]);
 
         // Should create 5 attendance records (Mon-Fri, no weekends)
         $attendanceCount = StudentAttendance::where('student_id', $this->student->id)
@@ -220,7 +227,8 @@ class LeaveRequestTest extends TestCase
             'status' => 'PENDING',
         ]);
 
-        $response = $this->actingAs($this->teacher)->post("/teacher/leave-requests/{$leaveRequest->id}/reject", [
+        $response = $this->actingAs($this->teacher)->post("/teacher/leave-requests/{$leaveRequest->id}/approve", [
+            'action' => 'reject',
             'rejection_reason' => '', // Empty reason
         ]);
 
@@ -235,7 +243,9 @@ class LeaveRequestTest extends TestCase
             'status' => 'PENDING',
         ]);
 
-        $response = $this->actingAs($this->admin)->post("/teacher/leave-requests/{$leaveRequest->id}/approve");
+        $response = $this->actingAs($this->admin)->post("/teacher/leave-requests/{$leaveRequest->id}/approve", [
+            'action' => 'approve',
+        ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('leave_requests', [

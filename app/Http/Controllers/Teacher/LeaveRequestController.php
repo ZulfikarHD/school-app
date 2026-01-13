@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ApproveLeaveRequestRequest;
 use App\Models\LeaveRequest;
 use App\Services\AttendanceService;
 use Inertia\Inertia;
@@ -52,42 +53,50 @@ class LeaveRequestController extends Controller
     }
 
     /**
-     * Approve leave request dan auto-sync ke attendance
-     * dengan membuat attendance records untuk date range
+     * Approve atau reject leave request
+     * dengan validasi dan rejection reason untuk reject action
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function approve(LeaveRequest $leaveRequest)
+    public function approve(ApproveLeaveRequestRequest $request, LeaveRequest $leaveRequest)
     {
         try {
-            $this->attendanceService->approveLeaveRequest(
-                $leaveRequest,
-                auth()->user()
-            );
+            $action = $request->validated('action');
 
-            return back()->with('success', 'Permohonan izin berhasil disetujui.');
+            if ($action === 'approve') {
+                $this->attendanceService->approveLeaveRequest(
+                    $leaveRequest,
+                    auth()->user()
+                );
+
+                return back()->with('success', 'Permohonan izin berhasil disetujui.');
+            } else {
+                // Reject action
+                $reason = $request->validated('rejection_reason');
+                $this->attendanceService->rejectLeaveRequest(
+                    $leaveRequest,
+                    auth()->user(),
+                    $reason
+                );
+
+                return back()->with('success', 'Permohonan izin berhasil ditolak.');
+            }
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menyetujui permohonan: '.$e->getMessage());
+            return back()->with('error', 'Gagal memproses permohonan: '.$e->getMessage());
         }
     }
 
     /**
-     * Reject leave request
+     * Reject leave request dengan alasan
+     * Deprecated: Use approve() method dengan action=reject instead
+     *
+     * @deprecated
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function reject(LeaveRequest $leaveRequest)
+    public function reject(ApproveLeaveRequestRequest $request, LeaveRequest $leaveRequest)
     {
-        try {
-            $this->attendanceService->rejectLeaveRequest(
-                $leaveRequest,
-                auth()->user(),
-                null
-            );
-
-            return back()->with('success', 'Permohonan izin berhasil ditolak.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menolak permohonan: '.$e->getMessage());
-        }
+        // Redirect ke approve method untuk unified handling
+        return $this->approve($request, $leaveRequest);
     }
 }
