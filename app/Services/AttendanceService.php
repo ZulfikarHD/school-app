@@ -228,6 +228,37 @@ class AttendanceService
     }
 
     /**
+     * Check apakah ada overlapping leave request untuk student tertentu
+     * pada date range yang diberikan dengan optional exclude untuk request ID tertentu
+     *
+     * @param  int|null  $excludeRequestId  ID request yang di-exclude dari pengecekan (untuk update)
+     * @return bool True jika ada overlap
+     */
+    public function hasOverlappingLeaveRequest(
+        int $studentId,
+        string $tanggalMulai,
+        string $tanggalSelesai,
+        ?int $excludeRequestId = null
+    ): bool {
+        $query = LeaveRequest::where('student_id', $studentId)
+            ->whereIn('status', ['PENDING', 'APPROVED'])
+            ->where(function ($q) use ($tanggalMulai, $tanggalSelesai) {
+                // Date range overlap logic: (new_start <= existing_end) AND (new_end >= existing_start)
+                $q->whereRaw('? <= tanggal_selesai AND ? >= tanggal_mulai', [
+                    $tanggalMulai,
+                    $tanggalSelesai,
+                ]);
+            });
+
+        // Exclude specific request ID jika diberikan (untuk edit/update case)
+        if ($excludeRequestId) {
+            $query->where('id', '!=', $excludeRequestId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
      * Approve leave request dan auto-sync ke student_attendances
      * dengan membuat attendance records untuk date range
      */

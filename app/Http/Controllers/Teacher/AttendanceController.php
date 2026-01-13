@@ -56,7 +56,7 @@ class AttendanceController extends Controller
             $query->join('students', 'student_attendances.student_id', '=', 'students.id')
                 ->where(function ($q) use ($search) {
                     $q->where('students.nis', 'like', "%{$search}%")
-                      ->orWhere('students.nama_lengkap', 'like', "%{$search}%");
+                        ->orWhere('students.nama_lengkap', 'like', "%{$search}%");
                 });
         }
 
@@ -108,7 +108,7 @@ class AttendanceController extends Controller
             $summaryQuery->join('students', 'student_attendances.student_id', '=', 'students.id')
                 ->where(function ($q) use ($search) {
                     $q->where('students.nis', 'like', "%{$search}%")
-                      ->orWhere('students.nama_lengkap', 'like', "%{$search}%");
+                        ->orWhere('students.nama_lengkap', 'like', "%{$search}%");
                 });
         }
 

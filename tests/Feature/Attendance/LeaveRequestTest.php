@@ -267,4 +267,246 @@ class LeaveRequestTest extends TestCase
 
         $response->assertSessionHasErrors('tanggal_selesai');
     }
+
+    /** @test LRT-011 */
+    public function cannot_submit_overlapping_leave_request_for_same_dates()
+    {
+        // Create first leave request (PENDING)
+        LeaveRequest::factory()->create([
+            'student_id' => $this->student->id,
+            'jenis' => 'SAKIT',
+            'tanggal_mulai' => now()->addDays(5)->format('Y-m-d'),
+            'tanggal_selesai' => now()->addDays(7)->format('Y-m-d'),
+            'status' => 'PENDING',
+        ]);
+
+        // Try to create overlapping request (exact same dates)
+        $response = $this->actingAs($this->parent)->post('/parent/leave-requests', [
+            'student_id' => $this->student->id,
+            'jenis' => 'IZIN',
+            'tanggal_mulai' => now()->addDays(5)->format('Y-m-d'),
+            'tanggal_selesai' => now()->addDays(7)->format('Y-m-d'),
+            'alasan' => 'Alasan lain',
+        ]);
+
+        $response->assertSessionHasErrors('tanggal_mulai');
+    }
+
+    /** @test LRT-012 */
+    public function cannot_submit_overlapping_leave_request_for_date_ranges()
+    {
+        // Create first leave request (APPROVED)
+        LeaveRequest::factory()->create([
+            'student_id' => $this->student->id,
+            'jenis' => 'SAKIT',
+            'tanggal_mulai' => now()->addDays(10)->format('Y-m-d'),
+            'tanggal_selesai' => now()->addDays(15)->format('Y-m-d'),
+            'status' => 'APPROVED',
+        ]);
+
+        // Try to create partially overlapping request
+        $response = $this->actingAs($this->parent)->post('/parent/leave-requests', [
+            'student_id' => $this->student->id,
+            'jenis' => 'IZIN',
+            'tanggal_mulai' => now()->addDays(12)->format('Y-m-d'), // Overlaps with existing
+            'tanggal_selesai' => now()->addDays(18)->format('Y-m-d'),
+            'alasan' => 'Alasan lain yang panjang untuk memenuhi validasi minimal',
+        ]);
+
+        $response->assertSessionHasErrors('tanggal_mulai');
+    }
+
+    /** @test LRT-013 */
+    public function can_submit_leave_request_after_existing_one_ends()
+    {
+        // Create first leave request
+        LeaveRequest::factory()->create([
+            'student_id' => $this->student->id,
+            'jenis' => 'SAKIT',
+            'tanggal_mulai' => now()->addDays(5)->format('Y-m-d'),
+            'tanggal_selesai' => now()->addDays(7)->format('Y-m-d'),
+            'status' => 'APPROVED',
+        ]);
+
+        // Create non-overlapping request (starts after first one ends)
+        $response = $this->actingAs($this->parent)->post('/parent/leave-requests', [
+            'student_id' => $this->student->id,
+            'jenis' => 'IZIN',
+            'tanggal_mulai' => now()->addDays(8)->format('Y-m-d'),
+            'tanggal_selesai' => now()->addDays(10)->format('Y-m-d'),
+            'alasan' => 'Alasan lain yang panjang untuk memenuhi validasi minimal',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseCount('leave_requests', 2);
+    }
+
+    /** @test LRT-014 */
+    public function parent_can_edit_pending_leave_request()
+    {
+        $leaveRequest = LeaveRequest::factory()->create([
+            'student_id' => $this->student->id,
+            'jenis' => 'SAKIT',
+            'tanggal_mulai' => now()->addDays(5)->format('Y-m-d'),
+            'tanggal_selesai' => now()->addDays(7)->format('Y-m-d'),
+            'status' => 'PENDING',
+            'submitted_by' => $this->parent->id,
+            'alasan' => 'Alasan awal',
+        ]);
+
+        $response = $this->actingAs($this->parent)->put("/parent/leave-requests/{$leaveRequest->id}", [
+            'student_id' => $this->student->id,
+            'jenis' => 'IZIN', // Changed from SAKIT
+            'tanggal_mulai' => now()->addDays(6)->format('Y-m-d'), // Changed dates
+            'tanggal_selesai' => now()->addDays(8)->format('Y-m-d'),
+            'alasan' => 'Alasan baru yang lebih panjang untuk update',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('leave_requests', [
+            'id' => $leaveRequest->id,
+            'jenis' => 'IZIN',
+            'alasan' => 'Alasan baru yang lebih panjang untuk update',
+        ]);
+    }
+
+    /** @test LRT-015 */
+    public function parent_cannot_edit_approved_leave_request()
+    {
+        $leaveRequest = LeaveRequest::factory()->create([
+            'student_id' => $this->student->id,
+            'status' => 'APPROVED',
+            'submitted_by' => $this->parent->id,
+        ]);
+
+        $response = $this->actingAs($this->parent)->put("/parent/leave-requests/{$leaveRequest->id}", [
+            'student_id' => $this->student->id,
+            'jenis' => 'IZIN',
+            'tanggal_mulai' => now()->addDay()->format('Y-m-d'),
+            'tanggal_selesai' => now()->addDays(2)->format('Y-m-d'),
+            'alasan' => 'Trying to change approved request',
+        ]);
+
+        $response->assertStatus(403); // Forbidden
+    }
+
+    /** @test LRT-016 */
+    public function parent_cannot_edit_another_parents_leave_request()
+    {
+        $otherParent = User::factory()->create(['role' => 'PARENT']);
+        $otherStudent = Student::factory()->create(['status' => 'aktif']);
+        $otherGuardian = Guardian::factory()->create(['user_id' => $otherParent->id]);
+        $otherGuardian->students()->attach($otherStudent->id, [
+            'relationship' => 'IBU',
+            'is_primary' => true,
+        ]);
+
+        $leaveRequest = LeaveRequest::factory()->create([
+            'student_id' => $otherStudent->id,
+            'status' => 'PENDING',
+            'submitted_by' => $otherParent->id,
+        ]);
+
+        $response = $this->actingAs($this->parent)->put("/parent/leave-requests/{$leaveRequest->id}", [
+            'student_id' => $otherStudent->id,
+            'jenis' => 'IZIN',
+            'tanggal_mulai' => now()->addDay()->format('Y-m-d'),
+            'tanggal_selesai' => now()->addDays(2)->format('Y-m-d'),
+            'alasan' => 'Trying to edit someone elses request',
+        ]);
+
+        $response->assertStatus(403); // Forbidden
+    }
+
+    /** @test LRT-017 */
+    public function parent_can_cancel_pending_leave_request()
+    {
+        $leaveRequest = LeaveRequest::factory()->create([
+            'student_id' => $this->student->id,
+            'status' => 'PENDING',
+            'submitted_by' => $this->parent->id,
+        ]);
+
+        $response = $this->actingAs($this->parent)->delete("/parent/leave-requests/{$leaveRequest->id}");
+
+        $response->assertRedirect();
+        $this->assertDatabaseMissing('leave_requests', [
+            'id' => $leaveRequest->id,
+        ]);
+    }
+
+    /** @test LRT-018 */
+    public function parent_cannot_cancel_approved_leave_request()
+    {
+        $leaveRequest = LeaveRequest::factory()->create([
+            'student_id' => $this->student->id,
+            'status' => 'APPROVED',
+            'submitted_by' => $this->parent->id,
+            'reviewed_by' => $this->teacher->id,
+        ]);
+
+        $response = $this->actingAs($this->parent)->delete("/parent/leave-requests/{$leaveRequest->id}");
+
+        $response->assertRedirect();
+        // Should still exist in database
+        $this->assertDatabaseHas('leave_requests', [
+            'id' => $leaveRequest->id,
+            'status' => 'APPROVED',
+        ]);
+    }
+
+    /** @test LRT-019 */
+    public function overlap_validation_excludes_current_request_when_editing()
+    {
+        $leaveRequest = LeaveRequest::factory()->create([
+            'student_id' => $this->student->id,
+            'jenis' => 'SAKIT',
+            'tanggal_mulai' => now()->addDays(5)->format('Y-m-d'),
+            'tanggal_selesai' => now()->addDays(7)->format('Y-m-d'),
+            'status' => 'PENDING',
+            'submitted_by' => $this->parent->id,
+        ]);
+
+        // Edit the same request with same dates (should be allowed)
+        $response = $this->actingAs($this->parent)->put("/parent/leave-requests/{$leaveRequest->id}", [
+            'student_id' => $this->student->id,
+            'jenis' => 'IZIN', // Changed type
+            'tanggal_mulai' => now()->addDays(5)->format('Y-m-d'), // Same dates
+            'tanggal_selesai' => now()->addDays(7)->format('Y-m-d'),
+            'alasan' => 'Updated alasan dengan lebih detail',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('leave_requests', [
+            'id' => $leaveRequest->id,
+            'jenis' => 'IZIN',
+        ]);
+    }
+
+    /** @test LRT-020 */
+    public function rejected_leave_requests_do_not_block_new_submissions()
+    {
+        // Create rejected leave request
+        LeaveRequest::factory()->create([
+            'student_id' => $this->student->id,
+            'jenis' => 'SAKIT',
+            'tanggal_mulai' => now()->addDays(5)->format('Y-m-d'),
+            'tanggal_selesai' => now()->addDays(7)->format('Y-m-d'),
+            'status' => 'REJECTED',
+            'reviewed_by' => $this->teacher->id,
+            'rejection_reason' => 'Alasan tidak valid',
+        ]);
+
+        // Should be able to create new request with same dates
+        $response = $this->actingAs($this->parent)->post('/parent/leave-requests', [
+            'student_id' => $this->student->id,
+            'jenis' => 'IZIN',
+            'tanggal_mulai' => now()->addDays(5)->format('Y-m-d'),
+            'tanggal_selesai' => now()->addDays(7)->format('Y-m-d'),
+            'alasan' => 'Alasan baru yang lebih lengkap dan detail',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseCount('leave_requests', 2);
+    }
 }

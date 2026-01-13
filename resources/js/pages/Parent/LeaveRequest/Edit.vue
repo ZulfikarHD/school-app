@@ -1,41 +1,61 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { ref, computed, onMounted } from 'vue';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
 import { useModal } from '@/composables/useModal';
-import { Send, Calendar, FileText, Upload, X, AlertCircle } from 'lucide-vue-next';
+import { Save, Calendar, FileText, Upload, X, AlertCircle, ArrowLeft } from 'lucide-vue-next';
+import { index, update } from '@/routes/parent/leave-requests';
 import type { Student } from '@/types/student';
+import type { LeaveRequest } from '@/types/attendance';
 
 /**
- * Form pengajuan permohonan izin untuk orang tua
- * dengan file upload dan date range selection
+ * Form edit permohonan izin untuk orang tua
+ * dengan pre-populated data dan file upload
  */
 
 interface Props {
     title: string;
     children: Student[];
+    leaveRequest: LeaveRequest;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const haptics = useHaptics();
 const modal = useModal();
 
 const attachmentPreview = ref<string | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
+const hasExistingAttachment = ref(false);
 
 /**
- * Form data untuk submission
+ * Form data untuk update dengan pre-populated values
  */
 const form = useForm({
-    student_id: null as number | null,
-    jenis: 'SAKIT' as 'IZIN' | 'SAKIT',
-    tanggal_mulai: new Date().toISOString().split('T')[0],
-    tanggal_selesai: new Date().toISOString().split('T')[0],
-    alasan: '',
+    student_id: props.leaveRequest.student_id,
+    jenis: props.leaveRequest.jenis as 'IZIN' | 'SAKIT',
+    tanggal_mulai: props.leaveRequest.tanggal_mulai,
+    tanggal_selesai: props.leaveRequest.tanggal_selesai,
+    alasan: props.leaveRequest.alasan,
     attachment: null as File | null
+});
+
+/**
+ * Initialize existing attachment preview
+ */
+onMounted(() => {
+    if (props.leaveRequest.attachment_path) {
+        hasExistingAttachment.value = true;
+        const path = props.leaveRequest.attachment_path;
+        // Check if it's an image or PDF
+        if (path.match(/\.(jpg|jpeg|png)$/i)) {
+            attachmentPreview.value = `/storage/${path}`;
+        } else {
+            attachmentPreview.value = 'pdf';
+        }
+    }
 });
 
 /**
@@ -76,6 +96,7 @@ const handleFileSelect = (event: Event) => {
     }
     
     form.attachment = file;
+    hasExistingAttachment.value = false;
     
     // Create preview for images
     if (file.type.startsWith('image/')) {
@@ -97,6 +118,7 @@ const handleFileSelect = (event: Event) => {
 const removeAttachment = () => {
     form.attachment = null;
     attachmentPreview.value = null;
+    hasExistingAttachment.value = false;
     if (fileInput.value) {
         fileInput.value.value = '';
     }
@@ -104,9 +126,9 @@ const removeAttachment = () => {
 };
 
 /**
- * Submit leave request
+ * Update leave request
  */
-const submitLeaveRequest = () => {
+const updateLeaveRequest = () => {
     if (!form.student_id) {
         modal.error('Mohon pilih anak terlebih dahulu');
         return;
@@ -119,19 +141,27 @@ const submitLeaveRequest = () => {
     
     haptics.medium();
     
-    form.post('/parent/leave-requests', {
+    form.put(update(props.leaveRequest.id).url, {
         preserveScroll: true,
         forceFormData: true,
         onSuccess: () => {
             haptics.success();
-            modal.success('Permohonan izin berhasil diajukan. Menunggu persetujuan wali kelas.');
+            modal.success('Permohonan izin berhasil diperbarui.');
         },
         onError: (errors) => {
             haptics.error();
-            const message = errors.message || 'Gagal mengajukan permohonan izin';
+            const message = errors.message || 'Gagal memperbarui permohonan izin';
             modal.error(message);
         }
     });
+};
+
+/**
+ * Go back to index
+ */
+const goBack = () => {
+    haptics.light();
+    router.visit(index().url);
 };
 </script>
 
@@ -148,8 +178,16 @@ const submitLeaveRequest = () => {
             >
                 <div class="bg-white px-6 py-8 border-b border-gray-100 dark:bg-zinc-900 dark:border-zinc-800">
                     <div class="mx-auto max-w-3xl">
+                        <button
+                            @click="goBack"
+                            class="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white
+                                   mb-4 transition-colors"
+                        >
+                            <ArrowLeft :size="16" />
+                            <span>Kembali</span>
+                        </button>
                         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ title }}</h1>
-                        <p class="mt-2 text-gray-600 dark:text-gray-400">Ajukan permohonan izin untuk anak Anda</p>
+                        <p class="mt-2 text-gray-600 dark:text-gray-400">Perbarui data permohonan izin anak Anda</p>
                     </div>
                 </div>
             </Motion>
@@ -160,7 +198,7 @@ const submitLeaveRequest = () => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.05 }"
                 >
-                    <form @submit.prevent="submitLeaveRequest" class="space-y-6">
+                    <form @submit.prevent="updateLeaveRequest" class="space-y-6">
                         <!-- Child Selection -->
                         <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm p-6">
                             <label class="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide mb-3">
@@ -320,7 +358,7 @@ const submitLeaveRequest = () => {
                                 Upload surat dokter atau dokumen pendukung lainnya (Max. 2MB, Format: JPG, PNG, PDF)
                             </p>
                             
-                            <div v-if="!form.attachment">
+                            <div v-if="!form.attachment && !attachmentPreview">
                                 <Motion :whileTap="{ scale: 0.97 }">
                                     <label
                                         class="flex items-center justify-center gap-3 p-6 border-2 border-dashed border-slate-300 dark:border-zinc-700
@@ -342,8 +380,12 @@ const submitLeaveRequest = () => {
                             
                             <div v-else class="relative">
                                 <div v-if="attachmentPreview === 'pdf'" class="p-6 bg-slate-50 dark:bg-zinc-800 rounded-xl border border-slate-200 dark:border-zinc-700">
-                                    <p class="text-sm font-medium text-slate-900 dark:text-white">{{ form.attachment.name }}</p>
-                                    <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1">{{ (form.attachment.size / 1024).toFixed(2) }} KB</p>
+                                    <p class="text-sm font-medium text-slate-900 dark:text-white">
+                                        {{ hasExistingAttachment ? 'Lampiran saat ini (PDF)' : form.attachment?.name }}
+                                    </p>
+                                    <p v-if="form.attachment" class="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                                        {{ (form.attachment.size / 1024).toFixed(2) }} KB
+                                    </p>
                                 </div>
                                 <div v-else class="relative rounded-xl overflow-hidden">
                                     <img :src="attachmentPreview!" alt="Preview" class="w-full h-48 object-cover" />
@@ -368,20 +410,36 @@ const submitLeaveRequest = () => {
                             <p class="text-sm text-red-600">{{ form.errors.message }}</p>
                         </div>
                         
-                        <!-- Submit Button -->
-                        <Motion :whileTap="{ scale: 0.97 }">
-                            <button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="w-full px-6 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold text-lg
-                                       flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/25
-                                       disabled:opacity-50 disabled:cursor-not-allowed
-                                       transition-all duration-150"
-                            >
-                                <Send :size="20" />
-                                <span>{{ form.processing ? 'Mengirim...' : 'Kirim Permohonan' }}</span>
-                            </button>
-                        </Motion>
+                        <!-- Action Buttons -->
+                        <div class="flex items-center gap-3">
+                            <Motion :whileTap="{ scale: 0.97 }" class="flex-1">
+                                <button
+                                    type="button"
+                                    @click="goBack"
+                                    class="w-full px-6 py-4 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700
+                                           text-slate-900 dark:text-white rounded-xl font-semibold text-lg
+                                           flex items-center justify-center gap-3
+                                           transition-all duration-150"
+                                >
+                                    <X :size="20" />
+                                    <span>Batal</span>
+                                </button>
+                            </Motion>
+                            
+                            <Motion :whileTap="{ scale: 0.97 }" class="flex-1">
+                                <button
+                                    type="submit"
+                                    :disabled="form.processing"
+                                    class="w-full px-6 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold text-lg
+                                           flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/25
+                                           disabled:opacity-50 disabled:cursor-not-allowed
+                                           transition-all duration-150"
+                                >
+                                    <Save :size="20" />
+                                    <span>{{ form.processing ? 'Menyimpan...' : 'Simpan Perubahan' }}</span>
+                                </button>
+                            </Motion>
+                        </div>
                     </form>
                 </Motion>
             </div>

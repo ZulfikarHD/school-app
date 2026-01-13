@@ -218,7 +218,7 @@ Route::middleware(['auth'])->group(function () {
 
             // Leave Request Routes
             Route::resource('leave-requests', ParentLeaveRequestController::class)
-                ->only(['index', 'create', 'store']);
+                ->except(['show']);
         });
     });
 

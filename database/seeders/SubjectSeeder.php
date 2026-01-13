@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Subject;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class SubjectSeeder extends Seeder
