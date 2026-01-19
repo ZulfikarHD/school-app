@@ -1,9 +1,3 @@
----
-name: Attendance Sprint
-overview: "Build 4 core attendance features with frontend pages, forms, and widgets: Daily Attendance Input (Teacher), Clock In/Out Widget (Teacher), Leave Request Form (Parent), and Leave Verification (Teacher/TU)"
-todos: []
----
-
 # Sprint 2: Core Attendance Features Implementation
 
 ## Executive Summary

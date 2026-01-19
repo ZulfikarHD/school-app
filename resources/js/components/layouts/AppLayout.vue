@@ -15,7 +15,10 @@ import { index as parentChildrenIndex } from '@/routes/parent/children';
 import { index as parentLeaveRequestsIndex } from '@/routes/parent/leave-requests';
 import { index as adminAttendanceStudentsIndex } from '@/routes/admin/attendance/students';
 import { index as adminAttendanceTeachersIndex } from '@/routes/admin/attendance/teachers';
+import { index as adminLeaveRequestsIndex } from '@/routes/admin/leave-requests';
+import { index as principalStudentsIndex } from '@/routes/principal/students';
 import { index as principalTeacherLeavesIndex } from '@/routes/principal/teacher-leaves';
+import { index as teacherStudentsIndex } from '@/routes/teacher/students';
 import { index as teacherAttendanceIndex } from '@/routes/teacher/attendance';
 import { create as teacherAttendanceSubjectCreate, index as teacherAttendanceSubjectIndex } from '@/routes/teacher/attendance/subject';
 import { myAttendance as teacherMyAttendance } from '@/routes/teacher';
@@ -53,6 +56,7 @@ import {
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
+const pendingCounts = computed(() => (page.props as any).pendingCounts ?? { leaveRequests: 0 });
 const haptics = useHaptics();
 const modal = useModal();
 const showProfileMenu = ref(false);
@@ -77,10 +81,16 @@ const getRouteUrl = (routeName: string): string => {
         'admin.students.index': adminStudentsIndex().url,
         'admin.attendance.students.index': adminAttendanceStudentsIndex().url,
         'admin.attendance.teachers.index': adminAttendanceTeachersIndex().url,
+        'admin.leave-requests.index': adminLeaveRequestsIndex().url,
         'admin.audit-logs.index': adminAuditLogsIndex().url,
         'audit-logs.index': auditLogsIndex().url,
         'profile.show': profileShow().url,
+        'principal.students.index': principalStudentsIndex().url,
         'principal.teacher-leaves.index': principalTeacherLeavesIndex().url,
+        'principal.attendance.dashboard': '/principal/attendance/dashboard',
+        'principal.attendance.students.index': '/principal/attendance/students',
+        'principal.attendance.teachers.index': '/principal/attendance/teachers',
+        'teacher.students.index': teacherStudentsIndex().url,
         'teacher.attendance.index': teacherAttendanceIndex().url,
         'teacher.attendance.subject.create': teacherAttendanceSubjectCreate().url,
         'teacher.attendance.subject.index': teacherAttendanceSubjectIndex().url,
@@ -157,51 +167,62 @@ const isActive = (route: string) => {
 };
 
 /**
- * Menu Items dengan Icon Components
+ * Menu Items dengan Icon Components dan Badge Count
+ *
+ * Sprint C Enhancement:
+ * - Added badge property untuk menampilkan pending count pada menu item
+ * - Badge ditampilkan di desktop sidebar dan mobile bottom nav
  */
 const menuItems = computed(() => {
     const role = user.value?.role;
+    const leaveRequestsBadge = pendingCounts.value.leaveRequests;
 
     const commonItems = [
-        { name: 'Dashboard', route: 'dashboard', icon: Home },
+        { name: 'Dashboard', route: 'dashboard', icon: Home, badge: 0 },
     ];
 
     if (role === 'SUPERADMIN' || role === 'ADMIN') {
         return [
             ...commonItems,
-            { name: 'Manajemen User', route: 'admin.users.index', icon: Users },
-            { name: 'Data Siswa', route: 'admin.students.index', icon: GraduationCap },
-            { name: 'Absensi Siswa', route: 'admin.attendance.students.index', icon: CalendarCheck },
-            { name: 'Presensi Guru', route: 'admin.attendance.teachers.index', icon: Clock },
-            { name: 'Audit Log', route: 'admin.audit-logs.index', icon: Activity },
+            { name: 'Manajemen User', route: 'admin.users.index', icon: Users, badge: 0 },
+            { name: 'Data Siswa', route: 'admin.students.index', icon: GraduationCap, badge: 0 },
+            { name: 'Absensi Siswa', route: 'admin.attendance.students.index', icon: CalendarCheck, badge: 0 },
+            { name: 'Presensi Guru', route: 'admin.attendance.teachers.index', icon: Clock, badge: 0 },
+            { name: 'Verifikasi Izin', route: 'admin.leave-requests.index', icon: FileText, badge: leaveRequestsBadge },
+            { name: 'Audit Log', route: 'admin.audit-logs.index', icon: Activity, badge: 0 },
         ];
     }
 
     if (role === 'PRINCIPAL') {
         return [
             ...commonItems,
-            { name: 'Izin Guru', route: 'principal.teacher-leaves.index', icon: ClipboardList },
-            { name: 'Audit Log', route: 'audit-logs.index', icon: Activity },
+            { name: 'Data Siswa', route: 'principal.students.index', icon: GraduationCap, badge: 0 },
+            { name: 'Kehadiran', route: 'principal.attendance.dashboard', icon: CalendarCheck, badge: 0 },
+            { name: 'Absensi Siswa', route: 'principal.attendance.students.index', icon: Users, badge: 0 },
+            { name: 'Presensi Guru', route: 'principal.attendance.teachers.index', icon: Clock, badge: 0 },
+            { name: 'Izin Guru', route: 'principal.teacher-leaves.index', icon: ClipboardList, badge: 0 },
+            { name: 'Audit Log', route: 'audit-logs.index', icon: Activity, badge: 0 },
         ];
     }
 
     if (role === 'TEACHER') {
         return [
             ...commonItems,
-            { name: 'Presensi Siswa', route: 'teacher.attendance.index', icon: CalendarCheck },
-            { name: 'Presensi Mapel', route: 'teacher.attendance.subject.create', icon: BookOpen },
-            { name: 'Riwayat Presensi Mapel', route: 'teacher.attendance.subject.index', icon: History },
-            { name: 'Riwayat Presensi Saya', route: 'teacher.my-attendance', icon: History },
-            { name: 'Verifikasi Izin', route: 'teacher.leave-requests', icon: FileText },
-            { name: 'Izin Saya', route: 'teacher.teacher-leaves.index', icon: ClipboardList },
+            { name: 'Data Siswa', route: 'teacher.students.index', icon: GraduationCap, badge: 0 },
+            { name: 'Presensi Siswa', route: 'teacher.attendance.index', icon: CalendarCheck, badge: 0 },
+            { name: 'Presensi Mapel', route: 'teacher.attendance.subject.create', icon: BookOpen, badge: 0 },
+            { name: 'Riwayat Presensi Mapel', route: 'teacher.attendance.subject.index', icon: History, badge: 0 },
+            { name: 'Riwayat Presensi Saya', route: 'teacher.my-attendance', icon: History, badge: 0 },
+            { name: 'Verifikasi Izin', route: 'teacher.leave-requests', icon: FileText, badge: leaveRequestsBadge },
+            { name: 'Izin Saya', route: 'teacher.teacher-leaves.index', icon: ClipboardList, badge: 0 },
         ];
     }
 
     if (role === 'PARENT') {
         return [
             ...commonItems,
-            { name: 'Data Anak', route: 'parent.children', icon: Users },
-            { name: 'Pengajuan Izin', route: 'parent.leave-requests', icon: FileText },
+            { name: 'Data Anak', route: 'parent.children', icon: Users, badge: 0 },
+            { name: 'Pengajuan Izin', route: 'parent.leave-requests', icon: FileText, badge: 0 },
         ];
     }
 
@@ -331,11 +352,19 @@ const currentDate = new Intl.DateTimeFormat('id-ID', {
                                 class="w-5 h-5 transition-colors duration-200"
                                 :class="isActive(item.route) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300'"
                             />
-                            <span>{{ item.name }}</span>
+                            <span class="flex-1">{{ item.name }}</span>
 
-                            <!-- Active Indicator Dot -->
+                            <!-- Pending Badge -->
+                            <span
+                                v-if="item.badge > 0"
+                                class="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full shadow-sm"
+                            >
+                                {{ item.badge > 99 ? '99+' : item.badge }}
+                            </span>
+
+                            <!-- Active Indicator Dot (only show when no badge) -->
                             <div
-                                v-if="isActive(item.route)"
+                                v-else-if="isActive(item.route)"
                                 class="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 shadow-[0_0_8px_rgba(37,99,235,0.5)]"
                             ></div>
                         </Link>
@@ -456,7 +485,14 @@ const currentDate = new Intl.DateTimeFormat('id-ID', {
                             ? 'text-blue-600 stroke-[2.5px] -translate-y-1'
                             : 'text-gray-400 stroke-2 group-hover:text-gray-600'"
                     />
-                     <span
+                    <!-- Mobile Badge (absolute positioned) -->
+                    <span
+                        v-if="item.badge > 0"
+                        class="absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-sm"
+                    >
+                        {{ item.badge > 99 ? '99+' : item.badge }}
+                    </span>
+                    <span
                         v-if="isActive(item.route)"
                         class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"
                     ></span>

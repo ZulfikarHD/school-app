@@ -17,9 +17,12 @@ interface Props {
         id: number;
         nama_lengkap: string;
     }>;
+    detailsUrl?: string;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    detailsUrl: '/admin/attendance/students',
+});
 
 const haptics = useHaptics();
 
@@ -33,7 +36,7 @@ const attendanceColor = computed(() => {
 
 const viewDetails = () => {
     haptics.light();
-    router.visit('/admin/attendance/students');
+    router.visit(props.detailsUrl);
 };
 </script>
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { User, Users, History, FileText, MapPin, GraduationCap, Phone, Mail } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import { User, Users, History, MapPin, GraduationCap, Phone, Mail } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
 import type { Student, Guardian, ClassHistory, StatusHistory } from '@/types/student';
@@ -12,20 +12,42 @@ interface Props {
         classHistory?: ClassHistory[];
         statusHistory?: StatusHistory[];
     };
+    // Read-only mode (hides certain admin-only features)
+    readOnly?: boolean;
+    // Show payment tab (Principal can see, Teacher cannot)
+    showPayment?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    readOnly: false,
+    showPayment: false
+});
+
 const haptics = useHaptics();
 
 const activeTab = ref<'biodata' | 'guardians' | 'class-history' | 'status-history'>('biodata');
 
 // Tabs dengan short labels untuk mobile
-const tabs = [
-    { id: 'biodata', label: 'Biodata', shortLabel: 'Bio', icon: User },
-    { id: 'guardians', label: 'Orang Tua/Wali', shortLabel: 'Ortu', icon: Users },
-    { id: 'class-history', label: 'Riwayat Kelas', shortLabel: 'Kelas', icon: GraduationCap },
-    { id: 'status-history', label: 'Riwayat Status', shortLabel: 'Status', icon: History },
-];
+// Filter tabs based on role permissions
+const tabs = computed(() => {
+    const allTabs = [
+        { id: 'biodata', label: 'Biodata', shortLabel: 'Bio', icon: User },
+        { id: 'guardians', label: 'Orang Tua/Wali', shortLabel: 'Ortu', icon: Users },
+        { id: 'class-history', label: 'Riwayat Kelas', shortLabel: 'Kelas', icon: GraduationCap },
+    ];
+    
+    // Status history only for admin/principal (not for teachers)
+    if (props.student.statusHistory && props.student.statusHistory.length > 0) {
+        allTabs.push({ id: 'status-history', label: 'Riwayat Status', shortLabel: 'Status', icon: History });
+    }
+    
+    // TODO: Add payment tab when payment module is implemented
+    // if (props.showPayment) {
+    //     allTabs.push({ id: 'payment', label: 'Pembayaran', shortLabel: 'Bayar', icon: DollarSign });
+    // }
+    
+    return allTabs;
+});
 
 const changeTab = (tabId: typeof activeTab.value) => {
     haptics.selection();

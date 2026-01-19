@@ -454,13 +454,47 @@ class StudentController extends Controller
     }
 
     /**
-     * Export student data to Excel
-     * TODO: Implement Excel export using Laravel Excel package
+     * Export student data to Excel dengan support untuk filter dan search
+     * menggunakan Laravel Excel package untuk generate file .xlsx
      */
     public function export(Request $request)
     {
-        // TODO: Implement export functionality
-        return back()->with('info', 'Fitur export akan segera tersedia.');
+        // Build query dengan filter yang sama seperti index
+        $query = Student::query()->with(['guardians', 'kelas']);
+
+        // Apply filters seperti di index method
+        if ($search = $request->input('search')) {
+            $query->search($search);
+        }
+
+        if ($kelasId = $request->input('kelas_id')) {
+            $query->byClass($kelasId);
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        } else {
+            $query->active();
+        }
+
+        if ($tahunAjaran = $request->input('tahun_ajaran')) {
+            $query->byAcademicYear($tahunAjaran);
+        }
+
+        if ($jenisKelamin = $request->input('jenis_kelamin')) {
+            $query->where('jenis_kelamin', $jenisKelamin);
+        }
+
+        $query->orderBy('created_at', 'desc');
+
+        // Generate filename dengan timestamp
+        $filename = 'Data_Siswa_'.date('Y-m-d_His').'.xlsx';
+
+        // Download Excel file
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\StudentExport($query),
+            $filename
+        );
     }
 
     /**

@@ -47,13 +47,19 @@ interface Props {
     // Options for filters
     classes?: Array<{ id: number; nama: string }>;
     academicYears?: string[];
+    // Read-only mode (hide edit/delete actions)
+    readOnly?: boolean;
+    // Hide selection checkboxes
+    hideSelection?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     loading: false,
     filters: () => ({}),
     classes: () => [],
-    academicYears: () => []
+    academicYears: () => [],
+    readOnly: false,
+    hideSelection: false
 });
 
 const emit = defineEmits(['edit', 'delete', 'view', 'update-status', 'selection-change']);
@@ -273,7 +279,7 @@ defineExpose({
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-100 dark:border-zinc-800">
                             <tr>
-                                <th class="px-6 py-3.5 w-10">
+                                <th v-if="!hideSelection" class="px-6 py-3.5 w-10">
                                     <div class="flex items-center">
                                         <input
                                             type="checkbox"
@@ -331,7 +337,7 @@ defineExpose({
 
                             <!-- Empty State -->
                             <tr v-else-if="students.data.length === 0">
-                                <td colspan="7" class="px-6 py-16 text-center text-slate-500">
+                                <td :colspan="hideSelection ? 6 : 7" class="px-6 py-16 text-center text-slate-500">
                                     <div class="flex flex-col items-center gap-3">
                                         <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
                                             <Shield class="w-8 h-8 text-slate-300 dark:text-zinc-600" />
@@ -350,9 +356,9 @@ defineExpose({
                                 v-for="student in students.data"
                                 :key="student.id"
                                 class="group hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors"
-                                :class="{ 'bg-emerald-50/50 dark:bg-emerald-900/10': selectedIds.includes(student.id) }"
+                                :class="{ 'bg-emerald-50/50 dark:bg-emerald-900/10': !hideSelection && selectedIds.includes(student.id) }"
                             >
-                                <td class="px-6 py-4">
+                                <td v-if="!hideSelection" class="px-6 py-4">
                                     <div class="flex items-center">
                                         <input
                                             type="checkbox"
@@ -398,21 +404,23 @@ defineExpose({
                                                 <Eye class="w-4 h-4" />
                                             </button>
                                         </Motion>
-                                        <Motion :whileTap="{ scale: 0.95 }">
-                                            <button @click="onEdit(student)" class="w-9 h-9 flex items-center justify-center text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-colors border border-transparent hover:border-amber-200 dark:hover:border-amber-800" title="Edit">
-                                                <Edit class="w-4 h-4" />
-                                            </button>
-                                        </Motion>
-                                        <Motion :whileTap="{ scale: 0.95 }">
-                                            <button @click="onUpdateStatus(student)" class="w-9 h-9 flex items-center justify-center text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-xl transition-colors border border-transparent hover:border-sky-200 dark:hover:border-sky-800" title="Update Status">
-                                                <RefreshCw class="w-4 h-4" />
-                                            </button>
-                                        </Motion>
-                                        <Motion :whileTap="{ scale: 0.95 }">
-                                            <button @click="onDelete(student)" class="w-9 h-9 flex items-center justify-center text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors border border-transparent hover:border-red-200 dark:hover:border-red-800" title="Hapus">
-                                                <Trash2 class="w-4 h-4" />
-                                            </button>
-                                        </Motion>
+                                        <template v-if="!readOnly">
+                                            <Motion :whileTap="{ scale: 0.95 }">
+                                                <button @click="onEdit(student)" class="w-9 h-9 flex items-center justify-center text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-colors border border-transparent hover:border-amber-200 dark:hover:border-amber-800" title="Edit">
+                                                    <Edit class="w-4 h-4" />
+                                                </button>
+                                            </Motion>
+                                            <Motion :whileTap="{ scale: 0.95 }">
+                                                <button @click="onUpdateStatus(student)" class="w-9 h-9 flex items-center justify-center text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-xl transition-colors border border-transparent hover:border-sky-200 dark:hover:border-sky-800" title="Update Status">
+                                                    <RefreshCw class="w-4 h-4" />
+                                                </button>
+                                            </Motion>
+                                            <Motion :whileTap="{ scale: 0.95 }">
+                                                <button @click="onDelete(student)" class="w-9 h-9 flex items-center justify-center text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors border border-transparent hover:border-red-200 dark:hover:border-red-800" title="Hapus">
+                                                    <Trash2 class="w-4 h-4" />
+                                                </button>
+                                            </Motion>
+                                        </template>
                                     </div>
                                 </td>
                             </tr>
@@ -439,11 +447,11 @@ defineExpose({
                 v-for="student in students.data"
                 :key="student.id"
                 class="bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border transition-all active:scale-[0.99]"
-                :class="selectedIds.includes(student.id) ? 'border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/10' : 'border-gray-100 dark:border-zinc-800'"
+                :class="!hideSelection && selectedIds.includes(student.id) ? 'border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/10' : 'border-gray-100 dark:border-zinc-800'"
             >
                 <div class="flex justify-between items-start mb-3">
                     <div class="flex items-start gap-3 flex-1 min-w-0">
-                        <div class="pt-1 shrink-0">
+                        <div v-if="!hideSelection" class="pt-1 shrink-0">
                             <input
                                 type="checkbox"
                                 :checked="selectedIds.includes(student.id)"
@@ -468,14 +476,14 @@ defineExpose({
                     </span>
                 </div>
 
-                <div class="flex items-center gap-2 mb-4 pl-20 text-sm text-gray-600 dark:text-gray-400">
+                <div class="flex items-center gap-2 mb-4 text-sm text-gray-600 dark:text-gray-400" :class="hideSelection ? '' : 'pl-20'">
                     <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300">
                         {{ student.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}
                     </span>
                     <span class="text-xs text-gray-400">• Kelas {{ student.kelas?.nama_lengkap || '-' }}</span>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t border-gray-50 dark:border-zinc-800 pl-20">
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-50 dark:border-zinc-800" :class="hideSelection ? '' : 'pl-20'">
                     <button
                         @click="onView(student)"
                         class="p-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
@@ -483,27 +491,29 @@ defineExpose({
                     >
                         <Eye class="w-4 h-4" />
                     </button>
-                    <button
-                        @click="onEdit(student)"
-                        class="p-2 text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-lg"
-                        title="Edit"
-                    >
-                        <Edit class="w-4 h-4" />
-                    </button>
-                    <button
-                        @click="onUpdateStatus(student)"
-                        class="p-2 text-gray-600 bg-gray-100 dark:bg-gray-800 rounded-lg"
-                        title="Update Status"
-                    >
-                        <RefreshCw class="w-4 h-4" />
-                    </button>
-                    <button
-                        @click="onDelete(student)"
-                        class="p-2 text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg"
-                        title="Hapus"
-                    >
-                        <Trash2 class="w-4 h-4" />
-                    </button>
+                    <template v-if="!readOnly">
+                        <button
+                            @click="onEdit(student)"
+                            class="p-2 text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-lg"
+                            title="Edit"
+                        >
+                            <Edit class="w-4 h-4" />
+                        </button>
+                        <button
+                            @click="onUpdateStatus(student)"
+                            class="p-2 text-gray-600 bg-gray-100 dark:bg-gray-800 rounded-lg"
+                            title="Update Status"
+                        >
+                            <RefreshCw class="w-4 h-4" />
+                        </button>
+                        <button
+                            @click="onDelete(student)"
+                            class="p-2 text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg"
+                            title="Hapus"
+                        >
+                            <Trash2 class="w-4 h-4" />
+                        </button>
+                    </template>
                 </div>
             </div>
         </div>
