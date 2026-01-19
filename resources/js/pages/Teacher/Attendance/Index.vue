@@ -500,8 +500,7 @@ const getStatusColor = (status: 'hadir' | 'izin' | 'sakit' | 'alpha') => {
                                                 : 'bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 border border-gray-300 dark:border-zinc-700',
                                             !link.url && 'opacity-50 cursor-not-allowed',
                                         ]"
-                                        v-html="link.label"
-                                    />
+                                    ><span v-html="link.label" /></Link>
                                 </div>
                             </div>
                         </div>

@@ -5,6 +5,7 @@ import AppLayout from '@/components/layouts/AppLayout.vue';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
 import { useModal } from '@/composables/useModal';
+import Badge from '@/components/ui/Badge.vue';
 import LeaveStatusBadge from '@/components/features/attendance/LeaveStatusBadge.vue';
 import { Plus, Calendar, FileText, Filter, X, Image as ImageIcon, Edit, Trash2 } from 'lucide-vue-next';
 import { create, edit, destroy } from '@/routes/parent/leave-requests';
@@ -291,16 +292,13 @@ const confirmCancel = () => {
                                             </div>
 
                                             <div>
-                                                <span
-                                                    :class="[
-                                                        'inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold',
-                                                        request.jenis === 'SAKIT'
-                                                            ? 'bg-sky-50 text-sky-700 border border-sky-200/50'
-                                                            : 'bg-amber-50 text-amber-700 border border-amber-200/50'
-                                                    ]"
+                                                <Badge
+                                                    :variant="request.jenis === 'SAKIT' ? 'info' : 'warning'"
+                                                    size="xs"
+                                                    rounded="square"
                                                 >
                                                     {{ request.jenis }}
-                                                </span>
+                                                </Badge>
                                             </div>
 
                                             <p class="text-sm text-slate-700 dark:text-zinc-300 line-clamp-2">
@@ -403,16 +401,13 @@ const confirmCancel = () => {
                             <!-- Type -->
                             <div>
                                 <p class="text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide mb-2">Jenis Izin</p>
-                                <span
-                                    :class="[
-                                        'inline-flex items-center px-3 py-1.5 rounded-lg font-semibold',
-                                        selectedRequest.jenis === 'SAKIT'
-                                            ? 'bg-sky-50 text-sky-700 border border-sky-200/50'
-                                            : 'bg-amber-50 text-amber-700 border border-amber-200/50'
-                                    ]"
+                                <Badge
+                                    :variant="selectedRequest.jenis === 'SAKIT' ? 'info' : 'warning'"
+                                    size="md"
+                                    rounded="square"
                                 >
                                     {{ selectedRequest.jenis }}
-                                </span>
+                                </Badge>
                             </div>
 
                             <!-- Date Range -->
@@ -538,16 +533,13 @@ const confirmCancel = () => {
                             <p class="text-xs text-slate-600 dark:text-zinc-400 mb-2">
                                 {{ formatDateRange(requestToCancel.tanggal_mulai, requestToCancel.tanggal_selesai) }}
                             </p>
-                            <span
-                                :class="[
-                                    'inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold',
-                                    requestToCancel.jenis === 'SAKIT'
-                                        ? 'bg-sky-50 text-sky-700 border border-sky-200/50'
-                                        : 'bg-amber-50 text-amber-700 border border-amber-200/50'
-                                ]"
+                            <Badge
+                                :variant="requestToCancel.jenis === 'SAKIT' ? 'info' : 'warning'"
+                                size="xs"
+                                rounded="square"
                             >
                                 {{ requestToCancel.jenis }}
-                            </span>
+                            </Badge>
                         </div>
 
                         <!-- Actions -->

@@ -167,8 +167,7 @@
                   : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300',
                 !link.url && 'opacity-50 cursor-not-allowed',
               ]"
-              v-html="link.label"
-            />
+            ><span v-html="link.label" /></Link>
           </div>
         </div>
       </div>
@@ -178,9 +177,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { router, Link } from '@inertiajs/vue3'
 import AppLayout from '@/components/layouts/AppLayout.vue'
-import { Link } from '@inertiajs/vue3'
+import { myAttendance } from '@/routes/teacher'
 
 interface TeacherAttendance {
   id: number
@@ -264,7 +263,7 @@ const formatTime = (timeString: string) => {
 
 const applyFilters = () => {
   router.get(
-    route('teacher.my-attendance'),
+    myAttendance().url,
     {
       month: filters.value.month,
       year: filters.value.year,

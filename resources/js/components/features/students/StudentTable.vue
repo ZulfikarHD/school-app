@@ -14,6 +14,7 @@ import {
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
 import { index as studentsIndex } from '@/routes/admin/students';
+import Badge from '@/components/ui/Badge.vue';
 import type { Student } from '@/types/student';
 
 // Define pagination interfaces locally since they are generic Inertia types
@@ -133,15 +134,18 @@ const toggleSelection = (id: number) => {
     emit('selection-change', props.students.data.filter(s => selectedIds.value.includes(s.id)));
 };
 
-// Helpers - Status badge dengan emerald sebagai primary color untuk "aktif"
-const getStatusBadgeClass = (status: string) => {
-    const classes: Record<string, string> = {
-        aktif: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
-        mutasi: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
-        do: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800',
-        lulus: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800',
+/**
+ * Status badge variant mapping untuk student status
+ * menggunakan Badge component untuk consistency
+ */
+const getStatusBadgeVariant = (status: string): 'success' | 'warning' | 'error' | 'info' | 'default' => {
+    const variants: Record<string, 'success' | 'warning' | 'error' | 'info' | 'default'> = {
+        aktif: 'success',
+        mutasi: 'warning',
+        do: 'error',
+        lulus: 'info',
     };
-    return classes[status] || 'bg-slate-100 text-slate-600 border-slate-200';
+    return variants[status] || 'default';
 };
 
 const getStatusLabel = (status: string) => {
@@ -210,8 +214,8 @@ defineExpose({
                 <!-- Filters Row - Horizontal scroll on mobile -->
                 <div class="relative -mx-4 px-4 md:mx-0 md:px-0">
                     <!-- Scroll shadow indicators -->
-                    <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-zinc-900 to-transparent pointer-events-none z-10 md:hidden"></div>
-                    <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-zinc-900 to-transparent pointer-events-none z-10 md:hidden"></div>
+                    <div class="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-white dark:from-zinc-900 to-transparent pointer-events-none z-10 md:hidden"></div>
+                    <div class="absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-white dark:from-zinc-900 to-transparent pointer-events-none z-10 md:hidden"></div>
 
                     <div class="flex gap-2 overflow-x-auto pb-2 md:pb-0 md:flex-wrap scrollbar-hide snap-x snap-mandatory">
                         <!-- Status Filter -->
@@ -370,12 +374,26 @@ defineExpose({
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
-                                        <img
-                                            :src="student.foto ? `/storage/${student.foto}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(student.nama_lengkap)}&background=random`"
-                                            :alt="student.nama_lengkap"
-                                            class="w-10 h-10 rounded-full object-cover bg-slate-100 ring-2 ring-white dark:ring-zinc-800"
-                                            loading="lazy"
-                                        />
+                                        <!-- Modern avatar dengan gradient border -->
+                                        <div class="relative shrink-0">
+                                            <div class="w-10 h-10 rounded-xl overflow-hidden bg-linear-to-br from-emerald-400 to-teal-500 p-0.5">
+                                                <img
+                                                    v-if="student.foto"
+                                                    :src="`/storage/${student.foto}`"
+                                                    :alt="student.nama_lengkap"
+                                                    class="w-full h-full rounded-[8px] object-cover bg-white dark:bg-zinc-800"
+                                                    loading="lazy"
+                                                />
+                                                <div 
+                                                    v-else 
+                                                    class="w-full h-full rounded-[8px] bg-linear-to-br from-slate-50 to-slate-100 dark:from-zinc-800 dark:to-zinc-700 flex items-center justify-center"
+                                                >
+                                                    <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                                                        {{ student.nama_lengkap.charAt(0).toUpperCase() }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div class="flex flex-col">
                                             <span class="font-medium text-slate-900 dark:text-slate-100">{{ student.nama_lengkap }}</span>
                                             <span class="text-xs text-slate-500" v-if="student.nama_panggilan">({{ student.nama_panggilan }})</span>
@@ -393,12 +411,17 @@ defineExpose({
                                     {{ student.kelas?.nama_lengkap || '-' }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span :class="['px-2.5 py-1 rounded-lg text-xs font-semibold border', getStatusBadgeClass(student.status)]">
+                                    <Badge
+                                        :variant="getStatusBadgeVariant(student.status)"
+                                        size="sm"
+                                        rounded="square"
+                                        dot
+                                    >
                                         {{ getStatusLabel(student.status) }}
-                                    </span>
+                                    </Badge>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div class="flex items-center justify-end gap-1.5">
                                         <Motion :whileTap="{ scale: 0.95 }">
                                             <button @click="onView(student)" class="w-9 h-9 flex items-center justify-center text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-colors border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800" title="Lihat Detail">
                                                 <Eye class="w-4 h-4" />
@@ -430,92 +453,150 @@ defineExpose({
             </div>
         </Motion>
 
-        <!-- Mobile Cards -->
+        <!-- Mobile Cards - Modern card design -->
         <div class="md:hidden space-y-3">
-            <!-- Loading State -->
-            <div v-if="loading" class="p-4 text-center text-gray-500 animate-pulse">Memuat data...</div>
-
-            <!-- Empty State -->
-            <div v-else-if="students.data.length === 0" class="p-8 text-center text-gray-500 bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800">
-                <Shield class="w-8 h-8 mx-auto text-gray-300 mb-2" />
-                <p>Belum ada siswa ditemukan</p>
+            <!-- Loading State - Skeleton cards -->
+            <div v-if="loading" class="space-y-3">
+                <div v-for="i in 3" :key="i" class="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-100 dark:border-zinc-800 animate-pulse">
+                    <div class="flex items-start gap-3">
+                        <div class="w-14 h-14 rounded-xl bg-slate-200 dark:bg-zinc-700"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 w-3/4 bg-slate-200 dark:bg-zinc-700 rounded"></div>
+                            <div class="h-3 w-1/2 bg-slate-100 dark:bg-zinc-800 rounded"></div>
+                        </div>
+                        <div class="h-6 w-16 bg-slate-200 dark:bg-zinc-700 rounded-full"></div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Data Cards -->
-            <div
+            <!-- Empty State - Modern design -->
+            <div v-else-if="students.data.length === 0" class="py-12 text-center bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-linear-to-br from-slate-100 to-slate-200 dark:from-zinc-800 dark:to-zinc-700 flex items-center justify-center">
+                    <Shield class="w-8 h-8 text-slate-400 dark:text-zinc-500" />
+                </div>
+                <p class="font-medium text-slate-700 dark:text-slate-300">Belum ada siswa ditemukan</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Coba ubah filter atau tambah siswa baru</p>
+            </div>
+
+            <!-- Data Cards - Modern premium design -->
+            <Motion
                 v-else
                 v-for="student in students.data"
                 :key="student.id"
-                class="bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border transition-all active:scale-[0.99]"
-                :class="!hideSelection && selectedIds.includes(student.id) ? 'border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/10' : 'border-gray-100 dark:border-zinc-800'"
+                :whileTap="{ scale: 0.98 }"
             >
-                <div class="flex justify-between items-start mb-3">
-                    <div class="flex items-start gap-3 flex-1 min-w-0">
-                        <div v-if="!hideSelection" class="pt-1 shrink-0">
-                            <input
-                                type="checkbox"
-                                :checked="selectedIds.includes(student.id)"
-                                @change="toggleSelection(student.id)"
-                                class="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 dark:border-zinc-600 dark:bg-zinc-700 dark:ring-offset-zinc-800"
+                <div
+                    class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border transition-all duration-200"
+                    :class="!hideSelection && selectedIds.includes(student.id) 
+                        ? 'border-emerald-400 ring-2 ring-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-950/10' 
+                        : 'border-slate-100 dark:border-zinc-800'"
+                >
+                    <!-- Header section dengan foto dan info utama -->
+                    <div class="p-4">
+                        <div class="flex items-start gap-3">
+                            <!-- Checkbox (jika tidak hidden) -->
+                            <div v-if="!hideSelection" class="pt-1 shrink-0">
+                                <input
+                                    type="checkbox"
+                                    :checked="selectedIds.includes(student.id)"
+                                    @change="toggleSelection(student.id)"
+                                    class="w-5 h-5 text-emerald-600 border-slate-300 rounded-md focus:ring-emerald-500 focus:ring-offset-0 dark:border-zinc-600 dark:bg-zinc-700 transition-colors"
+                                >
+                            </div>
+                            
+                            <!-- Photo dengan modern styling -->
+                            <div class="relative shrink-0">
+                                <!-- Photo container dengan gradient border effect -->
+                                <div class="w-14 h-14 rounded-xl overflow-hidden bg-linear-to-br from-emerald-400 to-teal-500 p-0.5 shadow-sm">
+                                    <img
+                                        v-if="student.foto"
+                                        :src="`/storage/${student.foto}`"
+                                        :alt="student.nama_lengkap"
+                                        class="w-full h-full rounded-[10px] object-cover bg-white dark:bg-zinc-800"
+                                        loading="lazy"
+                                    />
+                                    <!-- Fallback dengan initial -->
+                                    <div 
+                                        v-else 
+                                        class="w-full h-full rounded-[10px] bg-linear-to-br from-slate-50 to-slate-100 dark:from-zinc-800 dark:to-zinc-700 flex items-center justify-center"
+                                    >
+                                        <span class="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                                            {{ student.nama_lengkap.charAt(0).toUpperCase() }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <!-- Gender indicator dot -->
+                                <div 
+                                    class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900 flex items-center justify-center text-[8px] font-bold"
+                                    :class="student.jenis_kelamin === 'L' 
+                                        ? 'bg-sky-500 text-white' 
+                                        : 'bg-pink-500 text-white'"
+                                >
+                                    {{ student.jenis_kelamin }}
+                                </div>
+                            </div>
+                            
+                            <!-- Info utama -->
+                            <div class="min-w-0 flex-1">
+                                <h3 class="font-semibold text-slate-900 dark:text-slate-100 truncate leading-tight">
+                                    {{ student.nama_lengkap }}
+                                </h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 font-mono mt-0.5">{{ student.nis }}</p>
+                                <div class="flex items-center gap-2 mt-1.5">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-xs font-medium text-slate-600 dark:text-slate-400">
+                                        {{ student.kelas?.nama_lengkap || student.kelas?.nama || 'Belum ada kelas' }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Status badge -->
+                            <Badge
+                                :variant="getStatusBadgeVariant(student.status)"
+                                size="xs"
+                                dot
+                                class="shrink-0"
                             >
-                        </div>
-                        <img
-                            :src="student.foto ? `/storage/${student.foto}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(student.nama_lengkap)}&background=random`"
-                            :alt="student.nama_lengkap"
-                            class="w-12 h-12 rounded-full object-cover bg-slate-100 ring-2 ring-white dark:ring-zinc-800 shrink-0"
-                            loading="lazy"
-                        />
-                        <div class="min-w-0 flex-1">
-                            <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ student.nama_lengkap }}</h3>
-                            <p class="text-sm text-gray-500">{{ student.nis }}</p>
-                            <p class="text-xs text-gray-400" v-if="student.nama_panggilan">({{ student.nama_panggilan }})</p>
+                                {{ getStatusLabel(student.status) }}
+                            </Badge>
                         </div>
                     </div>
-                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-medium border border-transparent shrink-0', getStatusBadgeClass(student.status)]">
-                        {{ getStatusLabel(student.status) }}
-                    </span>
-                </div>
 
-                <div class="flex items-center gap-2 mb-4 text-sm text-gray-600 dark:text-gray-400" :class="hideSelection ? '' : 'pl-20'">
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300">
-                        {{ student.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}
-                    </span>
-                    <span class="text-xs text-gray-400">• Kelas {{ student.kelas?.nama_lengkap || '-' }}</span>
+                    <!-- Action buttons - Clean bottom section -->
+                    <div class="flex items-center justify-end gap-1.5 px-4 py-3 border-t border-slate-50 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-800/20 rounded-b-2xl">
+                        <button
+                            @click="onView(student)"
+                            class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                            title="Lihat Detail"
+                        >
+                            <Eye class="w-4 h-4" />
+                            <span>Detail</span>
+                        </button>
+                        <template v-if="!readOnly">
+                            <button
+                                @click="onEdit(student)"
+                                class="p-2 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                                title="Edit"
+                            >
+                                <Edit class="w-4 h-4" />
+                            </button>
+                            <button
+                                @click="onUpdateStatus(student)"
+                                class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+                                title="Update Status"
+                            >
+                                <RefreshCw class="w-4 h-4" />
+                            </button>
+                            <button
+                                @click="onDelete(student)"
+                                class="p-2 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Hapus"
+                            >
+                                <Trash2 class="w-4 h-4" />
+                            </button>
+                        </template>
+                    </div>
                 </div>
-
-                <div class="flex justify-end gap-2 pt-3 border-t border-gray-50 dark:border-zinc-800" :class="hideSelection ? '' : 'pl-20'">
-                    <button
-                        @click="onView(student)"
-                        class="p-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
-                        title="Lihat"
-                    >
-                        <Eye class="w-4 h-4" />
-                    </button>
-                    <template v-if="!readOnly">
-                        <button
-                            @click="onEdit(student)"
-                            class="p-2 text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-lg"
-                            title="Edit"
-                        >
-                            <Edit class="w-4 h-4" />
-                        </button>
-                        <button
-                            @click="onUpdateStatus(student)"
-                            class="p-2 text-gray-600 bg-gray-100 dark:bg-gray-800 rounded-lg"
-                            title="Update Status"
-                        >
-                            <RefreshCw class="w-4 h-4" />
-                        </button>
-                        <button
-                            @click="onDelete(student)"
-                            class="p-2 text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg"
-                            title="Hapus"
-                        >
-                            <Trash2 class="w-4 h-4" />
-                        </button>
-                    </template>
-                </div>
-            </div>
+            </Motion>
         </div>
 
         <!-- Pagination -->
@@ -588,10 +669,9 @@ defineExpose({
                                 : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-zinc-800',
                             !link.url && 'opacity-50 cursor-not-allowed hover:bg-transparent'
                         ]"
-                        v-html="link.label"
                         preserve-scroll
                         preserve-state
-                    />
+                    ><span v-html="link.label" /></Link>
                 </div>
             </div>
         </Motion>

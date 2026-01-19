@@ -5,6 +5,7 @@ import { Filter, Calendar, Users, FileText, ArrowLeft } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import AttendanceStatusBadge from '@/components/features/attendance/AttendanceStatusBadge.vue';
+import Badge from '@/components/ui/Badge.vue';
 import { useHaptics } from '@/composables/useHaptics';
 
 /**
@@ -185,12 +186,14 @@ const getClassName = (attendance: Attendance) => {
                         >
                             <Filter :size="18" />
                             Filter
-                            <span
+                            <Badge
                                 v-if="hasFilters"
-                                class="ml-1 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-full text-xs"
+                                variant="success"
+                                size="xs"
+                                class="ml-1"
                             >
                                 Aktif
-                            </span>
+                            </Badge>
                         </Motion>
 
                         <button

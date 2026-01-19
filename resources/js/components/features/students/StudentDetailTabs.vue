@@ -135,17 +135,48 @@ const formatDate = (date: string) => {
                 aria-labelledby="tab-biodata"
             >
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-                    <!-- Photo -->
+                    <!-- Photo - Modern premium design -->
                     <div class="lg:col-span-1">
-                        <div class="aspect-3/4 max-w-[200px] mx-auto lg:mx-0 rounded-2xl overflow-hidden bg-slate-100 dark:bg-zinc-800 shadow-sm">
-                            <img
-                                v-if="student.foto"
-                                :src="student.foto"
-                                :alt="student.nama_lengkap"
-                                class="w-full h-full object-cover"
-                            />
-                            <div v-else class="w-full h-full flex items-center justify-center">
-                                <User class="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 dark:text-gray-600" />
+                        <div class="relative aspect-3/4 max-w-[200px] mx-auto lg:mx-0 group">
+                            <!-- Outer glow effect untuk visual depth -->
+                            <div class="absolute -inset-1 bg-linear-to-br from-emerald-400/20 via-teal-400/20 to-cyan-400/20 rounded-2xl blur-sm opacity-60"></div>
+                            
+                            <!-- Main photo container -->
+                            <div class="relative h-full rounded-2xl overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-zinc-900/50 border border-slate-200/50 dark:border-zinc-700/50">
+                                <!-- Actual photo -->
+                                <img
+                                    v-if="student.foto"
+                                    :src="student.foto"
+                                    :alt="student.nama_lengkap"
+                                    class="w-full h-full object-cover"
+                                />
+                                
+                                <!-- Modern placeholder dengan gradient dan initials -->
+                                <div v-else class="w-full h-full bg-linear-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-zinc-800 dark:via-zinc-850 dark:to-zinc-900 flex flex-col items-center justify-center relative">
+                                    <!-- Subtle pattern background -->
+                                    <div class="absolute inset-0 opacity-30 dark:opacity-20" style="background-image: radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0); background-size: 20px 20px;"></div>
+                                    
+                                    <!-- Avatar circle dengan gradient dan initial -->
+                                    <div class="relative z-10 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-linear-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-3">
+                                        <span class="text-3xl sm:text-4xl font-bold text-white">
+                                            {{ student.nama_lengkap.charAt(0).toUpperCase() }}
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Label -->
+                                    <p class="relative z-10 text-xs font-medium text-slate-500 dark:text-zinc-500">Foto Siswa</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Status badge overlay - untuk visual flair -->
+                            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2">
+                                <span 
+                                    :class="getStatusBadgeClass(student.status)" 
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-md"
+                                >
+                                    <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                                    {{ getStatusLabel(student.status) }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -196,15 +227,11 @@ const formatDate = (date: string) => {
                                     {{ student.anak_ke }} dari {{ student.jumlah_saudara }} bersaudara
                                 </p>
                             </div>
-                                <div class="space-y-1">
-                                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Status</p>
-                                <span 
-                                    :class="getStatusBadgeClass(student.status)" 
-                                    class="inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold border"
-                                    role="status"
-                                >
-                                    {{ getStatusLabel(student.status) }}
-                                </span>
+                            <div class="space-y-1">
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Kelas Saat Ini</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {{ student.kelas?.nama_lengkap || student.kelas?.nama || 'Belum ditentukan' }}
+                                </p>
                             </div>
                         </div>
 

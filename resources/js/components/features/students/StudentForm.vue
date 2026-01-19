@@ -4,7 +4,7 @@
  * dengan refined aesthetic, collapsible sections, dan cohesive design language
  * untuk memastikan UX optimal dan visual yang premium
  */
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { ChevronDown, User, MapPin, GraduationCap, Users, IdCard, Calendar, Heart, Info, Check } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import PhotoUpload from './PhotoUpload.vue';
@@ -71,7 +71,7 @@ const sectionProgress = computed(() => {
             try {
                 const value = getNestedValue(props.form, field);
                 return value !== null && value !== undefined && value !== '';
-            } catch (e) {
+            } catch {
                 return false;
             }
         }).length;
@@ -132,15 +132,9 @@ const incomeRanges = [
     { value: '>10jt', label: '> Rp 10 Juta' }
 ];
 
-// Section config untuk cleaner template
-const sectionConfig = [
-    { key: 'biodata', icon: User, label: 'Biodata Siswa', desc: 'Identitas dan data pribadi siswa', accent: 'emerald' },
-    { key: 'address', icon: MapPin, label: 'Alamat & Kontak', desc: 'Domisili dan informasi kontak', accent: 'emerald' },
-    { key: 'academic', icon: GraduationCap, label: 'Data Akademik', desc: 'Kelas dan tahun ajaran', accent: 'emerald' },
-    { key: 'father', icon: Users, label: 'Data Ayah', desc: 'Informasi ayah kandung', accent: 'sky' },
-    { key: 'mother', icon: Heart, label: 'Data Ibu', desc: 'Informasi ibu kandung', accent: 'rose' },
-    { key: 'guardian', icon: Users, label: 'Data Wali', desc: 'Wali atau pengasuh (opsional)', accent: 'slate', optional: true },
-] as const;
+// Icons used in template for section headers
+// User, MapPin, GraduationCap, Users, Heart are used via dynamic component binding
+void [User, MapPin, GraduationCap, Users, Heart, IdCard, Calendar, Info, Check];
 </script>
 
 <template>
@@ -246,15 +240,17 @@ const sectionConfig = [
                     class="overflow-hidden"
                 >
                     <div class="px-5 pb-6 pt-2 space-y-6 border-t border-slate-100 dark:border-zinc-800/50">
-                        <div class="grid grid-cols-1 lg:grid-cols-[180px_1fr] gap-6">
-                            <!-- Photo Upload -->
-                            <div>
-                                <PhotoUpload
-                                    v-model="form.foto"
-                                    :error="form.errors.foto"
-                                    label="Foto Siswa"
-                                    hint="Foto 3x4, maks 2MB"
-                                />
+                        <div class="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-6 lg:gap-8">
+                            <!-- Photo Upload - Enhanced section dengan visual grouping -->
+                            <div class="lg:pt-2">
+                                <div class="bg-linear-to-br from-slate-50/80 to-slate-100/50 dark:from-zinc-900/50 dark:to-zinc-800/30 rounded-2xl p-4 border border-slate-100 dark:border-zinc-800">
+                                    <PhotoUpload
+                                        v-model="form.foto"
+                                        :error="form.errors.foto"
+                                        label="Foto Siswa"
+                                        hint="Foto 3x4, maks 2MB"
+                                    />
+                                </div>
                             </div>
 
                             <!-- Main Identity Fields -->

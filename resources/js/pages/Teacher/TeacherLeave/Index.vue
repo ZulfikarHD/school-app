@@ -99,8 +99,7 @@
                   : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300',
                 !link.url && 'opacity-50 cursor-not-allowed',
               ]"
-              v-html="link.label"
-            />
+            ><span v-html="link.label" /></Link>
           </div>
         </div>
       </div>

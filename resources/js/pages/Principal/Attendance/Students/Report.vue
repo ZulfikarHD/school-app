@@ -1,20 +1,18 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
 import {
-    FileText,
     Download,
     Filter,
-    Calendar,
     AlertTriangle,
     TrendingUp,
     ArrowLeft,
     Users,
 } from 'lucide-vue-next';
 import AppLayout from '@/components/layouts/AppLayout.vue';
-import AttendanceStatusBadge from '@/components/features/attendance/AttendanceStatusBadge.vue';
 import { useHaptics } from '@/composables/useHaptics';
+import Badge from '@/components/ui/Badge.vue';
 
 /**
  * Halaman laporan kehadiran siswa untuk Principal
@@ -105,12 +103,6 @@ const hasFilters = computed(() => {
     return filterForm.value.class_id || filterForm.value.status;
 });
 
-const trendDataArray = computed(() => {
-    return Object.values(props.trendData || {}).sort((a, b) =>
-        new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-});
-
 const pieChartData = computed(() => {
     const total = props.statistics.total_records || 1;
     return [
@@ -159,15 +151,6 @@ const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('id-ID', {
         day: 'numeric',
         month: 'short',
-        year: 'numeric',
-    });
-};
-
-const formatDateLong = (date: string) => {
-    return new Date(date).toLocaleDateString('id-ID', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
         year: 'numeric',
     });
 };
@@ -223,12 +206,14 @@ const getPercentageBgColor = (percentage: number) => {
                         >
                             <Filter :size="18" />
                             Filter
-                            <span
+                            <Badge
                                 v-if="hasFilters"
-                                class="ml-1 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-full text-xs"
+                                variant="success"
+                                size="xs"
+                                class="ml-1"
                             >
                                 Aktif
-                            </span>
+                            </Badge>
                         </Motion>
                     </div>
                 </div>
@@ -555,15 +540,12 @@ const getPercentageBgColor = (percentage: number) => {
                                             {{ student.kelas }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <span
-                                                :class="[
-                                                    'px-3 py-1 rounded-full text-sm font-semibold',
-                                                    getPercentageBgColor(student.persentase),
-                                                    getPercentageColor(student.persentase),
-                                                ]"
+                                            <Badge
+                                                :variant="student.persentase >= 90 ? 'success' : student.persentase >= 80 ? 'warning' : 'error'"
+                                                size="sm"
                                             >
                                                 {{ student.persentase }}%
-                                            </span>
+                                            </Badge>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-green-600 dark:text-green-400 font-medium">
                                             {{ student.total_hadir }}

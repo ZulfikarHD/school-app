@@ -39,7 +39,7 @@ interface Props {
     pendingLeaveRequests: number;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const haptics = useHaptics();
 const modal = useModal();

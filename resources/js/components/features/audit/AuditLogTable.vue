@@ -11,6 +11,7 @@ import {
 } from 'lucide-vue-next';
 import { useHaptics } from '@/composables/useHaptics';
 import { index as adminAuditLogsIndex } from '@/routes/admin/audit-logs';
+import Badge from '@/components/ui/Badge.vue';
 
 interface ActivityLog {
     id: number;
@@ -124,13 +125,10 @@ const formatJson = (data: any) => {
 };
 
 /**
- * Status color classes menggunakan design system colors
- * untuk visual consistency di seluruh aplikasi
+ * Status badge variant untuk audit log status
  */
-const getStatusColor = (status: string) => {
-    return status === 'failed'
-        ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
-        : 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20';
+const getStatusBadgeVariant = (status: string): 'success' | 'error' => {
+    return status === 'failed' ? 'error' : 'success';
 };
 </script>
 
@@ -254,21 +252,21 @@ const getStatusColor = (status: string) => {
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-300">
+                                    <Badge variant="default" size="sm">
                                         {{ log.action || log.description }}
-                                    </span>
+                                    </Badge>
                                 </td>
                                 <td class="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono text-xs">
                                     {{ log.ip_address }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span 
-                                        :class="['inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium', getStatusColor(log.status || 'success')]"
-                                        role="status"
+                                    <Badge
+                                        :variant="getStatusBadgeVariant(log.status || 'success')"
+                                        size="sm"
+                                        dot
                                     >
-                                        <component :is="log.status === 'failed' ? XCircle : CheckCircle" class="w-3 h-3" aria-hidden="true" />
                                         {{ log.status === 'failed' ? 'Gagal' : 'Berhasil' }}
-                                    </span>
+                                    </Badge>
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <component :is="expandedRows.has(log.id) ? ChevronUp : ChevronDown" class="w-4 h-4 text-slate-400" aria-hidden="true" />
@@ -322,10 +320,9 @@ const getStatusColor = (status: string) => {
                     ]"
                     :aria-current="link.active ? 'page' : undefined"
                     :aria-disabled="!link.url"
-                    v-html="link.label"
                     preserve-scroll
                     preserve-state
-                />
+                ><span v-html="link.label" /></Link>
             </div>
         </nav>
     </div>

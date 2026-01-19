@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
- * PhotoUpload - Photo upload component dengan refined aesthetic
+ * PhotoUpload - Modern photo upload component dengan premium aesthetic
  * yang mencakup drag & drop, preview, validation, dan haptic feedback
  * untuk memastikan UX optimal terutama di mobile dengan touch targets yang besar
  */
 import { ref, onBeforeUnmount, watch } from 'vue';
-import { Camera, X, ImagePlus } from 'lucide-vue-next';
+import { Camera, X, ImagePlus, Upload, User } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
 
@@ -97,13 +97,16 @@ const triggerBrowse = () => {
     fileInput.value?.click();
 };
 
+// Supress unused variable warning untuk icons yang digunakan di template
+void [Camera, Upload, User];
+
 onBeforeUnmount(() => {
     // Clean up object URLs if needed
 });
 </script>
 
 <template>
-    <div class="space-y-2">
+    <div class="space-y-2.5">
         <!-- Label dengan unique ID untuk accessibility -->
         <label 
             v-if="label" 
@@ -118,9 +121,9 @@ onBeforeUnmount(() => {
             :whileTap="{ scale: previewUrl ? 1 : 0.98 }"
         >
             <div
-                class="relative group cursor-pointer transition-all duration-200"
+                class="relative group cursor-pointer transition-all duration-300"
                 :class="[
-                    'rounded-xl overflow-hidden',
+                    'rounded-2xl overflow-hidden',
                     isDragging
                         ? 'ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-900'
                         : '',
@@ -149,93 +152,151 @@ onBeforeUnmount(() => {
                     @change="handleFileSelect"
                 />
 
-                <!-- Preview State -->
-                <div v-if="previewUrl" class="relative aspect-3/4 w-full max-w-[160px] mx-auto bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden">
-                    <img
-                        :src="previewUrl"
-                        alt="Preview Foto"
-                        class="w-full h-full object-cover"
-                    />
+                <!-- Preview State - Modern card design -->
+                <div v-if="previewUrl" class="relative aspect-3/4 w-full max-w-[180px] mx-auto">
+                    <!-- Outer glow effect -->
+                    <div class="absolute -inset-1 bg-linear-to-br from-emerald-400/20 via-teal-400/20 to-cyan-400/20 rounded-2xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    <!-- Image container -->
+                    <div class="relative h-full bg-linear-to-br from-slate-100 to-slate-200 dark:from-zinc-800 dark:to-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-slate-200/50 dark:shadow-zinc-900/50 border border-slate-200/50 dark:border-zinc-700/50">
+                        <img
+                            :src="previewUrl"
+                            alt="Preview Foto"
+                            class="w-full h-full object-cover"
+                        />
 
-                    <!-- Hover/Touch Overlay -->
-                    <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-end pb-4">
-                        <ImagePlus class="w-5 h-5 text-white mb-1" />
-                        <p class="text-white text-xs font-medium">Ganti Foto</p>
+                        <!-- Hover/Touch Overlay - Gradient dengan glassmorphism effect -->
+                        <div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 active:opacity-100 transition-all duration-300 flex flex-col items-center justify-end pb-5">
+                            <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2 border border-white/20">
+                                <ImagePlus class="w-5 h-5 text-white" />
+                            </div>
+                            <p class="text-white text-sm font-semibold">Ganti Foto</p>
+                            <p class="text-white/70 text-xs mt-0.5">Klik untuk memilih</p>
+                        </div>
                     </div>
 
-                    <!-- Remove Button - Increased touch target to 44px dengan proper focus state -->
+                    <!-- Remove Button - Modern floating design -->
                     <Motion :whileTap="{ scale: 0.9 }">
                         <button
                             @click.stop="removePhoto"
-                            class="absolute -top-1 -right-1 w-11 h-11 flex items-center justify-center bg-white/95 dark:bg-zinc-900/95 rounded-xl text-slate-500 hover:text-red-500 active:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors shadow-lg border border-slate-200 dark:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 focus-visible:ring-offset-2"
+                            class="absolute -top-2 -right-2 w-10 h-10 flex items-center justify-center bg-white dark:bg-zinc-800 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 active:bg-red-100 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200 shadow-lg shadow-slate-900/10 dark:shadow-black/20 border border-slate-200 dark:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 focus-visible:ring-offset-2"
                             type="button"
                             aria-label="Hapus foto"
                         >
-                            <X class="w-5 h-5" aria-hidden="true" />
+                            <X class="w-4 h-4" aria-hidden="true" />
                         </button>
                     </Motion>
                 </div>
 
-                <!-- Empty State -->
+                <!-- Empty State - Modern premium design -->
                 <div 
                     v-else 
-                    class="py-8 px-4 flex flex-col items-center justify-center text-center border-2 border-dashed rounded-xl transition-colors"
-                    :class="[
-                        isDragging
-                            ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20'
-                            : 'border-slate-200 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/50 hover:border-slate-300 dark:hover:border-zinc-600 hover:bg-slate-50 dark:hover:bg-zinc-900'
-                    ]"
+                    class="relative aspect-3/4 w-full max-w-[180px] mx-auto"
                 >
-                    <!-- Icon -->
-                    <Motion
-                        :animate="{ 
-                            scale: isDragging ? 1.1 : 1,
-                            y: isDragging ? -4 : 0
-                        }"
-                        :transition="{ duration: 0.2 }"
+                    <!-- Background pattern -->
+                    <div 
+                        class="absolute inset-0 rounded-2xl transition-all duration-300 overflow-hidden"
+                        :class="[
+                            isDragging
+                                ? 'bg-linear-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950/30 dark:via-teal-950/30 dark:to-cyan-950/30'
+                                : 'bg-linear-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900'
+                        ]"
                     >
-                        <div 
-                            class="w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-colors"
-                            :class="isDragging ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' : 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-slate-500'"
+                        <!-- Subtle grid pattern -->
+                        <div class="absolute inset-0 opacity-30 dark:opacity-20" style="background-image: radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0); background-size: 24px 24px;"></div>
+                    </div>
+
+                    <!-- Main content container -->
+                    <div 
+                        class="relative h-full flex flex-col items-center justify-center text-center p-4 rounded-2xl border-2 border-dashed transition-all duration-300"
+                        :class="[
+                            isDragging
+                                ? 'border-emerald-400 dark:border-emerald-500'
+                                : error
+                                    ? 'border-red-300 dark:border-red-500/50'
+                                    : 'border-slate-200 dark:border-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-600'
+                        ]"
+                    >
+                        <!-- Avatar placeholder dengan gradient -->
+                        <Motion
+                            :animate="{ 
+                                scale: isDragging ? 1.05 : 1,
+                                y: isDragging ? -4 : 0
+                            }"
+                            :transition="{ type: 'spring', stiffness: 300, damping: 20 }"
                         >
-                            <Camera class="w-6 h-6" />
+                            <div 
+                                class="relative w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300"
+                                :class="isDragging 
+                                    ? 'bg-linear-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/30' 
+                                    : 'bg-linear-to-br from-slate-200 to-slate-300 dark:from-zinc-700 dark:to-zinc-600'"
+                            >
+                                <!-- Inner icon -->
+                                <User 
+                                    class="w-8 h-8 transition-colors duration-300"
+                                    :class="isDragging ? 'text-white' : 'text-slate-400 dark:text-zinc-500'"
+                                />
+                                
+                                <!-- Camera badge -->
+                                <div 
+                                    class="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md"
+                                    :class="isDragging 
+                                        ? 'bg-white text-emerald-600' 
+                                        : 'bg-white dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-600'"
+                                >
+                                    <Camera class="w-3.5 h-3.5" />
+                                </div>
+                            </div>
+                        </Motion>
+
+                        <!-- Text content -->
+                        <div class="space-y-1">
+                            <p 
+                                class="text-sm font-semibold transition-colors duration-200"
+                                :class="isDragging ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'"
+                            >
+                                {{ isDragging ? 'Lepaskan di sini' : 'Upload Foto' }}
+                            </p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                {{ isDragging ? 'File siap diupload' : 'Klik atau drag file' }}
+                            </p>
                         </div>
-                    </Motion>
 
-                    <!-- Text -->
-                    <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        {{ isDragging ? 'Lepaskan di sini' : 'Upload foto' }}
-                    </p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">
-                        Klik atau drag file
-                    </p>
-
-                    <!-- File Info -->
-                    <div class="flex items-center gap-1.5 mt-3 text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
-                        <span>JPG, PNG</span>
-                        <span class="w-0.5 h-0.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                        <span>Max {{ maxSize }}MB</span>
+                        <!-- File format info - Modern pill design -->
+                        <div class="flex items-center gap-2 mt-4">
+                            <span class="px-2 py-1 rounded-md bg-slate-100 dark:bg-zinc-800 text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                                JPG
+                            </span>
+                            <span class="px-2 py-1 rounded-md bg-slate-100 dark:bg-zinc-800 text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                                PNG
+                            </span>
+                            <span class="text-[10px] text-slate-400 dark:text-zinc-500">
+                                Max {{ maxSize }}MB
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
         </Motion>
 
-        <!-- Hint Text -->
+        <!-- Hint Text - Enhanced styling -->
         <p 
             v-if="hint && !error" 
             :id="`photo-upload-hint-${$.uid}`"
-            class="text-xs text-slate-500 dark:text-slate-400 pl-1 font-medium"
+            class="text-xs text-slate-500 dark:text-slate-400 pl-1 font-medium flex items-center gap-1.5"
         >
+            <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-zinc-600"></span>
             {{ hint }}
         </p>
 
-        <!-- Error Message -->
+        <!-- Error Message - Enhanced styling -->
         <p 
             v-if="error" 
             :id="`photo-upload-error-${$.uid}`"
-            class="text-xs text-red-500 dark:text-red-400 pl-1 font-medium"
+            class="text-xs text-red-500 dark:text-red-400 pl-1 font-medium flex items-center gap-1.5"
             role="alert"
         >
+            <span class="w-1 h-1 rounded-full bg-red-400"></span>
             {{ error }}
         </p>
     </div>

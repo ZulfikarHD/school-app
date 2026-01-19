@@ -5,6 +5,13 @@
 
 ---
 
+## 📱 Mobile-First Standards
+
+- **Touch Targets:** Minimum 44x44px
+- **Loading States:** Always show skeleton or spinner
+- **Empty States:** Illustrations + helpful message
+- **Images:** `loading="lazy"` + proper sizing
+
 ## 🎯 Design Principles
 
 ### 1. **Clean Solid Design** (No Fake Glass)
@@ -12,6 +19,17 @@
 - **Cards:** `bg-white border border-slate-200 rounded-xl shadow-sm`
 - **Modals:** `bg-white rounded-2xl shadow-xl border border-slate-200`
 - **Rule:** Solid backgrounds + crisp borders + subtle shadows
+
+**Available Components:**
+- `FormInput` - Text input with icon support
+- `FormSelect` - Dropdown selector
+- `FormTextarea` - Multi-line text
+- `FormNumberInput` - Number with +/- controls
+- `FormCheckbox` - Checkbox with description
+- badge
+- basemodal
+- alerts
+- dialog
 
 ### 2. **Motion (Strategic Use)**
 Keep `motion-v` for high-impact moments:
@@ -101,13 +119,6 @@ All form inputs follow this aesthetic:
 - Radius: `rounded-xl`
 - Shadow: `shadow-sm` on focus
 
-**Available Components:**
-- `FormInput` - Text input with icon support
-- `FormSelect` - Dropdown selector
-- `FormTextarea` - Multi-line text
-- `FormNumberInput` - Number with +/- controls
-- `FormCheckbox` - Checkbox with description
-
 ---
 
 ## 🎭 Reusable Components
@@ -133,13 +144,6 @@ const confirmed = await modal.confirm('Simpan data?');
 ```
 
 ---
-
-## 📱 Mobile-First Standards
-
-- **Touch Targets:** Minimum 44x44px
-- **Loading States:** Always show skeleton or spinner
-- **Empty States:** Illustrations + helpful message
-- **Images:** `loading="lazy"` + proper sizing
 
 ### Layout Patterns
 ```

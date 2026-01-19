@@ -4,7 +4,6 @@ import { Head, router } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
 import {
     Bell,
-    FileText,
     RefreshCw,
     Users,
     GraduationCap,

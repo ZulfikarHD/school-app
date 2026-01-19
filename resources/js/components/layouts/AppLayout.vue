@@ -417,6 +417,9 @@ const getSpringConfig = (stiffness = 300, damping = 25) => {
     return { type: 'spring', stiffness, damping };
 };
 
+// Export untuk penggunaan di child components jika diperlukan
+defineExpose({ getSpringConfig });
+
 </script>
 
 <template>

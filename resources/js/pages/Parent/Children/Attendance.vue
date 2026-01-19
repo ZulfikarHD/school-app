@@ -5,7 +5,6 @@ import { Calendar, Download, ChevronLeft, ChevronRight, TrendingUp } from 'lucid
 import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import AttendanceStatusBadge from '@/components/features/attendance/AttendanceStatusBadge.vue';
-import { useModal } from '@/composables/useModal';
 import { useHaptics } from '@/composables/useHaptics';
 
 interface Student {

@@ -13,6 +13,7 @@ import {
 } from 'lucide-vue-next';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import { useHaptics } from '@/composables/useHaptics';
+import Badge from '@/components/ui/Badge.vue';
 
 /**
  * Halaman laporan presensi guru untuk Principal
@@ -78,23 +79,13 @@ const hasFilters = computed(() => {
     return !!filterForm.value.teacher_id;
 });
 
-const attendancePercentage = computed(() => {
-    return props.statistics.attendance_percentage || 0;
-});
-
-const getPercentageColor = (percentage: number) => {
-    if (percentage >= 90) return 'text-green-600 dark:text-green-400';
-    if (percentage >= 80) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
-};
-
 // Group attendances by teacher
 const attendancesByTeacher = computed(() => {
     const grouped: Record<number, { teacher: Teacher; attendances: TeacherAttendance[]; stats: { present: number; late: number; totalHours: number } }> = {};
-    
+
     props.attendances.forEach((att) => {
         if (!att.teacher) return;
-        
+
         if (!grouped[att.teacher.id]) {
             grouped[att.teacher.id] = {
                 teacher: att.teacher,
@@ -102,14 +93,14 @@ const attendancesByTeacher = computed(() => {
                 stats: { present: 0, late: 0, totalHours: 0 },
             };
         }
-        
+
         grouped[att.teacher.id].attendances.push(att);
         grouped[att.teacher.id].stats.present++;
-        
+
         if (att.is_late) {
             grouped[att.teacher.id].stats.late++;
         }
-        
+
         if (att.clock_in && att.clock_out) {
             const start = new Date(att.clock_in);
             const end = new Date(att.clock_out);
@@ -117,7 +108,7 @@ const attendancesByTeacher = computed(() => {
             grouped[att.teacher.id].stats.totalHours += hours;
         }
     });
-    
+
     return Object.values(grouped);
 });
 
@@ -134,7 +125,7 @@ const clearFilters = () => {
     haptics.light();
     const today = new Date();
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
+
     filterForm.value = {
         start_date: startOfMonth.toISOString().split('T')[0],
         end_date: today.toISOString().split('T')[0],
@@ -208,12 +199,14 @@ const formatTime = (datetime: string | null) => {
                     >
                         <Filter :size="18" />
                         Filter
-                        <span
+                        <Badge
                             v-if="hasFilters"
-                            class="ml-1 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-full text-xs"
+                            variant="success"
+                            size="xs"
+                            class="ml-1"
                         >
                             Aktif
-                        </span>
+                        </Badge>
                     </Motion>
                 </div>
             </Motion>
@@ -431,16 +424,13 @@ const formatTime = (datetime: string | null) => {
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                                        <span
-                                            :class="[
-                                                'px-2 py-1 rounded-lg text-xs font-medium',
-                                                item.stats.late > 0
-                                                    ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300'
-                                                    : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300',
-                                            ]"
+                                        <Badge
+                                            :variant="item.stats.late > 0 ? 'warning' : 'success'"
+                                            size="sm"
+                                            rounded="square"
                                         >
                                             {{ item.stats.late }}x
-                                        </span>
+                                        </Badge>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900 dark:text-white">
                                         {{ item.stats.totalHours.toFixed(1) }} jam
@@ -515,18 +505,22 @@ const formatTime = (datetime: string | null) => {
                                         {{ formatTime(attendance.clock_out) }}
                                     </td>
                                     <td class="px-6 py-3 whitespace-nowrap text-center">
-                                        <span
+                                        <Badge
                                             v-if="attendance.is_late"
-                                            class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 text-xs font-medium rounded-lg"
+                                            variant="warning"
+                                            size="sm"
+                                            dot
                                         >
                                             Terlambat
-                                        </span>
-                                        <span
+                                        </Badge>
+                                        <Badge
                                             v-else
-                                            class="px-2 py-1 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 text-xs font-medium rounded-lg"
+                                            variant="success"
+                                            size="sm"
+                                            dot
                                         >
                                             Tepat Waktu
-                                        </span>
+                                        </Badge>
                                     </td>
                                 </tr>
                             </tbody>

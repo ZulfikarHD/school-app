@@ -82,26 +82,19 @@
                   <p class="text-sm font-medium text-gray-900">
                     {{ leave.teacher.name }}
                   </p>
-                  <span
-                    class="px-2 py-1 text-xs font-medium rounded-full"
-                    :class="{
-                      'bg-blue-100 text-blue-800': leave.type === 'IZIN',
-                      'bg-red-100 text-red-800': leave.type === 'SAKIT',
-                      'bg-purple-100 text-purple-800': leave.type === 'CUTI',
-                    }"
+                  <Badge
+                    :variant="leave.type === 'IZIN' ? 'info' : leave.type === 'SAKIT' ? 'error' : 'secondary'"
+                    size="sm"
                   >
                     {{ leave.type }}
-                  </span>
-                  <span
-                    class="px-2 py-1 text-xs font-medium rounded-full"
-                    :class="{
-                      'bg-yellow-100 text-yellow-800': leave.status === 'PENDING',
-                      'bg-green-100 text-green-800': leave.status === 'APPROVED',
-                      'bg-red-100 text-red-800': leave.status === 'REJECTED',
-                    }"
+                  </Badge>
+                  <Badge
+                    :variant="leave.status === 'PENDING' ? 'warning' : leave.status === 'APPROVED' ? 'success' : 'error'"
+                    size="sm"
+                    dot
                   >
                     {{ leave.status }}
-                  </span>
+                  </Badge>
                 </div>
 
                 <p class="text-sm text-gray-600 mb-1">
@@ -170,8 +163,7 @@
                   : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300',
                 !link.url && 'opacity-50 cursor-not-allowed',
               ]"
-              v-html="link.label"
-            />
+            ><span v-html="link.label" /></Link>
           </div>
         </div>
       </div>
@@ -225,6 +217,7 @@
 import { ref } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/components/layouts/AppLayout.vue'
+import Badge from '@/components/ui/Badge.vue'
 import { Link } from '@inertiajs/vue3'
 import { index as indexRoute, approve as approveRoute, reject as rejectRoute } from '@/routes/principal/teacher-leaves'
 

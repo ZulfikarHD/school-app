@@ -1,11 +1,16 @@
 <script setup lang="ts">
+/**
+ * Users Index Page - Halaman manajemen user dengan fitur CRUD
+ * yang mencakup filter, pagination, dan aksi bulk untuk mengelola
+ * akun guru, orang tua, dan staff sekolah
+ */
 import { ref } from 'vue';
 import { Head, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import UserTable from '@/components/features/users/UserTable.vue';
 import { useModal } from '@/composables/useModal';
 import { useHaptics } from '@/composables/useHaptics';
-import { UserPlus, Users } from 'lucide-vue-next';
+import { UserPlus, UserCog } from 'lucide-vue-next';
 import { create, edit, destroy, resetPassword, toggleStatus } from '@/routes/admin/users';
 import { Motion } from 'motion-v';
 
@@ -101,41 +106,57 @@ const handleToggleStatus = async (user: any) => {
 </script>
 
 <template>
-    <Head title="Manajemen User" />
-
     <AppLayout>
-        <div class="max-w-7xl mx-auto space-y-6">
-            <!-- Header -->
-            <Motion
-                :initial="{ opacity: 0, y: -20 }"
-                :animate="{ opacity: 1, y: 0 }"
-                :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
-                class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            >
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Users class="w-8 h-8 text-blue-600 dark:text-blue-500" />
-                        Manajemen User
-                    </h1>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Kelola data user, role, dan hak akses sistem.
-                    </p>
-                </div>
+        <Head title="Manajemen User" />
 
-                <Link
-                    :href="create()"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow-md active:scale-95"
-                >
-                    <UserPlus class="w-4 h-4" />
-                    Tambah User Baru
-                </Link>
+        <div class="max-w-7xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <!-- Header - Consistent dengan design system -->
+            <Motion
+                :initial="{ opacity: 0, y: -10 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ duration: 0.3, ease: 'easeOut' }"
+            >
+                <div class="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 dark:border-zinc-800">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <!-- Left Side: Title -->
+                        <div class="flex items-center gap-3 sm:gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-linear-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 shrink-0">
+                                <UserCog class="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
+                                    Manajemen User
+                                </h1>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Kelola akun guru, orang tua, dan staff
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: Actions -->
+                        <div class="flex items-center gap-2.5">
+                            <Motion :whileTap="{ scale: 0.97 }">
+                                <Link
+                                    :href="create()"
+                                    @click="haptics.light()"
+                                    class="group flex items-center gap-2.5 px-5 py-2.5 min-h-[44px] bg-linear-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all duration-200 shadow-lg shadow-emerald-500/30
+                                           focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900"
+                                >
+                                    <UserPlus class="w-5 h-5 transition-transform group-hover:scale-110 duration-200" />
+                                    <span class="font-semibold hidden sm:inline">Tambah User</span>
+                                    <span class="font-semibold sm:hidden">Tambah</span>
+                                </Link>
+                            </Motion>
+                        </div>
+                    </div>
+                </div>
             </Motion>
 
             <!-- Content -->
             <Motion
-                :initial="{ opacity: 0, y: 20 }"
+                :initial="{ opacity: 0, y: 10 }"
                 :animate="{ opacity: 1, y: 0 }"
-                :transition="{ type: 'spring', stiffness: 300, damping: 30, delay: 0.1 }"
+                :transition="{ duration: 0.3, ease: 'easeOut', delay: 0.1 }"
             >
                 <UserTable
                     :users="users"
