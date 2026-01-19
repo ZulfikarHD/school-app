@@ -3,7 +3,8 @@ import { ref, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import { Motion } from 'motion-v';
-import { Download, FileSpreadsheet, Filter, Calendar, Clock } from 'lucide-vue-next';
+import { Download, FileSpreadsheet, Filter, Calendar, Clock, FileBarChart, Users, TrendingUp, AlertTriangle, X } from 'lucide-vue-next';
+import { useHaptics } from '@/composables/useHaptics';
 import type { TeacherAttendance } from '@/types/attendance';
 
 /**
@@ -37,6 +38,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const haptics = useHaptics();
 
 // Filter state
 const filterForm = ref({
@@ -48,9 +50,17 @@ const filterForm = ref({
 const isFiltering = ref(false);
 
 /**
+ * Check if filters are active
+ */
+const hasFilters = computed(() => {
+    return filterForm.value.start_date || filterForm.value.end_date || filterForm.value.teacher_id;
+});
+
+/**
  * Apply filters ke report
  */
 const applyFilters = () => {
+    haptics.light();
     isFiltering.value = true;
     router.get(route('admin.attendance.teachers.report'), filterForm.value, {
         preserveState: true,
@@ -64,6 +74,7 @@ const applyFilters = () => {
  * Reset semua filters
  */
 const resetFilters = () => {
+    haptics.light();
     filterForm.value = {
         start_date: '',
         end_date: '',
@@ -76,6 +87,7 @@ const resetFilters = () => {
  * Export to Excel for payroll
  */
 const exportToPayroll = () => {
+    haptics.medium();
     window.location.href = route('admin.attendance.teachers.export.payroll', filterForm.value);
 };
 
@@ -126,243 +138,301 @@ const calculateWorkHours = (clockIn: string | null, clockOut: string | null) => 
     <Head :title="title" />
 
     <AppLayout>
-        <div class="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 lg:px-8">
-            <!-- Header -->
+        <div class="min-h-screen bg-gray-50 dark:bg-zinc-950">
+            <!-- Header Section -->
             <Motion
-                tag="div"
                 :initial="{ opacity: 0, y: -20 }"
                 :animate="{ opacity: 1, y: 0 }"
-                class="mb-6"
+                :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
             >
-                <h1 class="text-2xl font-semibold text-gray-900">{{ title }}</h1>
-                <p class="mt-1 text-sm text-gray-600">
-                    Laporan presensi guru untuk payroll processing
-                </p>
-            </Motion>
+                <div class="bg-white px-6 py-8 border-b border-gray-100 dark:bg-zinc-900 dark:border-zinc-800">
+                    <div class="mx-auto max-w-7xl">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div class="flex items-start gap-4">
+                                <!-- Icon Container -->
+                                <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                                    <FileBarChart class="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                                        {{ title }}
+                                    </h1>
+                                    <p class="mt-1 text-gray-600 dark:text-gray-400">
+                                        Laporan presensi guru untuk payroll processing
+                                    </p>
+                                </div>
+                            </div>
 
-            <!-- Statistics Cards -->
-            <Motion
-                tag="div"
-                :initial="{ opacity: 0, y: 20 }"
-                :animate="{ opacity: 1, y: 0 }"
-                :transition="{ delay: 0.1 }"
-                class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-            >
-                <!-- Total Records -->
-                <div class="rounded-lg bg-white p-4 shadow-sm">
-                    <div class="text-sm font-medium text-gray-600">Total Records</div>
-                    <div class="mt-1 text-2xl font-semibold text-gray-900">
-                        {{ statistics.total_records }}
-                    </div>
-                </div>
-
-                <!-- Total Present -->
-                <div class="rounded-lg bg-white p-4 shadow-sm">
-                    <div class="text-sm font-medium text-gray-600">Total Hadir</div>
-                    <div class="mt-1 text-2xl font-semibold text-green-600">
-                        {{ statistics.total_present }}
-                    </div>
-                </div>
-
-                <!-- Total Late -->
-                <div class="rounded-lg bg-white p-4 shadow-sm">
-                    <div class="text-sm font-medium text-gray-600">Total Terlambat</div>
-                    <div class="mt-1 text-2xl font-semibold text-yellow-600">
-                        {{ statistics.total_late }}
-                    </div>
-                </div>
-
-                <!-- Average Hours -->
-                <div class="rounded-lg bg-white p-4 shadow-sm">
-                    <div class="text-sm font-medium text-gray-600">Rata-rata Jam Kerja</div>
-                    <div class="mt-1 text-2xl font-semibold text-blue-600">
-                        {{ statistics.average_hours ? statistics.average_hours.toFixed(1) : '0' }}j
-                    </div>
-                </div>
-            </Motion>
-
-            <!-- Filters Panel -->
-            <Motion
-                tag="div"
-                :initial="{ opacity: 0, y: 20 }"
-                :animate="{ opacity: 1, y: 0 }"
-                :transition="{ delay: 0.2 }"
-                class="mb-6 rounded-lg bg-white p-6 shadow-sm"
-            >
-                <div class="mb-4 flex items-center gap-2">
-                    <Filter class="h-5 w-5 text-gray-600" />
-                    <h2 class="text-lg font-medium text-gray-900">Filter Laporan</h2>
-                </div>
-
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <!-- Start Date -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">
-                            Tanggal Mulai
-                        </label>
-                        <div class="relative mt-1">
-                            <Calendar class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                            <input
-                                v-model="filterForm.start_date"
-                                type="date"
-                                class="block w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 focus:border-blue-500 focus:ring-blue-500"
-                            />
+                            <!-- Export Button -->
+                            <Motion
+                                tag="button"
+                                :whileTap="{ scale: 0.97 }"
+                                @click="exportToPayroll"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-emerald-500/25"
+                            >
+                                <FileSpreadsheet :size="18" />
+                                <span class="hidden sm:inline">Export untuk Payroll</span>
+                                <span class="sm:hidden">Export</span>
+                            </Motion>
                         </div>
                     </div>
-
-                    <!-- End Date -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">
-                            Tanggal Selesai
-                        </label>
-                        <div class="relative mt-1">
-                            <Calendar class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                            <input
-                                v-model="filterForm.end_date"
-                                type="date"
-                                class="block w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 focus:border-blue-500 focus:ring-blue-500"
-                            />
-                        </div>
-                    </div>
-
-                    <!-- Teacher Filter -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">
-                            Guru
-                        </label>
-                        <select
-                            v-model="filterForm.teacher_id"
-                            class="mt-1 block w-full rounded-lg border border-gray-300 py-2 px-3 focus:border-blue-500 focus:ring-blue-500"
-                        >
-                            <option :value="null">Semua Guru</option>
-                            <option v-for="teacher in teachers" :key="teacher.id" :value="teacher.id">
-                                {{ teacher.name }}
-                            </option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Filter Actions -->
-                <div class="mt-4 flex gap-3">
-                    <button
-                        @click="applyFilters"
-                        :disabled="isFiltering"
-                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                    >
-                        <Filter class="h-4 w-4" />
-                        {{ isFiltering ? 'Memfilter...' : 'Terapkan Filter' }}
-                    </button>
-
-                    <button
-                        @click="resetFilters"
-                        class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    >
-                        Reset
-                    </button>
                 </div>
             </Motion>
 
-            <!-- Export Button -->
-            <Motion
-                tag="div"
-                :initial="{ opacity: 0, y: 20 }"
-                :animate="{ opacity: 1, y: 0 }"
-                :transition="{ delay: 0.3 }"
-                class="mb-6"
-            >
-                <button
-                    @click="exportToPayroll"
-                    class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+            <div class="mx-auto max-w-7xl px-6 py-8 space-y-6">
+                <!-- Statistics Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Total Records -->
+                    <Motion
+                        :initial="{ opacity: 0, y: 20, scale: 0.95 }"
+                        :animate="{ opacity: 1, y: 0, scale: 1 }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.05 }"
+                    >
+                        <div class="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200 dark:border-zinc-800 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-slate-500 dark:text-zinc-400">Total Records</p>
+                                    <p class="mt-1 text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+                                        {{ statistics.total_records }}
+                                    </p>
+                                </div>
+                                <div class="p-3 bg-slate-100 dark:bg-zinc-800 rounded-xl">
+                                    <Users :size="20" class="text-slate-600 dark:text-zinc-400" />
+                                </div>
+                            </div>
+                        </div>
+                    </Motion>
+
+                    <!-- Total Present -->
+                    <Motion
+                        :initial="{ opacity: 0, y: 20, scale: 0.95 }"
+                        :animate="{ opacity: 1, y: 0, scale: 1 }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.1 }"
+                    >
+                        <div class="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-emerald-200 dark:border-emerald-800/50 shadow-sm">
+                            <p class="text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400">Total Hadir</p>
+                            <p class="mt-1 text-2xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-300">
+                                {{ statistics.total_present }}
+                            </p>
+                        </div>
+                    </Motion>
+
+                    <!-- Total Late -->
+                    <Motion
+                        :initial="{ opacity: 0, y: 20, scale: 0.95 }"
+                        :animate="{ opacity: 1, y: 0, scale: 1 }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.15 }"
+                    >
+                        <div class="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-amber-200 dark:border-amber-800/50 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-amber-600 dark:text-amber-400">Total Terlambat</p>
+                                    <p class="mt-1 text-2xl sm:text-3xl font-bold text-amber-700 dark:text-amber-300">
+                                        {{ statistics.total_late }}
+                                    </p>
+                                </div>
+                                <AlertTriangle v-if="statistics.total_late > 0" :size="18" class="text-amber-500" />
+                            </div>
+                        </div>
+                    </Motion>
+
+                    <!-- Average Hours -->
+                    <Motion
+                        :initial="{ opacity: 0, y: 20, scale: 0.95 }"
+                        :animate="{ opacity: 1, y: 0, scale: 1 }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.2 }"
+                    >
+                        <div class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg shadow-blue-500/20">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-blue-100">Rata-rata Jam Kerja</p>
+                                    <p class="mt-1 text-2xl sm:text-3xl font-bold text-white">
+                                        {{ statistics.average_hours ? statistics.average_hours.toFixed(1) : '0' }}j
+                                    </p>
+                                </div>
+                                <div class="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                                    <TrendingUp :size="20" class="text-white" />
+                                </div>
+                            </div>
+                        </div>
+                    </Motion>
+                </div>
+
+                <!-- Filters Panel -->
+                <Motion
+                    :initial="{ opacity: 0, y: 20 }"
+                    :animate="{ opacity: 1, y: 0 }"
+                    :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.25 }"
                 >
-                    <FileSpreadsheet class="h-4 w-4" />
-                    Export untuk Payroll
-                </button>
-            </Motion>
+                    <div class="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <Filter :size="18" class="text-slate-600 dark:text-zinc-400" />
+                                <h2 class="text-sm font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wide">Filter Laporan</h2>
+                            </div>
+                            <button
+                                v-if="hasFilters"
+                                @click="resetFilters"
+                                class="flex items-center gap-1 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                            >
+                                <X :size="14" />
+                                Reset
+                            </button>
+                        </div>
 
-            <!-- Data Table -->
-            <Motion
-                tag="div"
-                :initial="{ opacity: 0, y: 20 }"
-                :animate="{ opacity: 1, y: 0 }"
-                :transition="{ delay: 0.4 }"
-                class="overflow-hidden rounded-lg bg-white shadow-sm"
-            >
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Tanggal
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <!-- Start Date -->
+                            <div>
+                                <label class="block text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-zinc-400 mb-1.5">
+                                    Tanggal Mulai
+                                </label>
+                                <input
+                                    v-model="filterForm.start_date"
+                                    type="date"
+                                    class="w-full px-3 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700
+                                           rounded-xl text-slate-900 dark:text-white
+                                           focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50
+                                           transition-all duration-150"
+                                />
+                            </div>
+
+                            <!-- End Date -->
+                            <div>
+                                <label class="block text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-zinc-400 mb-1.5">
+                                    Tanggal Selesai
+                                </label>
+                                <input
+                                    v-model="filterForm.end_date"
+                                    type="date"
+                                    class="w-full px-3 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700
+                                           rounded-xl text-slate-900 dark:text-white
+                                           focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50
+                                           transition-all duration-150"
+                                />
+                            </div>
+
+                            <!-- Teacher Filter -->
+                            <div>
+                                <label class="block text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-zinc-400 mb-1.5">
                                     Guru
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Clock In
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Clock Out
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Jam Kerja
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    Status
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 bg-white">
-                            <tr v-if="attendances.length === 0">
-                                <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">
-                                    Tidak ada data presensi. Silakan sesuaikan filter.
-                                </td>
-                            </tr>
-                            <tr v-for="attendance in attendances" :key="attendance.id" class="hover:bg-gray-50">
-                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                                    {{ formatDate(attendance.tanggal) }}
-                                </td>
-                                <td class="px-6 py-4 text-sm">
-                                    <div class="font-medium text-gray-900">
-                                        {{ attendance.teacher.name }}
-                                    </div>
-                                    <div class="text-gray-500">
-                                        {{ attendance.teacher.email }}
-                                    </div>
-                                </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-sm">
-                                    <div class="flex items-center gap-2">
-                                        <Clock class="h-4 w-4 text-gray-400" />
-                                        <span class="text-gray-900">{{ formatTime(attendance.clock_in) }}</span>
-                                    </div>
-                                </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-sm">
-                                    <div class="flex items-center gap-2">
-                                        <Clock class="h-4 w-4 text-gray-400" />
-                                        <span class="text-gray-900">{{ formatTime(attendance.clock_out) }}</span>
-                                    </div>
-                                </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                                    {{ calculateWorkHours(attendance.clock_in, attendance.clock_out) }}
-                                </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-sm">
-                                    <span
-                                        v-if="attendance.is_late"
-                                        class="inline-flex rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800"
-                                    >
-                                        Terlambat
-                                    </span>
-                                    <span
-                                        v-else
-                                        class="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800"
-                                    >
-                                        Tepat Waktu
-                                    </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </Motion>
+                                </label>
+                                <select
+                                    v-model="filterForm.teacher_id"
+                                    class="w-full px-3 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700
+                                           rounded-xl text-slate-900 dark:text-white
+                                           focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50
+                                           transition-all duration-150"
+                                >
+                                    <option :value="null">Semua Guru</option>
+                                    <option v-for="teacher in teachers" :key="teacher.id" :value="teacher.id">
+                                        {{ teacher.name }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Filter Actions -->
+                        <div class="mt-4 pt-4 border-t border-slate-200 dark:border-zinc-700">
+                            <Motion
+                                tag="button"
+                                :whileTap="{ scale: 0.97 }"
+                                @click="applyFilters"
+                                :disabled="isFiltering"
+                                class="w-full sm:w-auto px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-emerald-500/25"
+                            >
+                                {{ isFiltering ? 'Memfilter...' : 'Terapkan Filter' }}
+                            </Motion>
+                        </div>
+                    </div>
+                </Motion>
+
+                <!-- Data Table -->
+                <Motion
+                    :initial="{ opacity: 0, y: 20 }"
+                    :animate="{ opacity: 1, y: 0 }"
+                    :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.3 }"
+                >
+                    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-100 dark:border-zinc-800">
+                                    <tr>
+                                        <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                                            Tanggal
+                                        </th>
+                                        <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                                            Guru
+                                        </th>
+                                        <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                                            Clock In
+                                        </th>
+                                        <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                                            Clock Out
+                                        </th>
+                                        <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                                            Jam Kerja
+                                        </th>
+                                        <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                                            Status
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                                    <tr v-if="attendances.length === 0">
+                                        <td colspan="6" class="px-6 py-16 text-center">
+                                            <Calendar :size="48" class="mx-auto mb-4 text-slate-300 dark:text-zinc-600" />
+                                            <p class="text-lg font-semibold text-slate-700 dark:text-zinc-300">Tidak ada data presensi</p>
+                                            <p class="text-sm mt-1 text-slate-500 dark:text-zinc-500">Silakan sesuaikan filter untuk melihat data</p>
+                                        </td>
+                                    </tr>
+                                    <tr v-for="attendance in attendances" :key="attendance.id" class="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-900 dark:text-white">
+                                            {{ formatDate(attendance.tanggal) }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm">
+                                            <div class="font-medium text-slate-900 dark:text-white">
+                                                {{ attendance.teacher.name }}
+                                            </div>
+                                            <div class="text-slate-500 dark:text-zinc-400">
+                                                {{ attendance.teacher.email }}
+                                            </div>
+                                        </td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm">
+                                            <div class="flex items-center gap-2 text-slate-900 dark:text-white">
+                                                <Clock :size="14" class="text-slate-400 dark:text-zinc-500" />
+                                                {{ formatTime(attendance.clock_in) }}
+                                            </div>
+                                        </td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm">
+                                            <div class="flex items-center gap-2 text-slate-900 dark:text-white">
+                                                <Clock :size="14" class="text-slate-400 dark:text-zinc-500" />
+                                                {{ formatTime(attendance.clock_out) }}
+                                            </div>
+                                        </td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm font-semibold text-slate-900 dark:text-white">
+                                            {{ calculateWorkHours(attendance.clock_in, attendance.clock_out) }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm">
+                                            <span
+                                                v-if="attendance.is_late"
+                                                class="inline-flex rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-400"
+                                            >
+                                                Terlambat
+                                            </span>
+                                            <span
+                                                v-else
+                                                class="inline-flex rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
+                                            >
+                                                Tepat Waktu
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </Motion>
+            </div>
         </div>
     </AppLayout>
 </template>
