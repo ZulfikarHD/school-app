@@ -1,13 +1,24 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
+import { Users, CreditCard, FileText, UserCog, GraduationCap, ChevronRight } from 'lucide-vue-next';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import { useHaptics } from '@/composables/useHaptics';
+import { useModal } from '@/composables/useModal';
+import { index as adminUsersIndex } from '@/routes/admin/users';
+import { index as adminStudentsIndex } from '@/routes/admin/students';
 
 /**
  * Dashboard untuk Admin/TU dengan akses ke Student Management,
  * Payment Management, PSB Registration, dan User Management
  * dengan iOS-like staggered animations dan haptic feedback
+ *
+ * UX Enhancement:
+ * - Standardized Lucide icons
+ * - Quick actions dengan navigasi aktual atau "Segera Hadir" state
+ * - Removed duplicate header (using AppLayout slot)
+ * - Stat cards dengan link ke halaman terkait
+ * - Focus states untuk accessibility
  */
 
 interface Props {
@@ -22,6 +33,7 @@ interface Props {
 defineProps<Props>();
 
 const haptics = useHaptics();
+const modal = useModal();
 
 /**
  * Handle card click dengan haptic feedback
@@ -29,180 +41,256 @@ const haptics = useHaptics();
 const handleCardClick = () => {
     haptics.light();
 };
+
+/**
+ * Show coming soon modal untuk fitur yang belum tersedia
+ */
+const showComingSoon = (featureName: string) => {
+    haptics.light();
+    modal.info('Segera Hadir', `Fitur ${featureName} akan segera tersedia dalam pembaruan berikutnya.`);
+};
+
+/**
+ * Stat cards configuration untuk konsistensi dan maintainability
+ */
+const statCards = [
+    {
+        key: 'students',
+        label: 'Total Siswa',
+        statKey: 'total_students',
+        icon: GraduationCap,
+        bgColor: 'bg-blue-100 dark:bg-blue-500/20',
+        iconColor: 'text-blue-600 dark:text-blue-400',
+        route: adminStudentsIndex,
+        linkText: 'Lihat data siswa',
+    },
+    {
+        key: 'payments',
+        label: 'Total Pembayaran',
+        statKey: 'total_payments',
+        icon: CreditCard,
+        bgColor: 'bg-green-100 dark:bg-green-500/20',
+        iconColor: 'text-green-600 dark:text-green-400',
+        route: null, // Coming soon
+        linkText: 'Segera hadir',
+    },
+    {
+        key: 'psb',
+        label: 'PSB Pending',
+        statKey: 'pending_psb',
+        icon: FileText,
+        bgColor: 'bg-amber-100 dark:bg-amber-500/20',
+        iconColor: 'text-amber-600 dark:text-amber-400',
+        route: null, // Coming soon
+        linkText: 'Segera hadir',
+    },
+    {
+        key: 'users',
+        label: 'Total User',
+        statKey: 'total_users',
+        icon: UserCog,
+        bgColor: 'bg-purple-100 dark:bg-purple-500/20',
+        iconColor: 'text-purple-600 dark:text-purple-400',
+        route: adminUsersIndex,
+        linkText: 'Kelola user',
+    },
+];
+
+/**
+ * Quick action cards configuration
+ */
+const quickActions = [
+    {
+        key: 'student-management',
+        title: 'Manajemen Siswa',
+        description: 'Kelola data siswa dan akademik',
+        icon: GraduationCap,
+        bgColor: 'bg-blue-100 dark:bg-blue-500/20',
+        iconColor: 'text-blue-600 dark:text-blue-400',
+        hoverBorder: 'hover:border-blue-200 dark:hover:border-blue-700',
+        route: adminStudentsIndex,
+    },
+    {
+        key: 'user-management',
+        title: 'Manajemen User',
+        description: 'Kelola akun dan akses pengguna',
+        icon: Users,
+        bgColor: 'bg-purple-100 dark:bg-purple-500/20',
+        iconColor: 'text-purple-600 dark:text-purple-400',
+        hoverBorder: 'hover:border-purple-200 dark:hover:border-purple-700',
+        route: adminUsersIndex,
+    },
+    {
+        key: 'payment',
+        title: 'Pembayaran',
+        description: 'Kelola pembayaran SPP dan lainnya',
+        icon: CreditCard,
+        bgColor: 'bg-green-100 dark:bg-green-500/20',
+        iconColor: 'text-green-600 dark:text-green-400',
+        hoverBorder: 'hover:border-green-200 dark:hover:border-green-700',
+        route: null, // Coming soon
+        comingSoon: true,
+    },
+    {
+        key: 'psb',
+        title: 'PSB',
+        description: 'Penerimaan Siswa Baru',
+        icon: FileText,
+        bgColor: 'bg-amber-100 dark:bg-amber-500/20',
+        iconColor: 'text-amber-600 dark:text-amber-400',
+        hoverBorder: 'hover:border-amber-200 dark:hover:border-amber-700',
+        route: null, // Coming soon
+        comingSoon: true,
+    },
+];
 </script>
 
 <template>
     <AppLayout>
         <Head title="Dashboard Admin" />
 
-        <div class="min-h-screen bg-gray-50 dark:bg-zinc-950">
-            <!-- Header Section dengan fade in animation -->
-            <Motion
-                :initial="{ opacity: 0, y: -20 }"
-                :animate="{ opacity: 1, y: 0 }"
-                :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
-            >
-                <div class="bg-white px-6 py-8 border-b border-gray-100 dark:bg-zinc-900 dark:border-zinc-800">
-                    <div class="mx-auto max-w-7xl">
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Dashboard Admin</h1>
-                        <p class="mt-2 text-gray-600 dark:text-gray-400">Selamat datang di sistem manajemen sekolah</p>
-                    </div>
-                </div>
-            </Motion>
-
+        <div class="space-y-6">
             <!-- Stats Grid dengan staggered animations -->
-            <div class="mx-auto max-w-7xl px-6 py-8">
-                <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <!-- Total Students Card -->
-                    <Motion
-                        :initial="{ opacity: 0, y: 20, scale: 0.95 }"
-                        :animate="{ opacity: 1, y: 0, scale: 1 }"
-                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.1 }"
-                        :whileHover="{ y: -2, scale: 1.01 }"
-                        :whileTap="{ scale: 0.97 }"
-                    >
-                        <div class="overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-none" @click="handleCardClick">
-                        <div class="p-6">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Siswa</p>
-                                    <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ stats.total_students }}</p>
-                                </div>
-                                <div class="rounded-full bg-blue-50 p-3 dark:bg-blue-900/20">
-                                    <svg class="h-8 w-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                        </div>
-                    </Motion>
-
-                    <!-- Total Payments Card -->
-                    <Motion
-                        :initial="{ opacity: 0, y: 20, scale: 0.95 }"
-                        :animate="{ opacity: 1, y: 0, scale: 1 }"
-                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.15 }"
-                        :whileHover="{ y: -2, scale: 1.01 }"
-                        :whileTap="{ scale: 0.97 }"
-                    >
-                        <div class="overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-none" @click="handleCardClick">
-                        <div class="p-6">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Pembayaran</p>
-                                    <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ stats.total_payments }}</p>
-                                </div>
-                                <div class="rounded-full bg-green-50 p-3 dark:bg-green-900/20">
-                                    <svg class="h-8 w-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                        </div>
-                    </Motion>
-
-                    <!-- Pending PSB Card -->
-                    <Motion
-                        :initial="{ opacity: 0, y: 20, scale: 0.95 }"
-                        :animate="{ opacity: 1, y: 0, scale: 1 }"
-                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.2 }"
-                        :whileHover="{ y: -2, scale: 1.01 }"
-                        :whileTap="{ scale: 0.97 }"
-                    >
-                        <div class="overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-none" @click="handleCardClick">
-                        <div class="p-6">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">PSB Pending</p>
-                                    <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ stats.pending_psb }}</p>
-                                </div>
-                                <div class="rounded-full bg-yellow-50 p-3 dark:bg-yellow-900/20">
-                                    <svg class="h-8 w-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                        </div>
-                    </Motion>
-
-                    <!-- Total Users Card -->
-                    <Motion
-                        :initial="{ opacity: 0, y: 20, scale: 0.95 }"
-                        :animate="{ opacity: 1, y: 0, scale: 1 }"
-                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.25 }"
-                        :whileHover="{ y: -2, scale: 1.01 }"
-                        :whileTap="{ scale: 0.97 }"
-                    >
-                        <div class="overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-none" @click="handleCardClick">
-                        <div class="p-6">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total User</p>
-                                    <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ stats.total_users }}</p>
-                                </div>
-                                <div class="rounded-full bg-purple-50 p-3 dark:bg-purple-900/20">
-                                    <svg class="h-8 w-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                        </div>
-                    </Motion>
-                </div>
-
-                <!-- Quick Actions dengan staggered animation -->
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <Motion
-                    :initial="{ opacity: 0, y: 20 }"
-                    :animate="{ opacity: 1, y: 0 }"
-                    :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.3 }"
-                    class="mt-8"
+                    v-for="(card, index) in statCards"
+                    :key="card.key"
+                    :initial="{ opacity: 0, y: 20, scale: 0.95 }"
+                    :animate="{ opacity: 1, y: 0, scale: 1 }"
+                    :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: index * 0.05 }"
+                    :whileHover="{ y: -2, scale: 1.01 }"
+                    :whileTap="{ scale: 0.97 }"
                 >
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Aksi Cepat</h2>
-                    <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <Motion
-                            :initial="{ opacity: 0, scale: 0.95 }"
-                            :animate="{ opacity: 1, scale: 1 }"
-                            :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.35 }"
-                            :whileHover="{ y: -2, scale: 1.01 }"
-                            :whileTap="{ scale: 0.97 }"
-                        >
-                            <div class="rounded-xl bg-white p-6 shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-none" @click="handleCardClick">
-                            <h3 class="font-semibold text-gray-900 dark:text-white">Manajemen Siswa</h3>
-                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Kelola data siswa dan akademik</p>
+                    <!-- Card dengan navigasi -->
+                    <Link
+                        v-if="card.route"
+                        :href="card.route().url"
+                        @click="handleCardClick"
+                        class="block overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                    >
+                        <div class="p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
+                                        {{ card.label }}
+                                    </p>
+                                    <p class="mt-1.5 text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
+                                        {{ (stats as any)[card.statKey] }}
+                                    </p>
+                                </div>
+                                <div :class="['p-3 rounded-xl', card.bgColor]">
+                                    <component :is="card.icon" :size="24" :class="card.iconColor" />
+                                </div>
                             </div>
-                        </Motion>
-                        <Motion
-                            :initial="{ opacity: 0, scale: 0.95 }"
-                            :animate="{ opacity: 1, scale: 1 }"
-                            :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.4 }"
-                            :whileHover="{ y: -2, scale: 1.01 }"
-                            :whileTap="{ scale: 0.97 }"
-                        >
-                            <div class="rounded-xl bg-white p-6 shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-none" @click="handleCardClick">
-                            <h3 class="font-semibold text-gray-900 dark:text-white">Pembayaran</h3>
-                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Kelola pembayaran SPP dan lainnya</p>
+                            <div class="mt-3 flex items-center text-xs text-slate-500 dark:text-slate-400">
+                                <span>{{ card.linkText }}</span>
+                                <ChevronRight :size="14" class="ml-1" />
                             </div>
-                        </Motion>
-                        <Motion
-                            :initial="{ opacity: 0, scale: 0.95 }"
-                            :animate="{ opacity: 1, scale: 1 }"
-                            :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.45 }"
-                            :whileHover="{ y: -2, scale: 1.01 }"
-                            :whileTap="{ scale: 0.97 }"
-                        >
-                            <div class="rounded-xl bg-white p-6 shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-none" @click="handleCardClick">
-                            <h3 class="font-semibold text-gray-900 dark:text-white">PSB</h3>
-                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Penerimaan Siswa Baru</p>
+                        </div>
+                    </Link>
+
+                    <!-- Card tanpa navigasi (coming soon) -->
+                    <div
+                        v-else
+                        class="overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200 dark:bg-zinc-900 dark:border-zinc-800"
+                    >
+                        <div class="p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
+                                        {{ card.label }}
+                                    </p>
+                                    <p class="mt-1.5 text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
+                                        {{ (stats as any)[card.statKey] }}
+                                    </p>
+                                </div>
+                                <div :class="['p-3 rounded-xl', card.bgColor]">
+                                    <component :is="card.icon" :size="24" :class="card.iconColor" />
+                                </div>
                             </div>
-                        </Motion>
+                            <div class="mt-3 flex items-center text-xs">
+                                <span class="text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                                    Segera Hadir
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </Motion>
             </div>
+
+            <!-- Quick Actions -->
+            <Motion
+                :initial="{ opacity: 0, y: 20 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.2 }"
+            >
+                <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Aksi Cepat</h2>
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Motion
+                        v-for="(action, index) in quickActions"
+                        :key="action.key"
+                        :initial="{ opacity: 0, scale: 0.95 }"
+                        :animate="{ opacity: 1, scale: 1 }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.25 + (index * 0.05) }"
+                        :whileHover="{ y: -2, scale: 1.01 }"
+                        :whileTap="{ scale: 0.97 }"
+                    >
+                        <!-- Action dengan navigasi -->
+                        <Link
+                            v-if="action.route"
+                            :href="action.route().url"
+                            @click="handleCardClick"
+                            :class="[
+                                'block rounded-xl bg-white p-5 shadow-sm border border-slate-200 transition-colors dark:bg-zinc-900 dark:border-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2',
+                                action.hoverBorder
+                            ]"
+                        >
+                            <div class="flex items-center gap-3">
+                                <div :class="['p-3 rounded-xl shrink-0', action.bgColor]">
+                                    <component :is="action.icon" :size="24" :class="action.iconColor" />
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="font-semibold text-slate-900 dark:text-white truncate">
+                                        {{ action.title }}
+                                    </h3>
+                                    <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400 truncate">
+                                        {{ action.description }}
+                                    </p>
+                                </div>
+                            </div>
+                        </Link>
+
+                        <!-- Action coming soon -->
+                        <button
+                            v-else
+                            @click="showComingSoon(action.title)"
+                            :class="[
+                                'w-full text-left rounded-xl bg-white p-5 shadow-sm border border-slate-200 transition-colors dark:bg-zinc-900 dark:border-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2',
+                                action.hoverBorder
+                            ]"
+                        >
+                            <div class="flex items-center gap-3">
+                                <div :class="['p-3 rounded-xl shrink-0', action.bgColor]">
+                                    <component :is="action.icon" :size="24" :class="action.iconColor" />
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-semibold text-slate-900 dark:text-white truncate">
+                                            {{ action.title }}
+                                        </h3>
+                                        <span class="text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full shrink-0">
+                                            Segera
+                                        </span>
+                                    </div>
+                                    <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400 truncate">
+                                        {{ action.description }}
+                                    </p>
+                                </div>
+                            </div>
+                        </button>
+                    </Motion>
+                </div>
+            </Motion>
         </div>
     </AppLayout>
 </template>
-
