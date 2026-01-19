@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { usePage, router, Link } from '@inertiajs/vue3';
 import { Motion, AnimatePresence } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
@@ -64,6 +64,7 @@ const haptics = useHaptics();
 const modal = useModal();
 const showProfileMenu = ref(false);
 const showMobileNav = ref(false);
+const showDesktopProfileMenu = ref(false);
 
 /**
  * Check apakah user prefer reduced motion untuk accessibility
@@ -160,6 +161,33 @@ const toggleMobileNav = () => {
     haptics.light();
     showMobileNav.value = !showMobileNav.value;
 };
+
+/**
+ * Toggle Desktop Profile Menu dropdown
+ */
+const toggleDesktopProfileMenu = () => {
+    haptics.light();
+    showDesktopProfileMenu.value = !showDesktopProfileMenu.value;
+};
+
+/**
+ * Handle click outside untuk menutup desktop profile menu
+ */
+const handleClickOutside = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    // Check if click is outside the profile section
+    if (showDesktopProfileMenu.value && !target.closest('.desktop-profile-section')) {
+        showDesktopProfileMenu.value = false;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+});
 
 /**
  * Placeholder handler untuk fitur yang belum tersedia
@@ -806,61 +834,76 @@ const getSpringConfig = (stiffness = 300, damping = 25) => {
                 </div>
             </div>
 
-            <!-- User Profile (Desktop) - Enhanced with Profile Access -->
-            <div class="p-3 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50">
-                <div class="space-y-2">
-                    <!-- Profile Section - Clickable to go to profile -->
-                    <Link
-                        :href="getRouteUrl('profile.show')"
-                        @click="handleNavClick"
-                        class="block p-2.5 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/50 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
-                    >
-                        <div class="flex items-center gap-2.5 min-w-0">
-                            <div class="w-8 h-8 rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-xs shadow-sm shadow-emerald-500/20 shrink-0">
-                                {{ user?.name?.charAt(0) || 'U' }}
-                            </div>
-                            <div class="flex flex-col min-w-0 flex-1">
-                                <span class="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{{ user?.name }}</span>
-                                <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate uppercase tracking-wide">{{ user?.role }}</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                <span class="text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">
-                                    Segera
-                                </span>
-                                <ChevronRight class="w-3.5 h-3.5 text-slate-400" />
-                            </div>
+            <!-- User Profile (Desktop) - With Dropdown Menu -->
+            <div class="desktop-profile-section p-3 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 relative">
+                <!-- Profile Card - Clickable to toggle dropdown -->
+                <button
+                    @click="toggleDesktopProfileMenu"
+                    class="w-full flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/50 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                >
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-xs shadow-sm shadow-emerald-500/20 shrink-0">
+                            {{ user?.name?.charAt(0) || 'U' }}
                         </div>
-                    </Link>
+                        <div class="flex flex-col min-w-0 text-left">
+                            <span class="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{{ user?.name }}</span>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate uppercase tracking-wide">{{ user?.role }}</span>
+                        </div>
+                    </div>
+                    <ChevronDown
+                        class="w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0"
+                        :class="showDesktopProfileMenu ? 'rotate-180' : ''"
+                    />
+                </button>
 
-                    <!-- Action Buttons Row -->
-                    <div class="flex gap-2">
-                        <!-- Settings Button - Coming Soon -->
-                        <Motion :whileTap="{ scale: 0.9 }" :whileHover="{ scale: 1.05 }">
-                            <button
-                                @click="showComingSoon('Pengaturan')"
-                                class="flex-1 flex items-center justify-center gap-2 p-2.5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/50 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
-                                aria-label="Pengaturan"
-                                title="Pengaturan"
-                            >
-                                <Settings class="w-4 h-4" />
-                                <span class="text-[11px] font-medium">Setting</span>
-                            </button>
-                        </Motion>
+                <!-- Desktop Profile Dropdown Menu -->
+                <Transition
+                    enter-active-class="transition ease-out duration-200"
+                    enter-from-class="opacity-0 translate-y-2"
+                    enter-to-class="opacity-100 translate-y-0"
+                    leave-active-class="transition ease-in duration-150"
+                    leave-from-class="opacity-100 translate-y-0"
+                    leave-to-class="opacity-0 translate-y-2"
+                >
+                    <div
+                        v-if="showDesktopProfileMenu"
+                        class="absolute bottom-full left-3 right-3 mb-2 bg-white dark:bg-zinc-800 rounded-xl border border-slate-200 dark:border-zinc-700 shadow-lg overflow-hidden"
+                    >
+                        <!-- Profile Link -->
+                        <Link
+                            :href="getRouteUrl('profile.show')"
+                            @click="showDesktopProfileMenu = false"
+                            class="flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 transition-colors focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-zinc-700/50"
+                        >
+                            <User class="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                            <span class="text-sm font-medium">Profil Saya</span>
+                        </Link>
+
+                        <!-- Settings Link (Coming Soon) -->
+                        <button
+                            @click="showDesktopProfileMenu = false; showComingSoon('Pengaturan')"
+                            class="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 transition-colors focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-zinc-700/50"
+                        >
+                            <Settings class="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                            <span class="text-sm font-medium">Pengaturan</span>
+                            <span class="ml-auto text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                                Segera
+                            </span>
+                        </button>
+
+                        <!-- Divider -->
+                        <div class="h-px bg-slate-100 dark:bg-zinc-700"></div>
 
                         <!-- Logout Button -->
-                        <Motion :whileTap="{ scale: 0.9 }" :whileHover="{ scale: 1.05 }">
-                            <button
-                                @click="logout"
-                                class="flex-1 flex items-center justify-center gap-2 p-2.5 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/50 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-                                aria-label="Keluar dari aplikasi"
-                                title="Keluar"
-                            >
-                                <LogOut class="w-4 h-4" />
-                                <span class="text-[11px] font-medium">Logout</span>
-                            </button>
-                        </Motion>
+                        <button
+                            @click="logout"
+                            class="w-full flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:bg-red-50 dark:focus-visible:bg-red-900/20"
+                        >
+                            <LogOut class="w-4 h-4" />
+                            <span class="text-sm font-medium">Keluar</span>
+                        </button>
                     </div>
-                </div>
+                </Transition>
             </div>
         </aside>
 
