@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+/**
+ * StatusChangeModal - Modal untuk mengubah status siswa
+ * dengan form validation, BaseModal integration, dan reusable Form components
+ * untuk memastikan consistency dengan design system aplikasi
+ */
+import { ref, watch, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
-import { X, AlertTriangle, CheckCircle } from 'lucide-vue-next';
+import { UserCheck, Calendar, FileText, School, AlertTriangle } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
+import BaseModal from './BaseModal.vue';
+import { FormSelect, FormInput, FormTextarea } from './Form';
 
 interface Props {
     show: boolean;
@@ -33,9 +40,20 @@ watch(() => props.show, (newVal) => {
     }
 });
 
+// Status sama dengan current - untuk validasi
+const isSameStatus = computed(() => form.status === props.currentStatus);
+
+// Validation message untuk same status
+const statusValidationMessage = computed(() => {
+    if (isSameStatus.value && form.status) {
+        return 'Pilih status yang berbeda dari status saat ini';
+    }
+    return '';
+});
+
 const submit = () => {
-    if (form.status === props.currentStatus) {
-        alert('Silakan pilih status baru yang berbeda.');
+    if (isSameStatus.value) {
+        haptics.error();
         return;
     }
 
@@ -48,9 +66,14 @@ const submit = () => {
             emit('close');
         },
         onError: () => {
-            haptics.heavy();
+            haptics.error();
         }
     });
+};
+
+const handleClose = () => {
+    haptics.light();
+    emit('close');
 };
 
 const statuses = [
@@ -62,96 +85,138 @@ const statuses = [
 </script>
 
 <template>
-    <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <!-- Backdrop -->
-        <Motion 
-            :initial="{ opacity: 0 }"
-            :animate="{ opacity: 1 }"
-            :transition="{ duration: 0.2 }"
-            class="fixed inset-0 bg-gray-500/75 transition-opacity" 
-            @click="$emit('close')"
-        />
-
-        <div class="flex items-end sm:items-center justify-center min-h-full p-4 text-center sm:p-0">
-            <Motion
-                :initial="{ opacity: 0, scale: 0.95, y: 20 }"
-                :animate="{ opacity: 1, scale: 1, y: 0 }"
-                :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
-                class="relative bg-white dark:bg-zinc-900 rounded-2xl text-left overflow-hidden shadow-sm transform sm:my-8 sm:max-w-lg sm:w-full border border-gray-200 dark:border-zinc-800"
-            >
-                
-                <!-- Header -->
-                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-200 dark:border-zinc-800 flex justify-between items-center">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" id="modal-title">
+    <BaseModal
+        :show="show"
+        size="lg"
+        @close="handleClose"
+    >
+        <!-- Custom Header -->
+        <template #header>
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                    <UserCheck class="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">
                         Update Status Siswa
                     </h3>
-                    <Motion :whileTap="{ scale: 0.9 }">
-                        <button @click="$emit('close'); haptics.light()" class="text-gray-400 hover:text-gray-500 transition-colors rounded-xl p-1">
-                            <X class="w-5 h-5" />
-                        </button>
-                    </Motion>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        Perubahan status akan tercatat dalam riwayat siswa
+                    </p>
                 </div>
+            </div>
+        </template>
 
-                <!-- Body -->
-                <form @submit.prevent="submit">
-                    <div class="px-4 py-5 sm:p-6 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status Baru <span class="text-red-500">*</span></label>
-                            <select v-model="form.status" class="w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-800">
-                                <option v-for="s in statuses" :key="s.value" :value="s.value">{{ s.label }}</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Perubahan <span class="text-red-500">*</span></label>
-                            <input v-model="form.tanggal" type="date" class="w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-800" />
-                            <p v-if="form.errors.tanggal" class="text-sm text-red-600 mt-1">{{ form.errors.tanggal }}</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alasan <span class="text-red-500">*</span></label>
-                            <textarea v-model="form.alasan" rows="2" class="w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-800" placeholder="Contoh: Pindah tugas orang tua"></textarea>
-                            <p v-if="form.errors.alasan" class="text-sm text-red-600 mt-1">{{ form.errors.alasan }}</p>
-                        </div>
-
-                         <div v-if="form.status === 'mutasi'">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sekolah Tujuan <span class="text-red-500">*</span></label>
-                            <input v-model="form.sekolah_tujuan" type="text" class="w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-800" />
-                            <p v-if="form.errors.sekolah_tujuan" class="text-sm text-red-600 mt-1">{{ form.errors.sekolah_tujuan }}</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Keterangan Tambahan</label>
-                            <textarea v-model="form.keterangan" rows="2" class="w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-800"></textarea>
-                        </div>
+        <form @submit.prevent="submit" class="space-y-5">
+            <!-- Warning jika status sama -->
+            <Motion
+                v-if="isSameStatus && form.status"
+                :initial="{ opacity: 0, y: -10 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ duration: 0.2 }"
+            >
+                <div class="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50">
+                    <AlertTriangle class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                        <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
+                            Status tidak berubah
+                        </p>
+                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                            {{ statusValidationMessage }}
+                        </p>
                     </div>
-
-                    <!-- Footer -->
-                    <div class="px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse bg-gray-50 dark:bg-zinc-800/50 border-t border-gray-200 dark:border-zinc-800 gap-3">
-                        <Motion :whileTap="{ scale: 0.97 }">
-                            <button 
-                                type="submit" 
-                                :disabled="form.processing"
-                                @click="haptics.medium()"
-                                class="w-full inline-flex justify-center rounded-xl border border-blue-700 shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                <span v-if="form.processing">Menyimpan...</span>
-                                <span v-else>Simpan Status</span>
-                            </button>
-                        </Motion>
-                        <Motion :whileTap="{ scale: 0.97 }">
-                            <button 
-                                type="button" 
-                                @click="$emit('close'); haptics.light()"
-                                class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-zinc-900 dark:border-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-800 transition-colors"
-                            >
-                                Batal
-                            </button>
-                        </Motion>
-                    </div>
-                </form>
+                </div>
             </Motion>
-        </div>
-    </div>
+
+            <!-- Status Select -->
+            <FormSelect
+                v-model="form.status"
+                label="Status Baru"
+                :options="statuses"
+                :icon="UserCheck"
+                :error="form.errors.status"
+                required
+                placeholder="Pilih status baru"
+            />
+
+            <!-- Tanggal Perubahan -->
+            <FormInput
+                v-model="form.tanggal"
+                type="date"
+                label="Tanggal Perubahan"
+                :icon="Calendar"
+                :error="form.errors.tanggal"
+                required
+            />
+
+            <!-- Alasan -->
+            <FormTextarea
+                v-model="form.alasan"
+                label="Alasan Perubahan"
+                :error="form.errors.alasan"
+                placeholder="Contoh: Pindah tugas orang tua ke kota lain"
+                :rows="2"
+                required
+                hint="Jelaskan alasan perubahan status secara singkat"
+            />
+
+            <!-- Sekolah Tujuan (hanya untuk mutasi) -->
+            <Motion
+                v-if="form.status === 'mutasi'"
+                :initial="{ opacity: 0, height: 0 }"
+                :animate="{ opacity: 1, height: 'auto' }"
+                :exit="{ opacity: 0, height: 0 }"
+                :transition="{ duration: 0.2 }"
+            >
+                <FormInput
+                    v-model="form.sekolah_tujuan"
+                    label="Sekolah Tujuan"
+                    :icon="School"
+                    :error="form.errors.sekolah_tujuan"
+                    placeholder="Nama sekolah tujuan mutasi"
+                    required
+                />
+            </Motion>
+
+            <!-- Keterangan Tambahan -->
+            <FormTextarea
+                v-model="form.keterangan"
+                label="Keterangan Tambahan"
+                placeholder="Informasi tambahan yang perlu dicatat (opsional)"
+                :rows="2"
+                hint="Opsional - tambahkan catatan jika diperlukan"
+            />
+        </form>
+
+        <!-- Footer Actions -->
+        <template #footer>
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                <Motion :whileTap="{ scale: 0.97 }">
+                    <button 
+                        type="button" 
+                        @click="handleClose"
+                        class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all duration-200 active:scale-95"
+                    >
+                        Batal
+                    </button>
+                </Motion>
+                <Motion :whileTap="{ scale: 0.97 }">
+                    <button 
+                        type="submit" 
+                        :disabled="form.processing || isSameStatus"
+                        @click="submit"
+                        class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-sm font-semibold text-white shadow-sm shadow-emerald-500/25 hover:shadow-md hover:shadow-emerald-500/30 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        <svg v-if="form.processing" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <UserCheck v-else class="w-4 h-4" />
+                        {{ form.processing ? 'Menyimpan...' : 'Simpan Status' }}
+                    </button>
+                </Motion>
+            </div>
+        </template>
+    </BaseModal>
 </template>
 

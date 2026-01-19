@@ -77,7 +77,7 @@ const textareaClasses = computed(() => [
     'bg-transparent',
     'text-slate-900 dark:text-slate-100 text-[15px] leading-relaxed',
     'placeholder:text-transparent',
-    'focus:outline-none',
+    'focus:outline-none focus-visible:outline-none',
     'disabled:cursor-not-allowed',
     'resize-none px-4',
     props.label ? 'pt-6 pb-3' : 'py-4',

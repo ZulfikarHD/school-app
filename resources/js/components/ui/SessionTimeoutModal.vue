@@ -62,21 +62,21 @@ const handleLogout = () => {
 
             <!-- Action Buttons -->
             <div class="flex flex-col gap-3 sm:flex-row">
-                <!-- Extend Button -->
+                <!-- Extend Button (Primary Action) -->
                 <button
                     type="button"
                     @click="handleExtend"
-                    class="flex-1 flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold shadow-sm transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-4 bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/50 active:scale-95"
+                    class="flex-1 flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold shadow-sm shadow-emerald-500/25 transition-all duration-200 hover:shadow-md hover:shadow-emerald-500/30 focus:outline-none focus:ring-4 bg-emerald-500 hover:bg-emerald-600 text-white focus:ring-emerald-500/50 active:scale-95"
                 >
                     <RefreshCw class="w-4 h-4" />
                     Perpanjang Session
                 </button>
 
-                <!-- Logout Button -->
+                <!-- Logout Button (Secondary Action) -->
                 <button
                     type="button"
                     @click="handleLogout"
-                    class="flex-1 flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 font-semibold text-gray-700 transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-700 dark:focus:ring-zinc-700/50 active:scale-95"
+                    class="flex-1 flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3 font-semibold text-slate-700 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-slate-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-700 dark:focus:ring-zinc-700/50 active:scale-95"
                 >
                     <LogOut class="w-4 h-4" />
                     Keluar Sekarang

@@ -3,8 +3,9 @@
  * FormCheckbox - Modern checkbox dengan refined aesthetic
  * yang mencakup label, description, smooth animations, dan haptic feedback
  * untuk memastikan consistency dan optimal touch targets (min 44x44px)
+ * dengan proper accessibility melalui id/for association
  */
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { AlertCircle, Check } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
@@ -16,6 +17,7 @@ interface Props {
     error?: string;
     disabled?: boolean;
     checkboxClass?: string;
+    id?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -28,6 +30,9 @@ const emit = defineEmits<{
 }>();
 
 const haptics = useHaptics();
+
+// Generate unique ID untuk accessibility jika tidak disediakan
+const uniqueId = ref(props.id || `checkbox-${Math.random().toString(36).slice(2, 9)}`);
 
 const handleChange = () => {
     if (props.disabled) return;
@@ -63,13 +68,15 @@ const checkboxWrapperClasses = computed(() => [
     <div class="space-y-1.5">
         <Motion :whileTap="{ scale: disabled ? 1 : 0.98 }">
             <div :class="containerClasses" @click="handleChange">
-                <!-- Custom Checkbox -->
+                <!-- Custom Checkbox dengan proper accessibility -->
                 <div :class="checkboxWrapperClasses">
-                    <!-- Hidden Native Checkbox -->
+                    <!-- Hidden Native Checkbox dengan id untuk label association -->
                     <input
+                        :id="uniqueId"
                         type="checkbox"
                         :checked="modelValue"
                         :disabled="disabled"
+                        :aria-describedby="description ? `${uniqueId}-description` : undefined"
                         class="sr-only"
                         @change="handleChange"
                     />
@@ -86,15 +93,20 @@ const checkboxWrapperClasses = computed(() => [
                     </Motion>
                 </div>
 
-                <!-- Label & Description -->
+                <!-- Label & Description dengan proper association -->
                 <div v-if="label || description" class="flex-1 select-none min-w-0">
                     <label
                         v-if="label"
+                        :for="uniqueId"
                         class="block text-sm font-medium text-slate-800 dark:text-slate-200 cursor-pointer leading-snug"
                     >
                         {{ label }}
                     </label>
-                    <p v-if="description" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                    <p 
+                        v-if="description" 
+                        :id="`${uniqueId}-description`"
+                        class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed"
+                    >
                         {{ description }}
                     </p>
                 </div>

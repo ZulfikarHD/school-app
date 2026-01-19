@@ -67,28 +67,29 @@ const sanitizedMessage = computed(() => {
 
 /**
  * Computed styling berdasarkan dialog type
+ * menggunakan emerald untuk success sesuai design system
  */
 const typeConfig = computed(() => {
     const configs = {
         success: {
-            bgColor: 'bg-green-100 dark:bg-green-900/30',
-            iconColor: 'text-green-600 dark:text-green-400',
-            buttonColor: 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500/50',
+            bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+            iconColor: 'text-emerald-600 dark:text-emerald-400',
+            buttonColor: 'bg-emerald-500 hover:bg-emerald-600 text-white focus:ring-emerald-500/50 shadow-sm shadow-emerald-500/25',
         },
         warning: {
-            bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
-            iconColor: 'text-yellow-600 dark:text-yellow-400',
-            buttonColor: 'bg-yellow-600 hover:bg-yellow-700 text-white focus:ring-yellow-500/50',
+            bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+            iconColor: 'text-amber-600 dark:text-amber-400',
+            buttonColor: 'bg-amber-500 hover:bg-amber-600 text-white focus:ring-amber-500/50 shadow-sm shadow-amber-500/25',
         },
         danger: {
             bgColor: 'bg-red-100 dark:bg-red-900/30',
             iconColor: 'text-red-600 dark:text-red-400',
-            buttonColor: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500/50',
+            buttonColor: 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/50 shadow-sm shadow-red-500/25',
         },
         info: {
-            bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-            iconColor: 'text-blue-600 dark:text-blue-400',
-            buttonColor: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/50',
+            bgColor: 'bg-sky-100 dark:bg-sky-900/30',
+            iconColor: 'text-sky-600 dark:text-sky-400',
+            buttonColor: 'bg-sky-500 hover:bg-sky-600 text-white focus:ring-sky-500/50 shadow-sm shadow-sky-500/25',
         },
     };
     return configs[props.type];

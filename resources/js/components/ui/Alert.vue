@@ -51,35 +51,40 @@ const positionClasses = {
 
 /**
  * Type configuration untuk styling dan icons
+ * menggunakan emerald sebagai success color sesuai design system
  */
 const typeConfig = {
     success: {
-        bg: 'bg-white dark:bg-zinc-900 border-green-200 dark:border-green-900',
+        bg: 'bg-white dark:bg-zinc-900 border-emerald-200 dark:border-emerald-900/50',
         icon: 'M5 13l4 4L19 7',
-        iconBg: 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400',
-        titleColor: 'text-gray-900 dark:text-white',
-        textColor: 'text-gray-600 dark:text-gray-400',
+        iconBg: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
+        titleColor: 'text-slate-900 dark:text-white',
+        textColor: 'text-slate-600 dark:text-slate-400',
+        progressColor: 'bg-emerald-500',
     },
     error: {
-        bg: 'bg-white dark:bg-zinc-900 border-red-200 dark:border-red-900',
+        bg: 'bg-white dark:bg-zinc-900 border-red-200 dark:border-red-900/50',
         icon: 'M6 18L18 6M6 6l12 12',
-        iconBg: 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400',
-        titleColor: 'text-gray-900 dark:text-white',
-        textColor: 'text-gray-600 dark:text-gray-400',
+        iconBg: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+        titleColor: 'text-slate-900 dark:text-white',
+        textColor: 'text-slate-600 dark:text-slate-400',
+        progressColor: 'bg-red-500',
     },
     warning: {
-        bg: 'bg-white dark:bg-zinc-900 border-yellow-200 dark:border-yellow-900',
+        bg: 'bg-white dark:bg-zinc-900 border-amber-200 dark:border-amber-900/50',
         icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
-        iconBg: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-400',
-        titleColor: 'text-gray-900 dark:text-white',
-        textColor: 'text-gray-600 dark:text-gray-400',
+        iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
+        titleColor: 'text-slate-900 dark:text-white',
+        textColor: 'text-slate-600 dark:text-slate-400',
+        progressColor: 'bg-amber-500',
     },
     info: {
-        bg: 'bg-white dark:bg-zinc-900 border-blue-200 dark:border-blue-900',
+        bg: 'bg-white dark:bg-zinc-900 border-sky-200 dark:border-sky-900/50',
         icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-        iconBg: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
-        titleColor: 'text-gray-900 dark:text-white',
-        textColor: 'text-gray-600 dark:text-gray-400',
+        iconBg: 'bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400',
+        titleColor: 'text-slate-900 dark:text-white',
+        textColor: 'text-slate-600 dark:text-slate-400',
+        progressColor: 'bg-sky-500',
     },
 };
 
@@ -206,13 +211,13 @@ onMounted(() => {
                         </Motion>
                     </div>
 
-                    <!-- Progress bar untuk auto-dismiss -->
+                    <!-- Progress bar untuk auto-dismiss dengan proper color -->
                     <Motion
                         v-if="duration > 0"
                         :initial="{ scaleX: 1 }"
                         :animate="{ scaleX: 0 }"
                         :transition="{ duration: duration / 1000, ease: 'linear' }"
-                        :class="['h-1 origin-left opacity-30', typeConfig[type].iconBg]"
+                        :class="['h-1 origin-left opacity-40', typeConfig[type].progressColor]"
                     />
                 </div>
             </Motion>

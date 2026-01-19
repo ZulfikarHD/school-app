@@ -24,6 +24,7 @@ interface Props {
     error?: string;
     required?: boolean;
     disabled?: boolean;
+    loading?: boolean;
     icon?: Component;
     hint?: string;
     selectClass?: string;
@@ -32,6 +33,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     required: false,
     disabled: false,
+    loading: false,
     placeholder: 'Pilih opsi',
 });
 
@@ -85,7 +87,7 @@ const selectClasses = computed(() => [
     'w-full h-[52px] rounded-xl transition-all duration-200',
     'bg-transparent',
     'text-slate-900 dark:text-slate-100 text-[15px]',
-    'focus:outline-none',
+    'focus:outline-none focus-visible:outline-none',
     'disabled:cursor-not-allowed',
     'appearance-none cursor-pointer',
     props.icon ? 'pl-11 pr-10' : 'pl-4 pr-10',
@@ -153,8 +155,14 @@ const handleBlur = () => {
 
 <template>
     <div class="space-y-1.5">
+        <!-- Loading Skeleton State -->
+        <div v-if="loading" class="animate-pulse">
+            <div v-if="label" class="h-3 w-20 bg-slate-200 dark:bg-zinc-700 rounded mb-2" />
+            <div class="h-[52px] bg-slate-200 dark:bg-zinc-700 rounded-xl" />
+        </div>
+
         <!-- Select Container -->
-        <Motion :whileTap="{ scale: disabled ? 1 : 0.995 }">
+        <Motion v-else :whileTap="{ scale: disabled ? 1 : 0.995 }">
             <div :class="containerClasses">
                 <!-- Icon -->
                 <component

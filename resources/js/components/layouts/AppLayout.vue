@@ -806,29 +806,60 @@ const getSpringConfig = (stiffness = 300, damping = 25) => {
                 </div>
             </div>
 
-            <!-- User Profile (Desktop) - Compact -->
+            <!-- User Profile (Desktop) - Enhanced with Profile Access -->
             <div class="p-3 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50">
-                <div class="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/50 shadow-sm">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-8 h-8 rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-xs shadow-sm shadow-emerald-500/20 shrink-0">
-                            {{ user?.name?.charAt(0) || 'U' }}
+                <div class="space-y-2">
+                    <!-- Profile Section - Clickable to go to profile -->
+                    <Link
+                        :href="getRouteUrl('profile.show')"
+                        @click="handleNavClick"
+                        class="block p-2.5 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/50 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                    >
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-xs shadow-sm shadow-emerald-500/20 shrink-0">
+                                {{ user?.name?.charAt(0) || 'U' }}
+                            </div>
+                            <div class="flex flex-col min-w-0 flex-1">
+                                <span class="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{{ user?.name }}</span>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate uppercase tracking-wide">{{ user?.role }}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <span class="text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                                    Segera
+                                </span>
+                                <ChevronRight class="w-3.5 h-3.5 text-slate-400" />
+                            </div>
                         </div>
-                        <div class="flex flex-col min-w-0">
-                            <span class="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{{ user?.name }}</span>
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate uppercase tracking-wide">{{ user?.role }}</span>
-                        </div>
-                    </div>
+                    </Link>
 
-                    <Motion :whileTap="{ scale: 0.9 }" :whileHover="{ scale: 1.05 }">
-                        <button
-                            @click="logout"
-                            class="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-                            aria-label="Keluar dari aplikasi"
-                            title="Keluar"
-                        >
-                            <LogOut class="w-4 h-4" />
-                        </button>
-                    </Motion>
+                    <!-- Action Buttons Row -->
+                    <div class="flex gap-2">
+                        <!-- Settings Button - Coming Soon -->
+                        <Motion :whileTap="{ scale: 0.9 }" :whileHover="{ scale: 1.05 }">
+                            <button
+                                @click="showComingSoon('Pengaturan')"
+                                class="flex-1 flex items-center justify-center gap-2 p-2.5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/50 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                                aria-label="Pengaturan"
+                                title="Pengaturan"
+                            >
+                                <Settings class="w-4 h-4" />
+                                <span class="text-[11px] font-medium">Setting</span>
+                            </button>
+                        </Motion>
+
+                        <!-- Logout Button -->
+                        <Motion :whileTap="{ scale: 0.9 }" :whileHover="{ scale: 1.05 }">
+                            <button
+                                @click="logout"
+                                class="flex-1 flex items-center justify-center gap-2 p-2.5 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/50 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                                aria-label="Keluar dari aplikasi"
+                                title="Keluar"
+                            >
+                                <LogOut class="w-4 h-4" />
+                                <span class="text-[11px] font-medium">Logout</span>
+                            </button>
+                        </Motion>
+                    </div>
                 </div>
             </div>
         </aside>

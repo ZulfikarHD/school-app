@@ -19,6 +19,7 @@ interface Props {
     required?: boolean;
     disabled?: boolean;
     readonly?: boolean;
+    loading?: boolean;
     icon?: Component;
     hint?: string;
     maxlength?: number;
@@ -34,6 +35,7 @@ const props = withDefaults(defineProps<Props>(), {
     required: false,
     disabled: false,
     readonly: false,
+    loading: false,
 });
 
 const emit = defineEmits<{
@@ -70,7 +72,7 @@ const inputClasses = computed(() => [
     'bg-transparent',
     'text-slate-900 dark:text-slate-100 text-[15px]',
     'placeholder:text-transparent',
-    'focus:outline-none',
+    'focus:outline-none focus-visible:outline-none',
     'disabled:cursor-not-allowed',
     props.icon ? 'pl-11 pr-4' : 'px-4',
     props.label ? 'pt-5 pb-1.5' : 'py-3.5',
@@ -104,8 +106,14 @@ const handleBlur = (event: FocusEvent) => {
 
 <template>
     <div class="space-y-1.5">
+        <!-- Loading Skeleton State -->
+        <div v-if="loading" class="animate-pulse">
+            <div v-if="label" class="h-3 w-20 bg-slate-200 dark:bg-zinc-700 rounded mb-2" />
+            <div class="h-[52px] bg-slate-200 dark:bg-zinc-700 rounded-xl" />
+        </div>
+
         <!-- Input Container -->
-        <Motion :whileTap="{ scale: disabled ? 1 : 0.995 }">
+        <Motion v-else :whileTap="{ scale: disabled ? 1 : 0.995 }">
             <div :class="containerClasses">
                 <!-- Icon -->
                 <component
