@@ -54,6 +54,10 @@ const changeTab = (tabId: typeof activeTab.value) => {
     activeTab.value = tabId;
 };
 
+/**
+ * Status badge classes menggunakan design system colors
+ * untuk visual consistency di seluruh aplikasi
+ */
 const getStatusBadgeClass = (status: string) => {
     const classes: Record<string, string> = {
         aktif: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
@@ -62,6 +66,19 @@ const getStatusBadgeClass = (status: string) => {
         lulus: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800',
     };
     return classes[status] || 'bg-slate-100 text-slate-600 border-slate-200';
+};
+
+/**
+ * Get status label yang readable
+ */
+const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+        aktif: 'Aktif',
+        mutasi: 'Mutasi',
+        do: 'Drop Out',
+        lulus: 'Lulus',
+    };
+    return labels[status] || status;
 };
 
 const formatDate = (date: string) => {
@@ -75,9 +92,9 @@ const formatDate = (date: string) => {
 
 <template>
     <div class="space-y-6">
-        <!-- Tabs Navigation -->
+        <!-- Tabs Navigation dengan proper accessibility -->
         <div class="bg-white dark:bg-zinc-900 rounded-2xl p-2 shadow-sm border border-slate-200 dark:border-zinc-800">
-            <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
+            <div class="grid grid-cols-4 gap-1.5 sm:gap-2" role="tablist" aria-label="Tab detail siswa">
                 <Motion
                     v-for="tab in tabs"
                     :key="tab.id"
@@ -85,21 +102,26 @@ const formatDate = (date: string) => {
                 >
                     <button
                         @click="changeTab(tab.id as typeof activeTab)"
-                        class="flex flex-col items-center justify-center gap-1 px-1.5 sm:px-4 py-2.5 sm:py-3 rounded-xl font-medium transition-all min-h-[56px] sm:min-h-[52px]"
+                        role="tab"
+                        :id="`tab-${tab.id}`"
+                        :aria-selected="activeTab === tab.id"
+                        :aria-controls="`panel-${tab.id}`"
+                        :tabindex="activeTab === tab.id ? 0 : -1"
+                        class="w-full flex flex-col items-center justify-center gap-1 px-1.5 sm:px-4 py-2.5 sm:py-3 rounded-xl font-medium transition-all min-h-[56px] sm:min-h-[52px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900"
                         :class="activeTab === tab.id
                             ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25'
                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-zinc-800 active:bg-slate-100 dark:active:bg-zinc-700'"
                     >
-                        <component :is="tab.icon" class="w-5 h-5 shrink-0" />
+                        <component :is="tab.icon" class="w-5 h-5 shrink-0" aria-hidden="true" />
                         <!-- Short label on mobile, full label on desktop -->
-                        <span class="text-[10px] sm:text-xs text-center leading-tight font-semibold sm:hidden">{{ tab.shortLabel }}</span>
+                        <span class="text-[11px] sm:text-xs text-center leading-tight font-semibold sm:hidden">{{ tab.shortLabel }}</span>
                         <span class="text-xs text-center leading-tight font-semibold hidden sm:block">{{ tab.label }}</span>
                     </button>
                 </Motion>
             </div>
         </div>
 
-        <!-- Tab Content -->
+        <!-- Tab Content dengan proper accessibility -->
         <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden">
             <!-- Biodata Tab -->
             <Motion
@@ -108,6 +130,9 @@ const formatDate = (date: string) => {
                 :animate="{ opacity: 1, x: 0 }"
                 :transition="{ duration: 0.2 }"
                 class="p-4 sm:p-8"
+                role="tabpanel"
+                id="panel-biodata"
+                aria-labelledby="tab-biodata"
             >
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
                     <!-- Photo -->
@@ -171,10 +196,14 @@ const formatDate = (date: string) => {
                                     {{ student.anak_ke }} dari {{ student.jumlah_saudara }} bersaudara
                                 </p>
                             </div>
-                            <div class="space-y-1">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</p>
-                                <span :class="getStatusBadgeClass(student.status)" class="inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold border">
-                                    {{ student.status.toUpperCase() }}
+                                <div class="space-y-1">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Status</p>
+                                <span 
+                                    :class="getStatusBadgeClass(student.status)" 
+                                    class="inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold border"
+                                    role="status"
+                                >
+                                    {{ getStatusLabel(student.status) }}
                                 </span>
                             </div>
                         </div>
@@ -214,50 +243,53 @@ const formatDate = (date: string) => {
                 :animate="{ opacity: 1, x: 0 }"
                 :transition="{ duration: 0.2 }"
                 class="p-4 sm:p-8"
+                role="tabpanel"
+                id="panel-guardians"
+                aria-labelledby="tab-guardians"
             >
                 <div v-if="student.guardians && student.guardians.length > 0" class="space-y-4 sm:space-y-6">
-                    <div v-for="guardian in student.guardians" :key="guardian.id" class="bg-gray-50 dark:bg-zinc-800/50 rounded-2xl p-4 sm:p-6 border border-gray-200 dark:border-zinc-700">
+                    <article v-for="guardian in student.guardians" :key="guardian.id" class="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-zinc-700">
                         <div class="flex items-start justify-between mb-4">
-                            <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 capitalize">
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 capitalize">
                                 {{ guardian.hubungan }}
                             </h3>
-                            <span v-if="guardian.pivot?.is_primary_contact" class="px-2.5 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-semibold rounded-lg border border-blue-200 dark:border-blue-800 shrink-0">
+                            <span v-if="guardian.pivot?.is_primary_contact" class="px-2.5 py-1 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 text-xs font-semibold rounded-lg border border-sky-200 dark:border-sky-800 shrink-0">
                                 Kontak Utama
                             </span>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="space-y-1">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Nama Lengkap</p>
-                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ guardian.nama_lengkap }}</p>
+                                <dt class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Nama Lengkap</dt>
+                                <dd class="text-sm font-medium text-slate-900 dark:text-slate-100">{{ guardian.nama_lengkap }}</dd>
                             </div>
                             <div class="space-y-1">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">NIK</p>
-                                <p class="text-sm font-mono text-gray-700 dark:text-gray-300">{{ guardian.nik }}</p>
+                                <dt class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">NIK</dt>
+                                <dd class="text-sm font-mono text-slate-700 dark:text-slate-300">{{ guardian.nik }}</dd>
                             </div>
                             <div class="space-y-1">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Pekerjaan</p>
-                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ guardian.pekerjaan }}</p>
+                                <dt class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Pekerjaan</dt>
+                                <dd class="text-sm text-slate-700 dark:text-slate-300">{{ guardian.pekerjaan }}</dd>
                             </div>
                             <div class="space-y-1">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Pendidikan</p>
-                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ guardian.pendidikan }}</p>
+                                <dt class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Pendidikan</dt>
+                                <dd class="text-sm text-slate-700 dark:text-slate-300">{{ guardian.pendidikan }}</dd>
                             </div>
                             <div class="space-y-1">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Penghasilan</p>
-                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ guardian.penghasilan }}</p>
+                                <dt class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Penghasilan</dt>
+                                <dd class="text-sm text-slate-700 dark:text-slate-300">{{ guardian.penghasilan }}</dd>
                             </div>
                             <div class="space-y-1">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">No. HP</p>
-                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ guardian.no_hp || '-' }}</p>
+                                <dt class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">No. HP</dt>
+                                <dd class="text-sm text-slate-700 dark:text-slate-300">{{ guardian.no_hp || '-' }}</dd>
                             </div>
-                        </div>
-                    </div>
+                        </dl>
+                    </article>
                 </div>
                 <!-- Empty State -->
                 <div v-else class="text-center py-12">
-                    <Users class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                    <p class="text-gray-500 dark:text-gray-400 font-medium">Belum ada data orang tua/wali</p>
-                    <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">Data orang tua/wali akan ditampilkan di sini</p>
+                    <Users class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" aria-hidden="true" />
+                    <p class="text-slate-500 dark:text-slate-400 font-medium">Belum ada data orang tua/wali</p>
+                    <p class="text-sm text-slate-400 dark:text-slate-500 mt-1">Data orang tua/wali akan ditampilkan di sini</p>
                 </div>
             </Motion>
 
@@ -268,22 +300,25 @@ const formatDate = (date: string) => {
                 :animate="{ opacity: 1, x: 0 }"
                 :transition="{ duration: 0.2 }"
                 class="p-4 sm:p-8"
+                role="tabpanel"
+                id="panel-class-history"
+                aria-labelledby="tab-class-history"
             >
                 <div v-if="student.classHistory && student.classHistory.length > 0" class="space-y-4">
-                    <div v-for="history in student.classHistory" :key="history.id" class="flex items-center gap-4 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
-                        <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                            <GraduationCap class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <article v-for="history in student.classHistory" :key="history.id" class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-200 dark:border-zinc-700">
+                        <div class="w-12 h-12 rounded-xl bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center">
+                            <GraduationCap class="w-6 h-6 text-sky-600 dark:text-sky-400" aria-hidden="true" />
                         </div>
                         <div class="flex-1">
-                            <p class="font-semibold text-gray-900 dark:text-gray-100">Kelas {{ history.kelas_id }}</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ history.tahun_ajaran }} • Wali Kelas: {{ history.wali_kelas }}</p>
+                            <p class="font-semibold text-slate-900 dark:text-slate-100">Kelas {{ history.kelas_id }}</p>
+                            <p class="text-sm text-slate-600 dark:text-slate-400">{{ history.tahun_ajaran }} • Wali Kelas: {{ history.wali_kelas }}</p>
                         </div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(history.created_at) }}</p>
-                    </div>
+                        <time class="text-xs text-slate-500 dark:text-slate-400">{{ formatDate(history.created_at) }}</time>
+                    </article>
                 </div>
                 <div v-else class="text-center py-12">
-                    <GraduationCap class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                    <p class="text-gray-500 dark:text-gray-400">Belum ada riwayat kelas</p>
+                    <GraduationCap class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" aria-hidden="true" />
+                    <p class="text-slate-500 dark:text-slate-400">Belum ada riwayat kelas</p>
                 </div>
             </Motion>
 
@@ -294,28 +329,31 @@ const formatDate = (date: string) => {
                 :animate="{ opacity: 1, x: 0 }"
                 :transition="{ duration: 0.2 }"
                 class="p-4 sm:p-8"
+                role="tabpanel"
+                id="panel-status-history"
+                aria-labelledby="tab-status-history"
             >
                 <div v-if="student.statusHistory && student.statusHistory.length > 0" class="space-y-4">
-                    <div v-for="history in student.statusHistory" :key="history.id" class="p-5 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
+                    <article v-for="history in student.statusHistory" :key="history.id" class="p-5 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-200 dark:border-zinc-700">
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex items-center gap-3">
                                 <span :class="getStatusBadgeClass(history.status_lama)" class="px-2.5 py-1 rounded-lg text-xs font-semibold border">
-                                    {{ history.status_lama.toUpperCase() }}
+                                    {{ getStatusLabel(history.status_lama) }}
                                 </span>
-                                <span class="text-gray-400">→</span>
+                                <span class="text-slate-400" aria-hidden="true">→</span>
                                 <span :class="getStatusBadgeClass(history.status_baru)" class="px-2.5 py-1 rounded-lg text-xs font-semibold border">
-                                    {{ history.status_baru.toUpperCase() }}
+                                    {{ getStatusLabel(history.status_baru) }}
                                 </span>
                             </div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(history.tanggal) }}</p>
+                            <time class="text-xs text-slate-500 dark:text-slate-400">{{ formatDate(history.tanggal) }}</time>
                         </div>
-                        <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">{{ history.alasan }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Diubah oleh: {{ history.changed_by.name }}</p>
-                    </div>
+                        <p class="text-sm text-slate-700 dark:text-slate-300 mb-2">{{ history.alasan }}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Diubah oleh: {{ history.changed_by.name }}</p>
+                    </article>
                 </div>
                 <div v-else class="text-center py-12">
-                    <History class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                    <p class="text-gray-500 dark:text-gray-400">Belum ada riwayat perubahan status</p>
+                    <History class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" aria-hidden="true" />
+                    <p class="text-slate-500 dark:text-slate-400">Belum ada riwayat perubahan status</p>
                 </div>
             </Motion>
         </div>

@@ -290,7 +290,7 @@ onMounted(() => {
 
                     <!-- Action Buttons -->
                     <div class="flex gap-3">
-                        <!-- Clock In Button -->
+                        <!-- Clock In Button dengan accessible focus state -->
                         <Motion
                             v-if="canClockIn"
                             :whileTap="{ scale: 0.97 }"
@@ -299,19 +299,22 @@ onMounted(() => {
                             <button
                                 @click="handleClockIn"
                                 :disabled="loading || gpsLoading"
-                                class="w-full px-4 py-3 bg-white text-emerald-600 rounded-xl font-semibold
+                                :aria-busy="gpsLoading"
+                                aria-label="Clock In - Mulai presensi hari ini"
+                                class="w-full px-4 py-3 min-h-[48px] bg-white text-emerald-600 rounded-xl font-semibold
                                        hover:bg-white/95 active:bg-white/90
                                        disabled:opacity-50 disabled:cursor-not-allowed
+                                       focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-600
                                        transition-all duration-150
                                        flex items-center justify-center gap-2"
                             >
-                                <LogIn v-if="!gpsLoading" :size="18" />
-                                <MapPin v-else :size="18" class="animate-pulse" />
+                                <LogIn v-if="!gpsLoading" :size="18" aria-hidden="true" />
+                                <MapPin v-else :size="18" class="animate-pulse" aria-hidden="true" />
                                 <span>{{ gpsLoading ? 'Mencari Lokasi...' : 'Masuk' }}</span>
                             </button>
                         </Motion>
 
-                        <!-- Clock Out Button -->
+                        <!-- Clock Out Button dengan accessible focus state -->
                         <Motion
                             v-if="canClockOut"
                             :whileTap="{ scale: 0.97 }"
@@ -320,22 +323,30 @@ onMounted(() => {
                             <button
                                 @click="handleClockOut"
                                 :disabled="loading || gpsLoading"
-                                class="w-full px-4 py-3 bg-white/10 text-white rounded-xl font-semibold
+                                :aria-busy="gpsLoading"
+                                aria-label="Clock Out - Selesai presensi hari ini"
+                                class="w-full px-4 py-3 min-h-[48px] bg-white/10 text-white rounded-xl font-semibold
                                        border border-white/30
                                        hover:bg-white/20 active:bg-white/15
                                        disabled:opacity-50 disabled:cursor-not-allowed
+                                       focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-600
                                        transition-all duration-150
                                        flex items-center justify-center gap-2"
                             >
-                                <LogOut v-if="!gpsLoading" :size="18" />
-                                <MapPin v-else :size="18" class="animate-pulse" />
+                                <LogOut v-if="!gpsLoading" :size="18" aria-hidden="true" />
+                                <MapPin v-else :size="18" class="animate-pulse" aria-hidden="true" />
                                 <span>{{ gpsLoading ? 'Mencari Lokasi...' : 'Pulang' }}</span>
                             </button>
                         </Motion>
 
                         <!-- Already Clocked Out -->
-                        <div v-if="clockStatus?.is_clocked_out" class="flex-1 px-4 py-3 bg-white/10 text-white rounded-xl font-semibold border border-white/30 flex items-center justify-center gap-2">
-                            <CheckCircle2 :size="18" />
+                        <div 
+                            v-if="clockStatus?.is_clocked_out" 
+                            class="flex-1 px-4 py-3 min-h-[48px] bg-white/10 text-white rounded-xl font-semibold border border-white/30 flex items-center justify-center gap-2"
+                            role="status"
+                            aria-label="Presensi hari ini sudah selesai"
+                        >
+                            <CheckCircle2 :size="18" aria-hidden="true" />
                             <span>Selesai Hari Ini</span>
                         </div>
                     </div>
@@ -348,14 +359,14 @@ onMounted(() => {
                         </p>
                     </div>
 
-                    <!-- Link to Attendance History -->
+                    <!-- Link to Attendance History dengan proper focus state -->
                     <div class="mt-3 pt-3 border-t border-white/20">
                         <a
                             href="/teacher/my-attendance"
-                            class="text-xs text-white/80 hover:text-white flex items-center justify-center gap-1 transition-colors"
+                            class="text-xs text-white/80 hover:text-white flex items-center justify-center gap-1 transition-colors py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-600"
                             @click="haptics.light()"
                         >
-                            <Clock :size="14" />
+                            <Clock :size="14" aria-hidden="true" />
                             <span>Lihat Riwayat Presensi Saya →</span>
                         </a>
                     </div>

@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import {
     Search,
-    Calendar,
-    Filter,
     ChevronDown,
     ChevronUp,
     Activity,
     CheckCircle,
-    XCircle,
-    Info
+    XCircle
 } from 'lucide-vue-next';
 import { useHaptics } from '@/composables/useHaptics';
 import { index as adminAuditLogsIndex } from '@/routes/admin/audit-logs';
@@ -121,151 +118,180 @@ const toggleExpand = (id: number) => {
 const formatJson = (data: any) => {
     try {
         return JSON.stringify(data, null, 2);
-    } catch (e) {
+    } catch {
         return data;
     }
 };
 
+/**
+ * Status color classes menggunakan design system colors
+ * untuk visual consistency di seluruh aplikasi
+ */
 const getStatusColor = (status: string) => {
     return status === 'failed'
         ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
-        : 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20';
+        : 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20';
 };
 </script>
 
 <template>
     <div class="space-y-4">
-        <!-- Filters -->
-        <div class="bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Filters dengan accessible labels -->
+        <div class="bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-4 gap-4">
             <!-- Search -->
             <div class="relative md:col-span-1">
-                <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <label for="audit-search" class="sr-only">Cari IP atau Deskripsi</label>
+                <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden="true" />
                 <input
+                    id="audit-search"
                     v-model="search"
                     @input="handleSearch"
                     type="text"
                     placeholder="Cari IP atau Deskripsi..."
-                    class="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    class="w-full pl-9 pr-4 py-2.5 min-h-[44px] text-sm rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white dark:focus:bg-zinc-900 transition-all"
                 >
             </div>
 
             <!-- User Filter -->
-            <select
-                v-model="userId"
-                @change="applyFilters"
-                class="text-sm rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-                <option value="">Semua User</option>
-                <option v-for="user in users" :key="user.id" :value="user.id">
-                    {{ user.name }}
-                </option>
-            </select>
+            <div>
+                <label for="audit-user-filter" class="sr-only">Filter User</label>
+                <select
+                    id="audit-user-filter"
+                    v-model="userId"
+                    @change="applyFilters"
+                    class="w-full text-sm rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2.5 px-3 min-h-[44px] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                >
+                    <option value="">Semua User</option>
+                    <option v-for="user in users" :key="user.id" :value="user.id">
+                        {{ user.name }}
+                    </option>
+                </select>
+            </div>
 
             <!-- Action Filter -->
-            <select
-                v-model="action"
-                @change="applyFilters"
-                class="text-sm rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-                <option value="">Semua Aksi</option>
-                <option value="login">Login</option>
-                <option value="logout">Logout</option>
-                <option value="create_user">Create User</option>
-                <option value="update_user">Update User</option>
-                <option value="delete_user">Delete User</option>
-                <option value="failed_login">Failed Login</option>
-                <option value="password_change">Change Password</option>
-                <option value="password_reset">Reset Password</option>
-            </select>
+            <div>
+                <label for="audit-action-filter" class="sr-only">Filter Aksi</label>
+                <select
+                    id="audit-action-filter"
+                    v-model="action"
+                    @change="applyFilters"
+                    class="w-full text-sm rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2.5 px-3 min-h-[44px] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                >
+                    <option value="">Semua Aksi</option>
+                    <option value="login">Login</option>
+                    <option value="logout">Logout</option>
+                    <option value="create_user">Create User</option>
+                    <option value="update_user">Update User</option>
+                    <option value="delete_user">Delete User</option>
+                    <option value="failed_login">Failed Login</option>
+                    <option value="password_change">Change Password</option>
+                    <option value="password_reset">Reset Password</option>
+                </select>
+            </div>
 
             <!-- Status Filter -->
-            <select
-                v-model="status"
-                @change="applyFilters"
-                class="text-sm rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-                <option value="">Semua Status</option>
-                <option value="success">Berhasil</option>
-                <option value="failed">Gagal</option>
-            </select>
+            <div>
+                <label for="audit-status-filter" class="sr-only">Filter Status</label>
+                <select
+                    id="audit-status-filter"
+                    v-model="status"
+                    @change="applyFilters"
+                    class="w-full text-sm rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2.5 px-3 min-h-[44px] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                >
+                    <option value="">Semua Status</option>
+                    <option value="success">Berhasil</option>
+                    <option value="failed">Gagal</option>
+                </select>
+            </div>
         </div>
 
-        <!-- Table -->
-        <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
+        <!-- Table dengan proper accessibility -->
+        <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left">
-                    <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-zinc-800/50 border-b border-gray-100 dark:border-zinc-800">
+                <table class="w-full text-sm text-left" role="table" aria-label="Tabel log aktivitas">
+                    <thead class="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-100 dark:border-zinc-800">
                         <tr>
-                            <th class="px-6 py-3 font-medium">Waktu</th>
-                            <th class="px-6 py-3 font-medium">User</th>
-                            <th class="px-6 py-3 font-medium">Aksi</th>
-                            <th class="px-6 py-3 font-medium">IP Address</th>
-                            <th class="px-6 py-3 font-medium">Status</th>
-                            <th class="px-6 py-3 font-medium w-10"></th>
+                            <th scope="col" class="px-6 py-3.5 font-semibold tracking-wide">Waktu</th>
+                            <th scope="col" class="px-6 py-3.5 font-semibold tracking-wide">User</th>
+                            <th scope="col" class="px-6 py-3.5 font-semibold tracking-wide">Aksi</th>
+                            <th scope="col" class="px-6 py-3.5 font-semibold tracking-wide">IP Address</th>
+                            <th scope="col" class="px-6 py-3.5 font-semibold tracking-wide">Status</th>
+                            <th scope="col" class="px-6 py-3.5 font-semibold tracking-wide w-10">
+                                <span class="sr-only">Expand</span>
+                            </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
+                    <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
                         <tr v-if="loading" class="animate-pulse">
-                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">Memuat log...</td>
+                            <td colspan="6" class="px-6 py-4 text-center text-slate-500">Memuat log...</td>
                         </tr>
                         <tr v-else-if="logs.data.length === 0">
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">
                                 <div class="flex flex-col items-center gap-2">
-                                    <Activity class="w-8 h-8 text-gray-300" />
+                                    <Activity class="w-8 h-8 text-slate-300 dark:text-slate-600" aria-hidden="true" />
                                     <p>Belum ada aktivitas tercatat</p>
                                 </div>
                             </td>
                         </tr>
                         <template v-else v-for="log in logs.data" :key="log.id">
                             <tr
-                                class="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                                class="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-zinc-800/50"
+                                tabindex="0"
+                                role="button"
+                                :aria-expanded="expandedRows.has(log.id)"
+                                :aria-label="`Log aktivitas ${log.action || log.description} oleh ${log.causer?.name || 'System'}, klik untuk ${expandedRows.has(log.id) ? 'tutup' : 'lihat'} detail`"
                                 @click="toggleExpand(log.id)"
+                                @keydown.enter="toggleExpand(log.id)"
+                                @keydown.space.prevent="toggleExpand(log.id)"
                             >
-                                <td class="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400">
+                                <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
                                     {{ log.created_at }}
                                 </td>
-                                <td class="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">
+                                <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
                                     <div class="flex flex-col">
                                         <span>{{ log.causer?.name || 'System' }}</span>
-                                        <span class="text-xs text-gray-500">{{ log.causer?.email || '-' }}</span>
+                                        <span class="text-xs text-slate-500">{{ log.causer?.email || '-' }}</span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-300">
                                         {{ log.action || log.description }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-gray-600 dark:text-gray-400 font-mono text-xs">
+                                <td class="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono text-xs">
                                     {{ log.ip_address }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span :class="['inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium', getStatusColor(log.status || 'success')]">
-                                        <component :is="log.status === 'failed' ? XCircle : CheckCircle" class="w-3 h-3" />
+                                    <span 
+                                        :class="['inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium', getStatusColor(log.status || 'success')]"
+                                        role="status"
+                                    >
+                                        <component :is="log.status === 'failed' ? XCircle : CheckCircle" class="w-3 h-3" aria-hidden="true" />
                                         {{ log.status === 'failed' ? 'Gagal' : 'Berhasil' }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <component :is="expandedRows.has(log.id) ? ChevronUp : ChevronDown" class="w-4 h-4 text-gray-400" />
+                                    <component :is="expandedRows.has(log.id) ? ChevronUp : ChevronDown" class="w-4 h-4 text-slate-400" aria-hidden="true" />
                                 </td>
                             </tr>
 
                             <!-- Expanded Detail Row -->
-                            <tr v-if="expandedRows.has(log.id)" class="bg-gray-50 dark:bg-zinc-800/30">
+                            <tr v-if="expandedRows.has(log.id)" class="bg-slate-50 dark:bg-zinc-800/30">
                                 <td colspan="6" class="px-6 py-4">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
                                         <div v-if="log.old_values || log.properties?.old">
-                                            <h4 class="font-bold text-gray-500 mb-2">Old Values</h4>
-                                            <pre class="bg-white dark:bg-zinc-900 p-3 rounded-lg border border-gray-200 dark:border-zinc-700 overflow-x-auto">{{ formatJson(log.old_values || log.properties?.old) }}</pre>
+                                            <h4 class="font-bold text-slate-500 mb-2">Old Values</h4>
+                                            <pre class="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-zinc-700 overflow-x-auto text-slate-700 dark:text-slate-300">{{ formatJson(log.old_values || log.properties?.old) }}</pre>
                                         </div>
                                         <div v-if="log.new_values || log.properties?.attributes || log.properties?.new">
-                                            <h4 class="font-bold text-gray-500 mb-2">New Values / Details</h4>
-                                            <pre class="bg-white dark:bg-zinc-900 p-3 rounded-lg border border-gray-200 dark:border-zinc-700 overflow-x-auto">{{ formatJson(log.new_values || log.properties?.attributes || log.properties?.new) }}</pre>
+                                            <h4 class="font-bold text-slate-500 mb-2">New Values / Details</h4>
+                                            <pre class="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-zinc-700 overflow-x-auto text-slate-700 dark:text-slate-300">{{ formatJson(log.new_values || log.properties?.attributes || log.properties?.new) }}</pre>
                                         </div>
                                         <div class="md:col-span-2">
-                                            <h4 class="font-bold text-gray-500 mb-2">Metadata</h4>
-                                            <div class="bg-white dark:bg-zinc-900 p-3 rounded-lg border border-gray-200 dark:border-zinc-700">
-                                                <p><span class="text-gray-500">User Agent:</span> {{ log.user_agent }}</p>
-                                                <p><span class="text-gray-500">Event:</span> {{ log.event }}</p>
+                                            <h4 class="font-bold text-slate-500 mb-2">Metadata</h4>
+                                            <div class="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-300">
+                                                <p><span class="text-slate-500">User Agent:</span> {{ log.user_agent }}</p>
+                                                <p><span class="text-slate-500">Event:</span> {{ log.event }}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -277,9 +303,9 @@ const getStatusColor = (status: string) => {
             </div>
         </div>
 
-        <!-- Pagination -->
-        <div v-if="logs.total > logs.per_page" class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-zinc-800">
-            <div class="text-sm text-gray-500">
+        <!-- Pagination dengan accessible navigation -->
+        <nav v-if="logs.total > logs.per_page" class="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-zinc-800" aria-label="Navigasi halaman log">
+            <div class="text-sm text-slate-500">
                 Menampilkan {{ logs.from }} - {{ logs.to }} dari {{ logs.total }} log
             </div>
             <div class="flex gap-1">
@@ -288,18 +314,20 @@ const getStatusColor = (status: string) => {
                     :key="i"
                     :href="link.url || '#'"
                     :class="[
-                        'px-3 py-1 text-sm rounded-md transition-colors',
+                        'min-w-[36px] h-9 px-3 flex items-center justify-center text-sm rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50',
                         link.active
-                            ? 'bg-blue-600 text-white font-medium'
-                            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-zinc-800',
+                            ? 'bg-emerald-500 text-white font-semibold shadow-sm'
+                            : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-zinc-800',
                         !link.url && 'opacity-50 cursor-not-allowed hover:bg-transparent'
                     ]"
+                    :aria-current="link.active ? 'page' : undefined"
+                    :aria-disabled="!link.url"
                     v-html="link.label"
                     preserve-scroll
                     preserve-state
                 />
             </div>
-        </div>
+        </nav>
     </div>
 </template>
 

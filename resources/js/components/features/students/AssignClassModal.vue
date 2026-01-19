@@ -99,9 +99,9 @@ const handleClose = () => {
         @close="handleClose"
         max-width="md"
     >
-        <form @submit.prevent="handleSubmit" class="p-4 space-y-4">
+        <form @submit.prevent="handleSubmit" class="p-4 space-y-4" aria-label="Form pindah kelas siswa">
             <!-- Summary Info -->
-            <div class="bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-slate-100 dark:border-zinc-800">
+            <div class="bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-slate-200 dark:border-zinc-800">
                 <p class="text-sm text-slate-600 dark:text-slate-400">
                     <span v-if="students.length === 1">
                         Siswa: <span class="font-semibold text-slate-900 dark:text-slate-100">{{ students[0].nama_lengkap }}</span>
@@ -136,7 +136,7 @@ const handleClose = () => {
                 <button
                     type="button"
                     @click="handleClose"
-                    class="px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                    class="px-4 py-2.5 min-h-[44px] text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900"
                 >
                     Batal
                 </button>
@@ -144,7 +144,8 @@ const handleClose = () => {
                 <button
                     type="submit"
                     :disabled="form.processing"
-                    class="px-4 py-2.5 text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    :aria-busy="form.processing"
+                    class="px-4 py-2.5 min-h-[44px] text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900"
                 >
                     <span v-if="form.processing">Menyimpan...</span>
                     <span v-else>Simpan Perubahan</span>

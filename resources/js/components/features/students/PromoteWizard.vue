@@ -455,15 +455,15 @@ watch(() => form.value.kelas_id_asal, () => {
                         />
                     </div>
 
-                    <!-- Student Items -->
-                    <div class="max-h-[400px] overflow-y-auto space-y-2 pr-2">
+                    <!-- Student Items dengan proper accessibility -->
+                    <div class="max-h-[400px] overflow-y-auto space-y-2 pr-2" role="group" aria-label="Daftar siswa untuk dipromosikan">
                         <Motion
                             v-for="student in previewStudents"
                             :key="student.id"
                             :whileTap="{ scale: 0.98 }"
                         >
                             <label
-                                class="flex items-center gap-3 p-4 bg-slate-50/50 dark:bg-zinc-800/30 hover:bg-slate-50 dark:hover:bg-zinc-800/50 border border-slate-200 dark:border-zinc-800 rounded-xl cursor-pointer transition-all duration-200"
+                                class="flex items-center gap-3 p-4 bg-slate-50/50 dark:bg-zinc-800/30 hover:bg-slate-50 dark:hover:bg-zinc-800/50 border border-slate-200 dark:border-zinc-800 rounded-xl cursor-pointer transition-all duration-200 focus-within:ring-2 focus-within:ring-emerald-500/50"
                                 :class="
                                     selectedStudentIds.includes(student.id)
                                         ? 'border-emerald-500/50 bg-emerald-50/30 dark:bg-emerald-950/20'
@@ -474,6 +474,7 @@ watch(() => form.value.kelas_id_asal, () => {
                                     type="checkbox"
                                     :checked="selectedStudentIds.includes(student.id)"
                                     @change="toggleStudent(student.id)"
+                                    :aria-label="`Pilih ${student.nama_lengkap}`"
                                     class="w-5 h-5 text-emerald-500 rounded border-slate-300 focus:ring-emerald-500 focus:ring-offset-0"
                                 />
                                 <div class="flex-1">
@@ -482,7 +483,7 @@ watch(() => form.value.kelas_id_asal, () => {
                                     </p>
                                     <p class="text-sm text-slate-500 dark:text-slate-400">
                                         NIS: {{ student.nis }}
-                                        <span class="mx-2">•</span>
+                                        <span class="mx-2" aria-hidden="true">•</span>
                                         {{ student.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}
                                     </p>
                                 </div>
@@ -498,15 +499,15 @@ watch(() => form.value.kelas_id_asal, () => {
                 </div>
             </div>
 
-            <!-- Actions -->
+            <!-- Actions dengan proper accessibility -->
             <div class="flex items-center gap-3 p-6 bg-slate-50 dark:bg-zinc-900/50 border-t border-slate-200 dark:border-zinc-800">
                 <Motion v-if="currentStep > 1" :whileTap="{ scale: 0.97 }" class="flex-none">
                     <button
                         type="button"
                         @click="prevStep"
-                        class="flex items-center gap-2 px-4 h-[48px] bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl border border-slate-300 dark:border-zinc-700 transition-colors duration-200"
+                        class="flex items-center gap-2 px-4 h-[48px] bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl border border-slate-300 dark:border-zinc-700 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/50"
                     >
-                        <ArrowLeft class="w-4 h-4" />
+                        <ArrowLeft class="w-4 h-4" aria-hidden="true" />
                         Kembali
                     </button>
                 </Motion>
@@ -521,10 +522,11 @@ watch(() => form.value.kelas_id_asal, () => {
                             (currentStep === 1 && !canGoToStep2) ||
                             (currentStep === 2 && !canGoToStep3)
                         "
-                        class="flex items-center gap-2 px-6 h-[48px] bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-sm shadow-emerald-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        :aria-disabled="(currentStep === 1 && !canGoToStep2) || (currentStep === 2 && !canGoToStep3)"
+                        class="flex items-center gap-2 px-6 h-[48px] bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-sm shadow-emerald-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900"
                     >
                         Lanjut
-                        <ArrowRight class="w-4 h-4" />
+                        <ArrowRight class="w-4 h-4" aria-hidden="true" />
                     </button>
                 </Motion>
 
@@ -533,10 +535,12 @@ watch(() => form.value.kelas_id_asal, () => {
                         type="button"
                         @click="handleSubmit"
                         :disabled="!canSubmit || isLoading"
-                        class="flex items-center gap-2 px-6 h-[48px] bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-sm shadow-emerald-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        :aria-busy="isLoading"
+                        :aria-disabled="!canSubmit"
+                        class="flex items-center gap-2 px-6 h-[48px] bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-sm shadow-emerald-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900"
                     >
-                        <Loader2 v-if="isLoading" class="w-4 h-4 animate-spin" />
-                        <Check v-else class="w-4 h-4" />
+                        <Loader2 v-if="isLoading" class="w-4 h-4 animate-spin" aria-hidden="true" />
+                        <Check v-else class="w-4 h-4" aria-hidden="true" />
                         Proses Naik Kelas
                     </button>
                 </Motion>

@@ -104,12 +104,16 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="space-y-2">
-        <!-- Label -->
-        <label v-if="label" class="block text-[11px] font-semibold tracking-wide uppercase text-slate-600 dark:text-slate-400 pl-1">
+        <!-- Label dengan unique ID untuk accessibility -->
+        <label 
+            v-if="label" 
+            :id="`photo-upload-label-${$.uid}`"
+            class="block text-[11px] font-semibold tracking-wide uppercase text-slate-600 dark:text-slate-400 pl-1"
+        >
             {{ label }}
         </label>
 
-        <!-- Upload Container -->
+        <!-- Upload Container dengan proper accessibility -->
         <Motion 
             :whileTap="{ scale: previewUrl ? 1 : 0.98 }"
         >
@@ -124,22 +128,29 @@ onBeforeUnmount(() => {
                         ? 'ring-2 ring-red-400 ring-offset-2 dark:ring-offset-zinc-900' 
                         : '',
                 ]"
+                role="button"
+                tabindex="0"
+                :aria-labelledby="label ? `photo-upload-label-${$.uid}` : undefined"
+                :aria-describedby="hint && !error ? `photo-upload-hint-${$.uid}` : error ? `photo-upload-error-${$.uid}` : undefined"
                 @dragenter.prevent="isDragging = true"
                 @dragleave.prevent="isDragging = false"
                 @dragover.prevent
                 @drop.prevent="handleDrop"
                 @click="triggerBrowse"
+                @keydown.enter="triggerBrowse"
+                @keydown.space.prevent="triggerBrowse"
             >
                 <input
                     ref="fileInput"
                     type="file"
                     class="hidden"
                     accept="image/png, image/jpeg, image/jpg"
+                    :aria-label="label || 'Upload foto'"
                     @change="handleFileSelect"
                 />
 
                 <!-- Preview State -->
-                <div v-if="previewUrl" class="relative aspect-[3/4] w-full max-w-[160px] mx-auto bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden">
+                <div v-if="previewUrl" class="relative aspect-3/4 w-full max-w-[160px] mx-auto bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden">
                     <img
                         :src="previewUrl"
                         alt="Preview Foto"
@@ -147,20 +158,20 @@ onBeforeUnmount(() => {
                     />
 
                     <!-- Hover/Touch Overlay -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-end pb-4">
+                    <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-end pb-4">
                         <ImagePlus class="w-5 h-5 text-white mb-1" />
                         <p class="text-white text-xs font-medium">Ganti Foto</p>
                     </div>
 
-                    <!-- Remove Button - Increased touch target to 44px -->
+                    <!-- Remove Button - Increased touch target to 44px dengan proper focus state -->
                     <Motion :whileTap="{ scale: 0.9 }">
                         <button
                             @click.stop="removePhoto"
-                            class="absolute -top-1 -right-1 w-11 h-11 flex items-center justify-center bg-white/95 dark:bg-zinc-900/95 rounded-xl text-slate-500 hover:text-red-500 active:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors shadow-lg border border-slate-200 dark:border-zinc-700"
+                            class="absolute -top-1 -right-1 w-11 h-11 flex items-center justify-center bg-white/95 dark:bg-zinc-900/95 rounded-xl text-slate-500 hover:text-red-500 active:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors shadow-lg border border-slate-200 dark:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 focus-visible:ring-offset-2"
                             type="button"
                             aria-label="Hapus foto"
                         >
-                            <X class="w-5 h-5" />
+                            <X class="w-5 h-5" aria-hidden="true" />
                         </button>
                     </Motion>
                 </div>
@@ -210,12 +221,21 @@ onBeforeUnmount(() => {
         </Motion>
 
         <!-- Hint Text -->
-        <p v-if="hint && !error" class="text-xs text-slate-500 dark:text-slate-400 pl-1 font-medium">
+        <p 
+            v-if="hint && !error" 
+            :id="`photo-upload-hint-${$.uid}`"
+            class="text-xs text-slate-500 dark:text-slate-400 pl-1 font-medium"
+        >
             {{ hint }}
         </p>
 
         <!-- Error Message -->
-        <p v-if="error" class="text-xs text-red-500 dark:text-red-400 pl-1 font-medium">
+        <p 
+            v-if="error" 
+            :id="`photo-upload-error-${$.uid}`"
+            class="text-xs text-red-500 dark:text-red-400 pl-1 font-medium"
+            role="alert"
+        >
             {{ error }}
         </p>
     </div>
