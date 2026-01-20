@@ -222,4 +222,59 @@ class Student extends Model
             'total' => $attendances->count(),
         ];
     }
+
+    /**
+     * Relationship one-to-many dengan Bill untuk tracking
+     * tagihan pembayaran siswa
+     *
+     * @return HasMany<Bill>
+     */
+    public function bills(): HasMany
+    {
+        return $this->hasMany(Bill::class);
+    }
+
+    /**
+     * Relationship one-to-many dengan Payment untuk tracking
+     * riwayat pembayaran siswa
+     *
+     * @return HasMany<Payment>
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Helper method untuk mendapatkan total tunggakan siswa
+     */
+    public function getTotalTunggakanAttribute(): float
+    {
+        return (float) $this->bills()
+            ->whereIn('status', ['belum_bayar', 'sebagian'])
+            ->sum(\Illuminate\Support\Facades\DB::raw('nominal - nominal_terbayar'));
+    }
+
+    /**
+     * Helper method untuk mendapatkan summary pembayaran siswa
+     *
+     * @return array{total_tagihan: float, total_terbayar: float, total_tunggakan: float}
+     */
+    public function getPaymentSummary(?string $tahunAjaran = null): array
+    {
+        $query = $this->bills()->active();
+
+        if ($tahunAjaran) {
+            $query->where('tahun_ajaran', $tahunAjaran);
+        }
+
+        $totalTagihan = (float) $query->sum('nominal');
+        $totalTerbayar = (float) $query->sum('nominal_terbayar');
+
+        return [
+            'total_tagihan' => $totalTagihan,
+            'total_terbayar' => $totalTerbayar,
+            'total_tunggakan' => $totalTagihan - $totalTerbayar,
+        ];
+    }
 }

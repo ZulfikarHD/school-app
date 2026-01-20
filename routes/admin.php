@@ -11,6 +11,7 @@
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\LeaveRequestController;
+use App\Http\Controllers\Admin\PaymentCategoryController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TeacherAttendanceController;
 use App\Http\Controllers\Admin\UserController;
@@ -90,4 +91,11 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
     Route::get('leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
     Route::post('leave-requests/{leaveRequest}/approve', [LeaveRequestController::class, 'approve'])
         ->name('leave-requests.approve');
+
+    /**
+     * Payment Management - Kategori pembayaran, tagihan, dan pembayaran
+     */
+    Route::patch('payment-categories/{payment_category}/toggle-status', [PaymentCategoryController::class, 'toggleStatus'])
+        ->name('payment-categories.toggle-status');
+    Route::resource('payment-categories', PaymentCategoryController::class);
 });
