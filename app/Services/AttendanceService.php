@@ -782,7 +782,7 @@ class AttendanceService
             ->pluck('teacher_id');
 
         return User::where('role', 'TEACHER')
-            ->where('is_active', true)
+            ->where('status', 'ACTIVE')
             ->whereNotIn('id', $clockedInTeacherIds)
             ->get();
     }

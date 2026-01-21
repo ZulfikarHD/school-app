@@ -6,7 +6,7 @@ import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import StudentTable from '@/components/features/students/StudentTable.vue';
 import AssignClassModal from '@/components/features/students/AssignClassModal.vue';
-import { create as createStudent, edit as editStudent, show as showStudent, destroy as deleteStudent } from '@/routes/admin/students';
+import { index as studentsIndex, create as createStudent, edit as editStudent, show as showStudent, destroy as deleteStudent, exportMethod as exportStudents } from '@/routes/admin/students';
 import { page as promotePage } from '@/routes/admin/students/promote';
 import { useModal } from '@/composables/useModal';
 import { useHaptics } from '@/composables/useHaptics';
@@ -97,6 +97,28 @@ const handleAssignSuccess = () => {
     router.reload({ only: ['students'] });
 };
 
+/**
+ * Handle export to Excel dengan current filters
+ * untuk download file .xlsx dengan data siswa
+ */
+const handleExport = () => {
+    haptics.light();
+    
+    // Build export URL with current filters
+    const exportUrl = exportStudents({
+        query: {
+            search: props.filters.search || undefined,
+            kelas_id: props.filters.kelas_id || undefined,
+            status: props.filters.status || undefined,
+            tahun_ajaran: props.filters.tahun_ajaran || undefined,
+            jenis_kelamin: props.filters.jenis_kelamin || undefined,
+        }
+    }).url;
+    
+    // Open in new tab to trigger download
+    window.open(exportUrl, '_blank');
+};
+
 // Mock mock classes if empty (fallback)
 const classesList = computed(() => props.classes || []);
 
@@ -175,7 +197,7 @@ const academicYears = [
                                 <!-- Export Button -->
                                 <Motion :whileTap="{ scale: 0.97 }">
                                     <button
-                                        @click="haptics.light()"
+                                        @click="handleExport"
                                         class="group w-11 h-11 flex items-center justify-center text-slate-600 dark:text-slate-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600 transition-all duration-200 shadow-sm
                                                focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
                                         title="Export Excel"
@@ -214,6 +236,7 @@ const academicYears = [
                     :filters="filters"
                     :classes="classesList"
                     :academic-years="academicYears"
+                    :filter-url="studentsIndex().url"
                     @edit="handleEdit"
                     @view="handleView"
                     @delete="handleDelete"

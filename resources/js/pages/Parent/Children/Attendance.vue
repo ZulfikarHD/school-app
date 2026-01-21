@@ -6,6 +6,8 @@ import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import AttendanceStatusBadge from '@/components/features/attendance/AttendanceStatusBadge.vue';
 import { useHaptics } from '@/composables/useHaptics';
+import { attendance } from '@/routes/parent/children';
+import { exportMethod as exportAttendance } from '@/routes/parent/children/attendance';
 
 interface Student {
     id: number;
@@ -46,6 +48,7 @@ const haptics = useHaptics();
 
 // State
 const currentMonth = ref(new Date(props.filters.start_date));
+const isLoading = ref(false);
 
 // Computed
 const attendancePercentage = computed(() => {
@@ -123,18 +126,35 @@ const loadMonth = () => {
     const startDate = new Date(year, month, 1).toISOString().split('T')[0];
     const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
     
-    router.get(`/parent/children/${props.student.id}/attendance`, {
-        start_date: startDate,
-        end_date: endDate,
-    }, {
+    isLoading.value = true;
+    
+    // Use Wayfinder route for navigation
+    const attendanceUrl = attendance(props.student.id, {
+        query: {
+            start_date: startDate,
+            end_date: endDate,
+        }
+    }).url;
+    
+    router.get(attendanceUrl, {}, {
         preserveState: true,
         preserveScroll: true,
+        onFinish: () => {
+            isLoading.value = false;
+        },
     });
 };
 
 const exportPDF = () => {
     haptics.medium();
-    window.location.href = `/parent/children/${props.student.id}/attendance/export?start_date=${props.filters.start_date}&end_date=${props.filters.end_date}`;
+    // Use Wayfinder route for export
+    const exportUrl = exportAttendance(props.student.id, {
+        query: {
+            start_date: props.filters.start_date,
+            end_date: props.filters.end_date,
+        }
+    }).url;
+    window.open(exportUrl, '_blank');
 };
 
 const getDayColor = (day: any) => {
@@ -201,8 +221,8 @@ const getDayTextColor = (day: any) => {
                 </Motion>
             </div>
 
-            <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <!-- Summary Cards - 2 cols on mobile, 5 on desktop -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
                 <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                     <div class="flex items-center justify-between">
                         <div>
@@ -247,7 +267,18 @@ const getDayTextColor = (day: any) => {
             </div>
 
             <!-- Calendar -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative">
+                <!-- Loading Overlay -->
+                <div
+                    v-if="isLoading"
+                    class="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm z-10 flex items-center justify-center"
+                >
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="w-10 h-10 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin"></div>
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Memuat data...</span>
+                    </div>
+                </div>
+                
                 <!-- Calendar Header -->
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <h2 class="text-lg font-medium text-gray-900 dark:text-white">
@@ -256,7 +287,8 @@ const getDayTextColor = (day: any) => {
                     <div class="flex items-center gap-3">
                         <button
                             @click="previousMonth"
-                            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            :disabled="isLoading"
+                            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <ChevronLeft :size="20" class="text-gray-600 dark:text-gray-400" />
                         </button>
@@ -265,7 +297,8 @@ const getDayTextColor = (day: any) => {
                         </span>
                         <button
                             @click="nextMonth"
-                            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            :disabled="isLoading"
+                            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <ChevronRight :size="20" class="text-gray-600 dark:text-gray-400" />
                         </button>
@@ -273,9 +306,9 @@ const getDayTextColor = (day: any) => {
                 </div>
 
                 <!-- Calendar Grid -->
-                <div class="p-6">
+                <div class="p-4 sm:p-6">
                     <!-- Day Headers -->
-                    <div class="grid grid-cols-7 gap-2 mb-2">
+                    <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
                         <div
                             v-for="day in ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']"
                             :key="day"
@@ -285,14 +318,14 @@ const getDayTextColor = (day: any) => {
                         </div>
                     </div>
 
-                    <!-- Calendar Days -->
-                    <div class="grid grid-cols-7 gap-2">
+                    <!-- Calendar Days - Min 44px touch target for mobile accessibility -->
+                    <div class="grid grid-cols-7 gap-1 sm:gap-2">
                         <div
                             v-for="(day, index) in calendarDays"
                             :key="index"
                             :class="[
-                                'aspect-square p-2 rounded-xl border-2 transition-all',
-                                day ? 'cursor-pointer hover:scale-105' : '',
+                                'min-h-[44px] sm:min-h-0 sm:aspect-square p-1 sm:p-2 rounded-lg sm:rounded-xl border-2 transition-all',
+                                day ? 'cursor-pointer active:scale-95 sm:hover:scale-105' : '',
                                 day?.isToday ? 'ring-2 ring-blue-500' : '',
                                 day?.isWeekend && !day?.attendance ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700' : '',
                                 !day?.isWeekend && !day?.attendance ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : '',
@@ -300,11 +333,11 @@ const getDayTextColor = (day: any) => {
                             ]"
                         >
                             <div v-if="day" class="h-full flex flex-col items-center justify-center">
-                                <span :class="['text-sm font-medium', getDayTextColor(day)]">
+                                <span :class="['text-xs sm:text-sm font-medium', getDayTextColor(day)]">
                                     {{ day.day }}
                                 </span>
-                                <div v-if="day.attendance" class="mt-1">
-                                    <span class="text-xs font-bold">
+                                <div v-if="day.attendance" class="mt-0.5 sm:mt-1">
+                                    <span class="text-[10px] sm:text-xs font-bold">
                                         {{ day.attendance.status }}
                                     </span>
                                 </div>

@@ -158,4 +158,17 @@ class User extends Authenticatable
     {
         return $query->where('role', 'TEACHER');
     }
+
+    /**
+     * Scope query untuk filter user dengan status ACTIVE
+     * Note: User model menggunakan column 'status' (enum: ACTIVE, INACTIVE)
+     * berbeda dengan model lain yang menggunakan 'is_active' (boolean)
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<User>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<User>
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'ACTIVE');
+    }
 }

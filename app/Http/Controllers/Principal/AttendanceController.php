@@ -75,7 +75,7 @@ class AttendanceController extends Controller
             ->values();
 
         // Get teacher presence
-        $totalTeachers = User::where('role', 'TEACHER')->where('is_active', true)->count();
+        $totalTeachers = User::where('role', 'TEACHER')->where('status', 'ACTIVE')->count();
         $teacherAttendances = TeacherAttendance::whereDate('tanggal', $date)->get();
         $clockedInCount = $teacherAttendances->count();
         $lateCount = $teacherAttendances->where('is_late', true)->count();
@@ -274,7 +274,7 @@ class AttendanceController extends Controller
 
         // Get all teachers untuk menampilkan yang belum clock in
         $allTeachers = User::where('role', 'TEACHER')
-            ->where('is_active', true)
+            ->where('status', 'ACTIVE')
             ->get();
 
         $clockedInTeacherIds = TeacherAttendance::whereDate('tanggal', $date)
@@ -329,7 +329,7 @@ class AttendanceController extends Controller
 
         // Get all teachers untuk filter dropdown
         $teachers = User::where('role', 'TEACHER')
-            ->where('is_active', true)
+            ->where('status', 'ACTIVE')
             ->orderBy('name')
             ->get();
 

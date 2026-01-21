@@ -73,7 +73,7 @@ class ChildController extends Controller
         $student->load([
             'guardians',
             'primaryGuardian',
-            'classHistory',
+            'classHistory.kelas',
             // Note: Tidak load statusHistory karena parent tidak perlu lihat history internal
         ]);
 

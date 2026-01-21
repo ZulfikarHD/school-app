@@ -114,7 +114,7 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
     });
 
     /**
-     * Payment Recording - Catat dan kelola pembayaran siswa
+     * Payment Recording - Catat dan kelola pembayaran siswa (Legacy per-payment)
      */
     Route::prefix('payments/records')->name('payments.records.')->group(function () {
         Route::get('/', [PaymentController::class, 'index'])->name('index');
@@ -126,6 +126,19 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
         Route::get('{payment}/receipt/stream', [PaymentController::class, 'receiptStream'])->name('receipt.stream');
         Route::post('{payment}/verify', [PaymentController::class, 'verify'])->name('verify');
         Route::post('{payment}/cancel', [PaymentController::class, 'cancel'])->name('cancel');
+    });
+
+    /**
+     * Payment Transactions - Combined payment management (1 transaction : N bills)
+     */
+    Route::prefix('payments/transactions')->name('payments.transactions.')->group(function () {
+        Route::get('/', [PaymentController::class, 'transactionIndex'])->name('index');
+        Route::post('/', [PaymentController::class, 'storeTransaction'])->name('store');
+        Route::get('{transaction}', [PaymentController::class, 'showTransaction'])->name('show');
+        Route::get('{transaction}/receipt', [PaymentController::class, 'transactionReceipt'])->name('receipt');
+        Route::get('{transaction}/receipt/stream', [PaymentController::class, 'transactionReceiptStream'])->name('receipt.stream');
+        Route::post('{transaction}/verify', [PaymentController::class, 'verifyTransaction'])->name('verify');
+        Route::post('{transaction}/reject', [PaymentController::class, 'rejectTransaction'])->name('reject');
     });
 
     /**

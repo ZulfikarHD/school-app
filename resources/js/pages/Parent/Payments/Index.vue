@@ -109,11 +109,34 @@ interface PendingPayment {
     has_bukti: boolean;
 }
 
+interface PendingTransaction {
+    id: number;
+    transaction_number: string;
+    total_amount: number;
+    formatted_amount: string;
+    payment_method: string;
+    method_label: string;
+    payment_date: string;
+    formatted_date: string;
+    status: string;
+    status_label: string;
+    bill_count: number;
+    students: Array<{
+        id: number;
+        nama_lengkap: string;
+        nis: string;
+        kelas: string;
+    }>;
+    has_proof: boolean;
+    created_at: string;
+}
+
 interface Props {
     children: Student[];
     activeBills: Bill[];
     paidBills: Bill[];
-    pendingPayments: PendingPayment[];
+    pendingTransactions: PendingTransaction[];
+    pendingPayments?: PendingPayment[]; // Legacy support
     summary: Summary;
     message?: string;
 }
@@ -178,7 +201,18 @@ const filteredPaidBills = computed(() => {
     return props.paidBills.filter(bill => bill.student.id === selectedChildId.value);
 });
 
-// Filter pending payments by selected child
+// Filter pending transactions by selected child
+const pendingTransactions = computed(() => {
+    if (!selectedChildId.value) {
+        return props.pendingTransactions || [];
+    }
+    // Filter transactions that have at least one item for the selected child
+    return (props.pendingTransactions || []).filter(transaction =>
+        transaction.students.some(student => student.id === selectedChildId.value)
+    );
+});
+
+// Legacy: Filter pending payments by selected child
 const pendingPayments = computed(() => {
     if (!selectedChildId.value) {
         return props.pendingPayments || [];
@@ -550,7 +584,65 @@ watch(selectedChildId, () => {
                     </div>
                 </Motion>
 
-                <!-- Pending Payments Section -->
+                <!-- Pending Transactions Section (Combined Payment) -->
+                <Motion
+                    v-if="pendingTransactions.length > 0"
+                    :initial="{ opacity: 0, y: 10 }"
+                    :animate="{ opacity: 1, y: 0 }"
+                    :transition="{ duration: 0.3, ease: 'easeOut', delay: 0.12 }"
+                >
+                    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden">
+                        <div class="px-4 py-3 border-b border-slate-200 dark:border-zinc-800 bg-orange-50 dark:bg-orange-900/20">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <Clock class="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                                    <h3 class="font-semibold text-orange-900 dark:text-orange-100">Menunggu Verifikasi</h3>
+                                    <span class="px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300">
+                                        {{ pendingTransactions.length }} transaksi
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="divide-y divide-slate-200 dark:divide-zinc-800">
+                            <div
+                                v-for="transaction in pendingTransactions"
+                                :key="transaction.id"
+                                class="p-4"
+                            >
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <p class="font-semibold text-slate-900 dark:text-slate-100">
+                                                {{ transaction.transaction_number }}
+                                            </p>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                                <Clock class="w-3 h-3" />
+                                                Menunggu Verifikasi
+                                            </span>
+                                        </div>
+                                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                                            {{ transaction.bill_count }} tagihan •
+                                            {{ transaction.students.map(s => s.nama_lengkap).join(', ') }}
+                                        </p>
+                                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                                            Disubmit: {{ transaction.created_at }}
+                                        </p>
+                                    </div>
+                                    <div class="text-right shrink-0">
+                                        <p class="font-bold text-slate-900 dark:text-slate-100">
+                                            {{ transaction.formatted_amount }}
+                                        </p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                            {{ transaction.method_label }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Motion>
+
+                <!-- Legacy: Pending Payments Section (untuk backward compatibility) -->
                 <Motion
                     v-if="pendingPayments.length > 0"
                     :initial="{ opacity: 0, y: 10 }"
@@ -562,7 +654,7 @@ watch(selectedChildId, () => {
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <Clock class="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                                    <h3 class="font-semibold text-orange-900 dark:text-orange-100">Menunggu Verifikasi</h3>
+                                    <h3 class="font-semibold text-orange-900 dark:text-orange-100">Pembayaran Lama (Legacy)</h3>
                                     <span class="px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300">
                                         {{ pendingPayments.length }}
                                     </span>

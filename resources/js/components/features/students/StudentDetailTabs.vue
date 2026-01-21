@@ -337,8 +337,13 @@ const formatDate = (date: string) => {
                             <GraduationCap class="w-6 h-6 text-sky-600 dark:text-sky-400" aria-hidden="true" />
                         </div>
                         <div class="flex-1">
-                            <p class="font-semibold text-slate-900 dark:text-slate-100">Kelas {{ history.kelas_id }}</p>
-                            <p class="text-sm text-slate-600 dark:text-slate-400">{{ history.tahun_ajaran }} • Wali Kelas: {{ history.wali_kelas }}</p>
+                            <p class="font-semibold text-slate-900 dark:text-slate-100">
+                                {{ history.kelas ? `Kelas ${history.kelas.tingkat}${history.kelas.nama}` : `Kelas ID ${history.kelas_id}` }}
+                            </p>
+                            <p class="text-sm text-slate-600 dark:text-slate-400">
+                                {{ history.tahun_ajaran }}
+                                <span v-if="history.wali_kelas"> • Wali Kelas: {{ history.wali_kelas }}</span>
+                            </p>
                         </div>
                         <time class="text-xs text-slate-500 dark:text-slate-400">{{ formatDate(history.created_at) }}</time>
                     </article>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import {
     Search,
@@ -13,7 +13,6 @@ import {
 } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import { useHaptics } from '@/composables/useHaptics';
-import { index as studentsIndex } from '@/routes/admin/students';
 import Badge from '@/components/ui/Badge.vue';
 import type { Student } from '@/types/student';
 
@@ -52,6 +51,10 @@ interface Props {
     readOnly?: boolean;
     // Hide selection checkboxes
     hideSelection?: boolean;
+    // Custom filter URL - allows different portals (admin, principal, teacher) to use their own routes
+    filterUrl?: string;
+    // Custom empty state message for read-only users
+    emptyMessage?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -60,7 +63,9 @@ const props = withDefaults(defineProps<Props>(), {
     classes: () => [],
     academicYears: () => [],
     readOnly: false,
-    hideSelection: false
+    hideSelection: false,
+    filterUrl: '',
+    emptyMessage: ''
 });
 
 const emit = defineEmits(['edit', 'delete', 'view', 'update-status', 'selection-change']);
@@ -76,24 +81,35 @@ const jenisKelamin = ref(props.filters.jenis_kelamin || '');
 // Selection state
 const selectedIds = ref<number[]>([]);
 
-// Debounce search
-let timeout: ReturnType<typeof setTimeout>;
+// Debounce search with proper cleanup
+let timeout: ReturnType<typeof setTimeout> | null = null;
 
 const handleSearch = () => {
-    clearTimeout(timeout);
+    if (timeout) clearTimeout(timeout);
     timeout = setTimeout(() => {
         applyFilters();
     }, 300);
 };
 
+// Cleanup timeout on component unmount to prevent memory leaks
+onUnmounted(() => {
+    if (timeout) clearTimeout(timeout);
+});
+
 const applyFilters = () => {
+    // Skip filtering if no filterUrl is provided
+    if (!props.filterUrl) {
+        console.warn('StudentTable: filterUrl prop is required for filtering');
+        return;
+    }
+
     haptics.selection();
     // Reset selection when filtering
     selectedIds.value = [];
     emit('selection-change', []);
 
     router.get(
-        studentsIndex().url,
+        props.filterUrl,
         {
             search: search.value,
             kelas_id: kelasId.value,
@@ -348,7 +364,9 @@ defineExpose({
                                         </div>
                                         <div>
                                             <p class="font-medium text-slate-700 dark:text-slate-300">Belum ada siswa ditemukan</p>
-                                            <p class="text-sm text-slate-400 mt-1">Coba ubah filter atau tambah siswa baru</p>
+                                            <p class="text-sm text-slate-400 mt-1">
+                                                {{ emptyMessage || (readOnly ? 'Coba ubah filter pencarian' : 'Coba ubah filter atau tambah siswa baru') }}
+                                            </p>
                                         </div>
                                     </div>
                                 </td>
@@ -475,7 +493,9 @@ defineExpose({
                     <Shield class="w-8 h-8 text-slate-400 dark:text-zinc-500" />
                 </div>
                 <p class="font-medium text-slate-700 dark:text-slate-300">Belum ada siswa ditemukan</p>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Coba ubah filter atau tambah siswa baru</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    {{ emptyMessage || (readOnly ? 'Coba ubah filter pencarian' : 'Coba ubah filter atau tambah siswa baru') }}
+                </p>
             </div>
 
             <!-- Data Cards - Modern premium design -->

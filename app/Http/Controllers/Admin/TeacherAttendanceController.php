@@ -87,7 +87,7 @@ class TeacherAttendanceController extends Controller
         $attendances = $this->attendanceService->getTeacherAttendanceReport($filters);
 
         // Calculate work hours for each teacher
-        $teachers = User::where('role', 'TEACHER')->where('is_active', true)->get();
+        $teachers = User::where('role', 'TEACHER')->where('status', 'ACTIVE')->get();
 
         $statistics = [
             'total_records' => $attendances->count(),

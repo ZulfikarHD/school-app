@@ -5,7 +5,7 @@ import { Eye, Users } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import StudentTable from '@/components/features/students/StudentTable.vue';
-import { show as showStudent } from '@/routes/teacher/students';
+import { index as studentsIndex, show as showStudent } from '@/routes/teacher/students';
 import { useHaptics } from '@/composables/useHaptics';
 import type { Student } from '@/types/student';
 
@@ -85,6 +85,8 @@ const handleView = (student: Student) => {
                     :academic-years="academicYears"
                     :read-only="true"
                     :hide-selection="true"
+                    :filter-url="studentsIndex().url"
+                    empty-message="Tidak ada siswa di kelas yang Anda ajar"
                     @view="handleView"
                 />
             </Motion>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Payments Index Page - Daftar pembayaran dengan filter dan statistik
- * untuk Admin/TU mengelola semua pembayaran
+ * untuk Admin/TU mengelola semua pembayaran (legacy + transactions)
  */
 import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
@@ -11,26 +11,30 @@ import { useModal } from '@/composables/useModal';
 import {
     Plus, Search, Receipt, Banknote, CreditCard, Eye, Printer,
     Clock, CheckCircle2, XCircle, Calendar, TrendingUp,
-    ChevronLeft, ChevronRight, RefreshCw
+    ChevronLeft, ChevronRight, RefreshCw, Layers
 } from 'lucide-vue-next';
 import { index, create, show, receipt } from '@/routes/admin/payments/records';
+import { show as showTransaction, receipt as transactionReceipt } from '@/routes/admin/payments/transactions';
 import { Motion } from 'motion-v';
 
-interface Payment {
+// Unified Record interface untuk gabungan payment + transaction
+interface PaymentRecord {
     id: number;
-    nomor_kwitansi: string;
-    bill: {
-        id: number;
-        nomor_tagihan: string;
-        category: string;
-        periode: string;
-    };
-    student: {
+    type: 'payment' | 'transaction';
+    reference_number: string;
+    students: Array<{
         id: number;
         nama_lengkap: string;
         nis: string;
         kelas: string;
-    };
+    }>;
+    bills: Array<{
+        id: number;
+        category: string;
+        periode: string;
+        amount: number;
+    }>;
+    bill_count: number;
     nominal: number;
     formatted_nominal: string;
     metode_pembayaran: string;
@@ -40,7 +44,6 @@ interface Payment {
     waktu_bayar: string;
     status: 'pending' | 'verified' | 'cancelled';
     status_label: string;
-    keterangan: string | null;
     creator: { id: number; name: string } | null;
     verifier: { id: number; name: string } | null;
     verified_at: string | null;
@@ -64,7 +67,7 @@ interface Stats {
 }
 
 interface PaginatedData {
-    data: Payment[];
+    data: PaymentRecord[];
     current_page: number;
     last_page: number;
     per_page: number;
@@ -82,7 +85,7 @@ interface Filters {
 }
 
 interface Props {
-    payments: PaginatedData;
+    records: PaginatedData;
     stats: Stats;
     filters: Filters;
 }
@@ -102,7 +105,7 @@ const dateFilter = ref(props.filters.date || new Date().toISOString().split('T')
 let searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
 // Computed
-const hasPayments = computed(() => props.payments.data.length > 0);
+const hasRecords = computed(() => props.records.data.length > 0);
 
 const statusOptions = [
     { value: '', label: 'Semua Status' },
@@ -154,16 +157,23 @@ const goToPage = (url: string | null) => {
     router.get(url, {}, { preserveState: true, preserveScroll: true });
 };
 
-const viewPayment = (payment: Payment) => {
+const viewRecord = (record: PaymentRecord) => {
     haptics.light();
-    router.get(show(payment.id).url);
+    if (record.type === 'transaction') {
+        router.get(showTransaction(record.id).url);
+    } else {
+        router.get(show(record.id).url);
+    }
 };
 
-const downloadReceipt = (payment: Payment) => {
+const downloadReceipt = (record: PaymentRecord) => {
     haptics.medium();
-    // Gunakan URL stream untuk membuka PDF di browser (bukan download)
-    // sehingga user dapat langsung print via browser
-    window.open(`/admin/payments/records/${payment.id}/receipt/stream`, '_blank');
+    // Gunakan URL stream untuk membuka PDF di browser
+    if (record.type === 'transaction') {
+        window.open(`/admin/payments/transactions/${record.id}/receipt/stream`, '_blank');
+    } else {
+        window.open(`/admin/payments/records/${record.id}/receipt/stream`, '_blank');
+    }
 };
 
 const getStatusConfig = (status: string) => {
@@ -362,164 +372,105 @@ watch([statusFilter, metodeFilter, dateFilter], () => {
                 </div>
             </Motion>
 
-            <!-- Payments Table -->
+            <!-- Records List -->
             <Motion
                 :initial="{ opacity: 0, y: 10 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ duration: 0.3, ease: 'easeOut', delay: 0.15 }"
             >
                 <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden">
-                    <!-- Desktop Table -->
-                    <div class="hidden lg:block overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50">
-                                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">No. Kwitansi</th>
-                                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Siswa</th>
-                                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Tagihan</th>
-                                    <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Nominal</th>
-                                    <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Metode</th>
-                                    <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Status</th>
-                                    <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Tanggal</th>
-                                    <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-200 dark:divide-zinc-800">
-                                <tr
-                                    v-for="payment in payments.data"
-                                    :key="payment.id"
-                                    class="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
-                                >
-                                    <td class="px-6 py-4">
-                                        <span class="font-mono text-sm font-medium text-slate-900 dark:text-slate-100">
-                                            {{ payment.nomor_kwitansi }}
+                    <!-- Records List -->
+                    <div class="divide-y divide-slate-200 dark:divide-zinc-800">
+                        <div
+                            v-for="record in records.data"
+                            :key="`${record.type}-${record.id}`"
+                            class="p-4 hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors"
+                        >
+                            <div class="flex items-start gap-4">
+                                <!-- Left: Main Info -->
+                                <div class="flex-1 min-w-0">
+                                    <!-- Reference & Status -->
+                                    <div class="flex items-center gap-2 flex-wrap mb-2">
+                                        <p class="font-mono text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                            {{ record.reference_number }}
+                                        </p>
+                                        <span
+                                            v-if="record.type === 'transaction' && record.bill_count > 1"
+                                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400"
+                                        >
+                                            <Layers class="w-3 h-3" />
+                                            {{ record.bill_count }}
                                         </span>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <p class="font-medium text-slate-900 dark:text-slate-100">{{ payment.student.nama_lengkap }}</p>
-                                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ payment.student.nis }} • {{ payment.student.kelas }}</p>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <p class="text-sm text-slate-900 dark:text-slate-100">{{ payment.bill.category }}</p>
-                                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ payment.bill.periode }}</p>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <span class="font-bold text-slate-900 dark:text-slate-100">{{ payment.formatted_nominal }}</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-300">
-                                            <component :is="getMetodeIcon(payment.metode_pembayaran)" class="w-3 h-3" />
-                                            {{ payment.metode_label }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
                                         <span
                                             :class="[
-                                                'inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium',
-                                                getStatusConfig(payment.status).bgClass,
-                                                getStatusConfig(payment.status).textClass
+                                                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
+                                                getStatusConfig(record.status).bgClass,
+                                                getStatusConfig(record.status).textClass
                                             ]"
                                         >
-                                            <component :is="getStatusConfig(payment.status).icon" class="w-3 h-3" />
-                                            {{ payment.status_label }}
+                                            <component :is="getStatusConfig(record.status).icon" class="w-3 h-3" />
+                                            {{ record.status_label }}
                                         </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <span class="text-sm text-slate-900 dark:text-slate-100">{{ payment.formatted_tanggal }}</span>
-                                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ payment.waktu_bayar }}</p>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center justify-center gap-1">
-                                            <button
-                                                @click="viewPayment(payment)"
-                                                class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-                                                title="Lihat Detail"
-                                            >
-                                                <Eye class="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                v-if="payment.status === 'verified'"
-                                                @click="downloadReceipt(payment)"
-                                                class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
-                                                title="Cetak Kwitansi"
-                                            >
-                                                <Printer class="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                                    </div>
 
-                    <!-- Mobile Cards -->
-                    <div class="lg:hidden divide-y divide-slate-200 dark:divide-zinc-800">
-                        <div
-                            v-for="payment in payments.data"
-                            :key="payment.id"
-                            class="p-4"
-                        >
-                            <div class="flex items-start justify-between gap-3 mb-3">
-                                <div>
-                                    <p class="font-mono text-sm font-medium text-slate-900 dark:text-slate-100">
-                                        {{ payment.nomor_kwitansi }}
-                                    </p>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                                        {{ payment.formatted_tanggal }} {{ payment.waktu_bayar }}
-                                    </p>
-                                </div>
-                                <span
-                                    :class="[
-                                        'inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium',
-                                        getStatusConfig(payment.status).bgClass,
-                                        getStatusConfig(payment.status).textClass
-                                    ]"
-                                >
-                                    <component :is="getStatusConfig(payment.status).icon" class="w-3 h-3" />
-                                    {{ payment.status_label }}
-                                </span>
-                            </div>
+                                    <!-- Student & Bills -->
+                                    <div class="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                                        <span class="font-medium text-slate-900 dark:text-slate-100">
+                                            {{ record.students.length === 1 ? record.students[0].nama_lengkap : `${record.students.length} siswa` }}
+                                        </span>
+                                        <span v-if="record.students.length === 1"> • {{ record.students[0].kelas }}</span>
+                                    </div>
 
-                            <div class="flex items-center gap-3 mb-3">
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-medium text-slate-900 dark:text-slate-100 truncate">
-                                        {{ payment.student.nama_lengkap }}
-                                    </p>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                                        {{ payment.student.nis }} • {{ payment.bill.category }}
-                                    </p>
+                                    <!-- Bills summary -->
+                                    <div class="text-sm text-slate-500 dark:text-slate-400">
+                                        <span v-if="record.bills.length === 1">
+                                            {{ record.bills[0].category }} ({{ record.bills[0].periode }})
+                                        </span>
+                                        <span v-else>
+                                            {{ record.bills.map(b => b.category).join(', ') }}
+                                        </span>
+                                    </div>
+
+                                    <!-- Date & Method -->
+                                    <div class="flex items-center gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                        <span class="flex items-center gap-1">
+                                            <Calendar class="w-3.5 h-3.5" />
+                                            {{ record.formatted_tanggal }}
+                                        </span>
+                                        <span class="flex items-center gap-1">
+                                            <component :is="getMetodeIcon(record.metode_pembayaran)" class="w-3.5 h-3.5" />
+                                            {{ record.metode_label }}
+                                        </span>
+                                    </div>
                                 </div>
+
+                                <!-- Right: Amount & Actions -->
                                 <div class="text-right shrink-0">
-                                    <p class="font-bold text-slate-900 dark:text-slate-100">{{ payment.formatted_nominal }}</p>
-                                    <span class="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                                        <component :is="getMetodeIcon(payment.metode_pembayaran)" class="w-3 h-3" />
-                                        {{ payment.metode_label }}
-                                    </span>
+                                    <p class="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">{{ record.formatted_nominal }}</p>
+                                    <div class="flex items-center gap-1 justify-end">
+                                        <button
+                                            @click="viewRecord(record)"
+                                            class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                                            title="Lihat Detail"
+                                        >
+                                            <Eye class="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            v-if="record.status === 'verified'"
+                                            @click="downloadReceipt(record)"
+                                            class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                                            title="Cetak Kwitansi"
+                                        >
+                                            <Printer class="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div class="flex items-center gap-2">
-                                <button
-                                    @click="viewPayment(payment)"
-                                    class="flex-1 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-zinc-800 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors flex items-center justify-center gap-1"
-                                >
-                                    <Eye class="w-4 h-4" />
-                                    Detail
-                                </button>
-                                <button
-                                    v-if="payment.status === 'verified'"
-                                    @click="downloadReceipt(payment)"
-                                    class="flex-1 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/20 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/30 transition-colors flex items-center justify-center gap-1"
-                                >
-                                    <Printer class="w-4 h-4" />
-                                    Cetak
-                                </button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Empty State -->
-                    <div v-if="!hasPayments" class="p-12 text-center">
+                    <div v-if="!hasRecords" class="p-12 text-center">
                         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
                             <Receipt class="w-8 h-8 text-slate-400" />
                         </div>
@@ -535,24 +486,24 @@ watch([statusFilter, metodeFilter, dateFilter], () => {
                     </div>
 
                     <!-- Pagination -->
-                    <div v-if="payments.last_page > 1" class="px-6 py-4 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+                    <div v-if="records.last_page > 1" class="px-6 py-4 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between">
                         <p class="text-sm text-slate-500 dark:text-slate-400">
-                            Menampilkan {{ payments.data.length }} dari {{ payments.total }} pembayaran
+                            Menampilkan {{ records.data.length }} dari {{ records.total }} pembayaran
                         </p>
                         <div class="flex items-center gap-1">
                             <button
-                                @click="goToPage(payments.links[0]?.url)"
-                                :disabled="!payments.links[0]?.url"
+                                @click="goToPage(records.links[0]?.url)"
+                                :disabled="!records.links[0]?.url"
                                 class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft class="w-5 h-5" />
                             </button>
                             <span class="px-3 text-sm text-slate-600 dark:text-slate-400">
-                                {{ payments.current_page }} / {{ payments.last_page }}
+                                {{ records.current_page }} / {{ records.last_page }}
                             </span>
                             <button
-                                @click="goToPage(payments.links[payments.links.length - 1]?.url)"
-                                :disabled="!payments.links[payments.links.length - 1]?.url"
+                                @click="goToPage(records.links[records.links.length - 1]?.url)"
+                                :disabled="!records.links[records.links.length - 1]?.url"
                                 class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <ChevronRight class="w-5 h-5" />

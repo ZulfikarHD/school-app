@@ -94,11 +94,20 @@ class Bill extends Model
     }
 
     /**
-     * Relationship one-to-many dengan Payment
+     * Relationship one-to-many dengan Payment (legacy)
      */
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Relationship one-to-many dengan PaymentItem
+     * untuk combined payment system
+     */
+    public function paymentItems(): HasMany
+    {
+        return $this->hasMany(PaymentItem::class);
     }
 
     /**
@@ -235,12 +244,48 @@ class Bill extends Model
 
     /**
      * Update status tagihan berdasarkan nominal terbayar
+     * dari legacy Payment model
      */
     public function updatePaymentStatus(): void
     {
         $totalPaid = $this->payments()
             ->where('status', 'verified')
             ->sum('nominal');
+
+        $this->nominal_terbayar = $totalPaid;
+
+        if ($totalPaid >= $this->nominal) {
+            $this->status = 'lunas';
+        } elseif ($totalPaid > 0) {
+            $this->status = 'sebagian';
+        } else {
+            $this->status = 'belum_bayar';
+        }
+
+        $this->save();
+    }
+
+    /**
+     * Update status tagihan berdasarkan PaymentItem dari PaymentTransaction
+     *
+     * Menghitung total pembayaran dari verified PaymentItems
+     * dan mengupdate status tagihan sesuai dengan nominal terbayar
+     */
+    public function updatePaymentStatusFromTransaction(): void
+    {
+        // Hitung total dari PaymentItems yang transaction-nya verified
+        $totalFromTransactions = $this->paymentItems()
+            ->whereHas('paymentTransaction', function ($query) {
+                $query->where('status', 'verified');
+            })
+            ->sum('amount');
+
+        // Hitung total dari legacy Payments yang verified (untuk backward compatibility)
+        $totalFromLegacy = $this->payments()
+            ->where('status', 'verified')
+            ->sum('nominal');
+
+        $totalPaid = $totalFromTransactions + $totalFromLegacy;
 
         $this->nominal_terbayar = $totalPaid;
 

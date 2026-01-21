@@ -79,7 +79,24 @@ class StudentController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/Students/Create');
+        $classes = SchoolClass::active()
+            ->orderBy('tingkat')
+            ->orderBy('nama')
+            ->get()
+            ->map(fn ($class) => [
+                'id' => $class->id,
+                'nama' => "Kelas {$class->tingkat}{$class->nama}",
+            ]);
+
+        // Generate current academic year dynamically
+        $now = now();
+        $year = $now->month >= 7 ? $now->year : $now->year - 1;
+        $currentAcademicYear = "{$year}/".($year + 1);
+
+        return Inertia::render('Admin/Students/Create', [
+            'classes' => $classes,
+            'currentAcademicYear' => $currentAcademicYear,
+        ]);
     }
 
     /**
@@ -173,7 +190,7 @@ class StudentController extends Controller
         $student->load([
             'guardians',
             'primaryGuardian',
-            'classHistory',
+            'classHistory.kelas',
             'statusHistory.changedBy',
             'kelas',
         ]);
@@ -196,8 +213,18 @@ class StudentController extends Controller
     {
         $student->load('guardians');
 
+        $classes = SchoolClass::active()
+            ->orderBy('tingkat')
+            ->orderBy('nama')
+            ->get()
+            ->map(fn ($class) => [
+                'id' => $class->id,
+                'nama' => "Kelas {$class->tingkat}{$class->nama}",
+            ]);
+
         return Inertia::render('Admin/Students/Edit', [
             'student' => $student,
+            'classes' => $classes,
         ]);
     }
 

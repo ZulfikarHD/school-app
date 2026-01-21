@@ -12,18 +12,15 @@ import { index as studentsIndex, store as storeStudent } from '@/routes/admin/st
 import { useHaptics } from '@/composables/useHaptics';
 import { useModal } from '@/composables/useModal';
 
+interface Props {
+    classes: Array<{ id: number; nama: string }>;
+    currentAcademicYear: string;
+}
+
+const props = defineProps<Props>();
+
 const haptics = useHaptics();
 const modal = useModal();
-
-// Mock classes
-const classes = [
-    { id: 1, nama: 'Kelas 1' },
-    { id: 2, nama: 'Kelas 2' },
-    { id: 3, nama: 'Kelas 3' },
-    { id: 4, nama: 'Kelas 4' },
-    { id: 5, nama: 'Kelas 5' },
-    { id: 6, nama: 'Kelas 6' },
-];
 
 const form = useForm({
     // Biodata
@@ -53,7 +50,7 @@ const form = useForm({
 
     // Akademik
     kelas_id: '',
-    tahun_ajaran_masuk: '2024/2025',
+    tahun_ajaran_masuk: props.currentAcademicYear,
     tanggal_masuk: new Date().toISOString().split('T')[0],
 
     // Data Ayah
@@ -155,7 +152,7 @@ const submit = () => {
                 <StudentForm
                     :form="form"
                     mode="create"
-                    :classes="classes"
+                    :classes="props.classes"
                 />
 
                 <!-- Actions - Sticky bottom dengan backdrop blur -->

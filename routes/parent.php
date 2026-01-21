@@ -39,6 +39,7 @@ Route::middleware(['auth', 'role:PARENT'])->group(function () {
 
         /**
          * Payments Portal - Melihat tagihan, riwayat pembayaran, dan submit pembayaran
+         * Updated: Mendukung combined payment (1 transaksi untuk multiple bills)
          */
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::get('/', [PaymentController::class, 'index'])->name('index');
@@ -46,6 +47,13 @@ Route::middleware(['auth', 'role:PARENT'])->group(function () {
             Route::get('submit', [PaymentController::class, 'showSubmit'])->name('submit');
             Route::post('submit', [PaymentController::class, 'submitPayment'])->name('submit.store');
             Route::get('pending', [PaymentController::class, 'pendingPayments'])->name('pending');
+
+            // Transaction-based routes (combined payment)
+            Route::get('transactions/{transaction}', [PaymentController::class, 'showTransaction'])->name('transactions.show');
+            Route::get('transactions/{transaction}/receipt', [PaymentController::class, 'downloadTransactionReceipt'])->name('transactions.receipt');
+            Route::post('transactions/{transaction}/cancel', [PaymentController::class, 'cancelTransaction'])->name('transactions.cancel');
+
+            // Legacy payment receipt (backward compatibility)
             Route::get('{payment}/receipt', [PaymentController::class, 'downloadReceipt'])->name('receipt');
         });
     });
