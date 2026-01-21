@@ -360,7 +360,7 @@ class PaymentService
         ];
 
         return Pdf::loadView('receipts.payment', $data)
-            ->setPaper('a5', 'portrait');
+            ->setPaper('a4', 'portrait');
     }
 
     /**

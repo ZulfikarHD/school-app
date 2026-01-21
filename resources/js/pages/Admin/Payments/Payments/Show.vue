@@ -105,13 +105,34 @@ const downloadReceipt = () => {
 
 const printReceipt = () => {
     haptics.medium();
-    // Open in new window for print
-    const printWindow = window.open(receipt(props.payment.id).url + '/stream', '_blank');
-    if (printWindow) {
-        printWindow.onload = () => {
-            printWindow.print();
-        };
-    }
+    // Menggunakan iframe tersembunyi untuk print PDF
+    // Ini memastikan PDF ter-load sepenuhnya sebelum print dialog muncul
+    const printUrl = `/admin/payments/records/${props.payment.id}/receipt/stream`;
+
+    // Buat iframe tersembunyi
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    iframe.src = printUrl;
+
+    // Tambahkan ke DOM
+    document.body.appendChild(iframe);
+
+    // Tunggu iframe load lalu print
+    iframe.onload = () => {
+        setTimeout(() => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+            // Hapus iframe setelah print dialog ditutup
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 1000);
+        }, 500); // Delay untuk memastikan PDF ter-render
+    };
 };
 
 const handleVerify = async () => {

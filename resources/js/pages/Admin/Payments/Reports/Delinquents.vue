@@ -3,18 +3,18 @@
  * Admin Delinquent Students Page
  *
  * Menampilkan daftar siswa yang memiliki tunggakan pembayaran
- * dengan total tunggakan dan detail tagihan
+ * dengan total tunggakan, detail tagihan, dan pagination
  */
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
 import {
     ArrowLeft, Users, AlertTriangle, Wallet,
-    ChevronDown, ChevronUp, Calendar
+    ChevronDown, ChevronUp, Calendar, ChevronLeft, ChevronRight
 } from 'lucide-vue-next';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import { useHaptics } from '@/composables/useHaptics';
-import { index as reportsIndex, delinquents } from '@/routes/admin/payments/reports';
+import { index as reportsIndex, delinquents as delinquentsRoute } from '@/routes/admin/payments/reports';
 
 interface BillItem {
     id: number;
@@ -39,8 +39,18 @@ interface Delinquent {
     bills: BillItem[];
 }
 
+interface PaginatedDelinquents {
+    data: Delinquent[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+}
+
 interface Props {
-    delinquents: Delinquent[];
+    delinquents: PaginatedDelinquents;
     totalStudents: number;
     totalTunggakan: number;
     formattedTotalTunggakan: string;
@@ -53,6 +63,10 @@ interface Props {
 const props = defineProps<Props>();
 
 const haptics = useHaptics();
+
+// Computed untuk menghindari konflik nama dengan route
+const delinquentsList = computed(() => props.delinquents.data);
+const pagination = computed(() => props.delinquents);
 
 // State
 const expandedStudent = ref<number | null>(null);
@@ -75,9 +89,24 @@ const changeSort = (field: string) => {
         sortDir.value = 'desc';
     }
 
-    router.get(delinquents().url, {
+    router.get(delinquentsRoute().url, {
         sort: sortBy.value,
         dir: sortDir.value,
+        page: 1, // Reset ke page 1 saat sort berubah
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
+
+const goToPage = (page: number) => {
+    if (page < 1 || page > pagination.value.last_page) return;
+
+    haptics.light();
+    router.get(delinquentsRoute().url, {
+        sort: sortBy.value,
+        dir: sortDir.value,
+        page,
     }, {
         preserveState: true,
         preserveScroll: true,
@@ -194,9 +223,9 @@ const getSortIcon = (field: string) => {
                         </button>
                     </div>
 
-                    <div v-if="delinquents.length > 0" class="divide-y divide-slate-200 dark:divide-zinc-800">
+                    <div v-if="delinquentsList.length > 0" class="divide-y divide-slate-200 dark:divide-zinc-800">
                         <div
-                            v-for="item in delinquents"
+                            v-for="item in delinquentsList"
                             :key="item.student.id"
                         >
                             <!-- Main Row -->
@@ -298,6 +327,64 @@ const getSortIcon = (field: string) => {
                         <p class="text-slate-500 dark:text-slate-400">
                             Semua pembayaran sudah lunas
                         </p>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div
+                        v-if="pagination.total > 0"
+                        class="px-4 py-3 border-t border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50"
+                    >
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <!-- Info -->
+                            <p class="text-sm text-slate-500 dark:text-slate-400">
+                                Menampilkan {{ pagination.from }}-{{ pagination.to }} dari {{ pagination.total }} siswa
+                            </p>
+
+                            <!-- Pagination Controls -->
+                            <div class="flex items-center gap-1">
+                                <!-- Previous -->
+                                <button
+                                    @click="goToPage(pagination.current_page - 1)"
+                                    :disabled="pagination.current_page === 1"
+                                    class="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronLeft class="w-5 h-5" />
+                                </button>
+
+                                <!-- Page Numbers -->
+                                <template v-for="page in pagination.last_page" :key="page">
+                                    <button
+                                        v-if="page === 1 || page === pagination.last_page || (page >= pagination.current_page - 1 && page <= pagination.current_page + 1)"
+                                        @click="goToPage(page)"
+                                        :class="[
+                                            'min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-colors',
+                                            page === pagination.current_page
+                                                ? 'bg-violet-500 text-white'
+                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-zinc-700'
+                                        ]"
+                                    >
+                                        {{ page }}
+                                    </button>
+                                    <span
+                                        v-else-if="page === 2 && pagination.current_page > 3"
+                                        class="px-1 text-slate-400"
+                                    >...</span>
+                                    <span
+                                        v-else-if="page === pagination.last_page - 1 && pagination.current_page < pagination.last_page - 2"
+                                        class="px-1 text-slate-400"
+                                    >...</span>
+                                </template>
+
+                                <!-- Next -->
+                                <button
+                                    @click="goToPage(pagination.current_page + 1)"
+                                    :disabled="pagination.current_page === pagination.last_page"
+                                    class="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronRight class="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </Motion>

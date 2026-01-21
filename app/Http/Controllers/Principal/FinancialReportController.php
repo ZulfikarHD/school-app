@@ -67,21 +67,30 @@ class FinancialReportController extends Controller
     }
 
     /**
-     * Display delinquent students list
+     * Display delinquent students list with pagination
      */
     public function delinquents(Request $request)
     {
         $sortBy = $request->input('sort', 'total_tunggakan');
         $sortDir = $request->input('dir', 'desc');
+        $perPage = $request->input('per_page', 15);
+        $page = $request->input('page', 1);
 
         // Get all unpaid bills grouped by student
         $delinquents = Bill::query()
             ->whereIn('status', ['belum_bayar', 'sebagian'])
+            ->whereHas('student') // Pastikan student exists
             ->with(['student.kelas', 'paymentCategory'])
             ->get()
             ->groupBy('student_id')
             ->map(function ($bills) {
                 $student = $bills->first()->student;
+
+                // Skip jika student null
+                if (! $student) {
+                    return null;
+                }
+
                 $totalTunggakan = $bills->sum(fn ($bill) => $bill->sisa_tagihan);
                 $overdueCount = $bills->filter(fn ($bill) => $bill->isOverdue())->count();
                 $oldestDue = $bills->sortBy('tanggal_jatuh_tempo')->first();
@@ -107,20 +116,42 @@ class FinancialReportController extends Controller
                     ])->values(),
                 ];
             })
+            ->filter() // Remove null entries
             ->values();
 
+        // Calculate totals before pagination
+        $totalStudents = $delinquents->count();
+        $totalTunggakan = $delinquents->sum('total_tunggakan');
+
         // Sort
-        $delinquents = $delinquents->sortBy(
-            $sortBy === 'nama' ? 'student.nama_lengkap' : $sortBy,
-            SORT_REGULAR,
-            $sortDir === 'desc'
-        )->values();
+        $sortField = $sortBy === 'nama' ? 'student.nama_lengkap' : $sortBy;
+        if ($sortDir === 'desc') {
+            $delinquents = $delinquents->sortByDesc($sortField)->values();
+        } else {
+            $delinquents = $delinquents->sortBy($sortField)->values();
+        }
+
+        // Manual pagination on collection
+        $total = $delinquents->count();
+        $lastPage = (int) ceil($total / $perPage);
+        $from = ($page - 1) * $perPage + 1;
+        $to = min($page * $perPage, $total);
+
+        $paginatedData = $delinquents->slice(($page - 1) * $perPage, $perPage)->values();
 
         return Inertia::render('Principal/Financial/Delinquents', [
-            'delinquents' => $delinquents,
-            'totalStudents' => $delinquents->count(),
-            'totalTunggakan' => $delinquents->sum('total_tunggakan'),
-            'formattedTotalTunggakan' => 'Rp '.number_format($delinquents->sum('total_tunggakan'), 0, ',', '.'),
+            'delinquents' => [
+                'data' => $paginatedData->toArray(),
+                'current_page' => (int) $page,
+                'last_page' => $lastPage,
+                'per_page' => (int) $perPage,
+                'total' => $total,
+                'from' => $total > 0 ? $from : null,
+                'to' => $total > 0 ? $to : null,
+            ],
+            'totalStudents' => $totalStudents,
+            'totalTunggakan' => $totalTunggakan,
+            'formattedTotalTunggakan' => 'Rp '.number_format($totalTunggakan, 0, ',', '.'),
             'filters' => [
                 'sort' => $sortBy,
                 'dir' => $sortDir,
@@ -129,7 +160,10 @@ class FinancialReportController extends Controller
     }
 
     /**
-     * Export financial report to Excel
+     * Export financial report to CSV
+     *
+     * Mengekspor laporan keuangan dalam format CSV yang dapat dibuka
+     * di Excel, Google Sheets, atau aplikasi spreadsheet lainnya
      */
     public function export(Request $request)
     {
@@ -163,17 +197,21 @@ class FinancialReportController extends Controller
         });
 
         $monthName = Carbon::create($year, $month, 1)->translatedFormat('F Y');
-        $filename = "Laporan-Keuangan-{$monthName}.xlsx";
+        $filename = "Laporan-Keuangan-{$monthName}.csv";
 
         return response()->streamDownload(function () use ($exportData) {
             $output = fopen('php://output', 'w');
-            fputcsv($output, array_keys($exportData->first() ?? []));
-            foreach ($exportData as $row) {
-                fputcsv($output, $row);
+            // Add BOM for UTF-8 Excel compatibility
+            fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+            if ($exportData->isNotEmpty()) {
+                fputcsv($output, array_keys($exportData->first()));
+                foreach ($exportData as $row) {
+                    fputcsv($output, $row);
+                }
             }
             fclose($output);
         }, $filename, [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
     }

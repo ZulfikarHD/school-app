@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\LeaveRequest;
+use App\Models\Payment;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -51,12 +52,22 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'pendingCounts' => $this->getPendingCounts($request),
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'warning' => fn () => $request->session()->get('warning'),
+                'info' => fn () => $request->session()->get('info'),
+            ],
         ];
     }
 
     /**
      * Mendapatkan pending counts berdasarkan role user
      * untuk ditampilkan sebagai badge notification di navigation
+     *
+     * Meliputi:
+     * - leaveRequests: Izin siswa yang menunggu verifikasi
+     * - pendingPayments: Pembayaran yang menunggu verifikasi (Admin/TU)
      *
      * @return array<string, int>
      */
@@ -67,10 +78,12 @@ class HandleInertiaRequests extends Middleware
         if (! $user) {
             return [
                 'leaveRequests' => 0,
+                'pendingPayments' => 0,
             ];
         }
 
         $pendingLeaveRequests = 0;
+        $pendingPayments = 0;
 
         // Teacher: pending leave requests untuk siswa di kelas yang diampu
         if ($user->role === 'TEACHER') {
@@ -81,13 +94,15 @@ class HandleInertiaRequests extends Middleware
                 ->count();
         }
 
-        // Admin/Superadmin: semua pending leave requests
+        // Admin/Superadmin: semua pending leave requests dan pending payments
         if (in_array($user->role, ['ADMIN', 'SUPERADMIN'])) {
             $pendingLeaveRequests = LeaveRequest::pending()->count();
+            $pendingPayments = Payment::pending()->count();
         }
 
         return [
             'leaveRequests' => $pendingLeaveRequests,
+            'pendingPayments' => $pendingPayments,
         ];
     }
 }

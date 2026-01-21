@@ -154,15 +154,15 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                     <div class="flex items-center gap-4">
                         <button
                             @click="navigateTo('/principal/attendance/dashboard')"
-                            class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                            class="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                         >
-                            <ArrowLeft :size="20" class="text-gray-600 dark:text-gray-400" />
+                            <ArrowLeft :size="20" class="text-slate-600 dark:text-slate-400" />
                         </button>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
                                 {{ title }}
                             </h1>
-                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                 {{ formatDate(filters.date) }}
                             </p>
                         </div>
@@ -170,19 +170,19 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
 
                     <div class="flex items-center gap-3">
                         <div class="flex items-center gap-2">
-                            <Calendar :size="18" class="text-gray-400" />
+                            <Calendar :size="18" class="text-slate-400" />
                             <input
                                 v-model="selectedDate"
                                 type="date"
                                 @change="applyFilters"
-                                class="px-3 py-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                class="px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                             />
                         </div>
 
                         <select
                             v-model="filterLate"
                             @change="applyFilters"
-                            class="px-3 py-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                            class="px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         >
                             <option value="">Semua Status</option>
                             <option value="1">Terlambat</option>
@@ -207,17 +207,17 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.1 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
                                 <Users :size="20" class="text-blue-600 dark:text-blue-400" />
                             </div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">Total</span>
                         </div>
-                        <p class="mt-3 text-2xl font-bold text-gray-900 dark:text-white">
+                        <p class="mt-3 text-2xl font-bold text-slate-900 dark:text-white">
                             {{ summary.total_guru }}
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Total Guru</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Total Guru</p>
                     </div>
                 </Motion>
 
@@ -226,17 +226,17 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.15 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
                                 <CheckCircle :size="20" class="text-green-600 dark:text-green-400" />
                             </div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ attendancePercentage }}%</span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">{{ attendancePercentage }}%</span>
                         </div>
                         <p class="mt-3 text-2xl font-bold text-green-600 dark:text-green-400">
                             {{ summary.hadir }}
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Hadir</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Hadir</p>
                     </div>
                 </Motion>
 
@@ -245,7 +245,7 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.2 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-2 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg">
                                 <Clock :size="20" class="text-yellow-600 dark:text-yellow-400" />
@@ -254,7 +254,7 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                         <p class="mt-3 text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                             {{ summary.terlambat }}
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Terlambat</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Terlambat</p>
                     </div>
                 </Motion>
 
@@ -263,7 +263,7 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.25 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
                                 <XCircle :size="20" class="text-red-600 dark:text-red-400" />
@@ -272,7 +272,7 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                         <p class="mt-3 text-2xl font-bold text-red-600 dark:text-red-400">
                             {{ summary.belum_hadir }}
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Belum Hadir</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Belum Hadir</p>
                     </div>
                 </Motion>
             </div>
@@ -286,62 +286,62 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.3 }"
                     class="lg:col-span-2"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
-                            <h3 class="font-semibold text-gray-900 dark:text-white">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 dark:border-zinc-800">
+                            <h3 class="font-semibold text-slate-900 dark:text-white">
                                 Daftar Presensi Guru
                             </h3>
                         </div>
 
                         <div class="overflow-x-auto">
                             <table class="w-full">
-                                <thead class="bg-gray-50 dark:bg-zinc-800 border-b border-gray-100 dark:border-zinc-700">
+                                <thead class="bg-slate-50 dark:bg-zinc-800 border-b border-slate-200 dark:border-zinc-700">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Guru
                                         </th>
-                                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Jam Masuk
                                         </th>
-                                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Jam Keluar
                                         </th>
-                                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Durasi
                                         </th>
-                                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Status
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
+                                <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
                                     <tr
                                         v-for="attendance in attendances.data"
                                         :key="attendance.id"
-                                        class="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                        class="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
                                     >
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div>
-                                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                                <div class="text-sm font-medium text-slate-900 dark:text-white">
                                                     {{ attendance.teacher?.name || '-' }}
                                                 </div>
-                                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                <div class="text-xs text-slate-500 dark:text-slate-400">
                                                     {{ attendance.teacher?.email || '-' }}
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <span class="text-sm text-gray-900 dark:text-white">
+                                            <span class="text-sm text-slate-900 dark:text-white">
                                                 {{ formatTime(attendance.clock_in) }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <span class="text-sm text-gray-900 dark:text-white">
+                                            <span class="text-sm text-slate-900 dark:text-white">
                                                 {{ formatTime(attendance.clock_out) }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <span class="text-sm text-gray-500 dark:text-gray-400">
+                                            <span class="text-sm text-slate-500 dark:text-slate-400">
                                                 {{ calculateDuration(attendance.clock_in, attendance.clock_out) }}
                                             </span>
                                         </td>
@@ -361,7 +361,7 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                                         </td>
                                     </tr>
                                     <tr v-if="attendances.data.length === 0">
-                                        <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                        <td colspan="5" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                             <Clock :size="48" class="mx-auto mb-3 opacity-50" />
                                             <p class="text-lg font-medium">Belum ada data presensi</p>
                                             <p class="text-sm mt-1">Belum ada guru yang clock in</p>
@@ -372,9 +372,9 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                         </div>
 
                         <!-- Pagination -->
-                        <div v-if="attendances.last_page > 1" class="px-6 py-4 border-t border-gray-100 dark:border-zinc-800">
+                        <div v-if="attendances.last_page > 1" class="px-6 py-4 border-t border-slate-200 dark:border-zinc-800">
                             <div class="flex items-center justify-between">
-                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                <div class="text-sm text-slate-500 dark:text-slate-400">
                                     Halaman {{ attendances.current_page }} dari {{ attendances.last_page }}
                                 </div>
                                 <div class="flex items-center gap-2">
@@ -386,7 +386,7 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                                             'px-3 py-1 rounded-lg text-sm font-medium transition-colors',
                                             page === attendances.current_page
                                                 ? 'bg-emerald-600 text-white'
-                                                : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-zinc-600',
+                                                : 'bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-zinc-600',
                                         ]"
                                     >
                                         {{ page }}
@@ -403,35 +403,35 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                     :animate="{ opacity: 1, x: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.35 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 dark:border-zinc-800">
                             <div class="flex items-center gap-3">
                                 <div class="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
                                     <AlertCircle :size="20" class="text-red-600 dark:text-red-400" />
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-gray-900 dark:text-white">
+                                    <h3 class="font-semibold text-slate-900 dark:text-white">
                                         Belum Clock In
                                     </h3>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">
                                         {{ absentTeachers.length }} guru
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="divide-y divide-gray-100 dark:divide-zinc-800 max-h-96 overflow-y-auto">
+                        <div class="divide-y divide-slate-100 dark:divide-zinc-800 max-h-96 overflow-y-auto">
                             <div
                                 v-for="teacher in absentTeachers"
                                 :key="teacher.id"
-                                class="px-6 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                                class="px-6 py-3 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
                             >
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="font-medium text-gray-900 dark:text-white">
+                                        <p class="font-medium text-slate-900 dark:text-white">
                                             {{ teacher.name }}
                                         </p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">
                                             {{ teacher.email }}
                                         </p>
                                     </div>
@@ -442,7 +442,7 @@ const calculateDuration = (clockIn: string | null, clockOut: string | null) => {
                             </div>
                             <div v-if="absentTeachers.length === 0" class="px-6 py-8 text-center">
                                 <CheckCircle :size="40" class="mx-auto text-green-500 mb-2" />
-                                <p class="text-gray-500 dark:text-gray-400">
+                                <p class="text-slate-500 dark:text-slate-400">
                                     Semua guru sudah hadir
                                 </p>
                             </div>

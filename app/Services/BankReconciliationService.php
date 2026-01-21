@@ -560,6 +560,10 @@ class BankReconciliationService
 
     /**
      * Get unmatched payments untuk manual matching
+     *
+     * Mengembalikan semua pembayaran transfer yang belum di-match
+     * dengan rekonsiliasi manapun dalam rentang tanggal yang ditentukan
+     * atau 90 hari terakhir jika tidak ada rentang yang ditentukan
      */
     public function getUnmatchedPayments(?Carbon $startDate = null, ?Carbon $endDate = null): Collection
     {
@@ -573,15 +577,20 @@ class BankReconciliationService
             })
             ->with(['student.kelas', 'bill.paymentCategory']);
 
-        if ($startDate) {
-            $query->whereDate('tanggal_bayar', '>=', $startDate);
+        // Jika tidak ada rentang tanggal, ambil 90 hari terakhir
+        if (! $startDate && ! $endDate) {
+            $query->whereDate('tanggal_bayar', '>=', now()->subDays(90));
+        } else {
+            if ($startDate) {
+                $query->whereDate('tanggal_bayar', '>=', $startDate);
+            }
+
+            if ($endDate) {
+                $query->whereDate('tanggal_bayar', '<=', $endDate);
+            }
         }
 
-        if ($endDate) {
-            $query->whereDate('tanggal_bayar', '<=', $endDate);
-        }
-
-        return $query->orderBy('tanggal_bayar', 'desc')->get();
+        return $query->orderBy('tanggal_bayar', 'desc')->limit(100)->get();
     }
 
     /**

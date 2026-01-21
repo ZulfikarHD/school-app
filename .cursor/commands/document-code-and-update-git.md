@@ -180,5 +180,3 @@ grep -n "this->.*Service->" app/Http/Controllers/Owner/{Feature}/*
 - [ ] Last Updated date
 ```
 
-**Update Git** After Updating the documentation run Git Commit and Push follow my writing style (use indonesian - my-writing-style.mdc), and follow the best practice of git commit message for PR.
-

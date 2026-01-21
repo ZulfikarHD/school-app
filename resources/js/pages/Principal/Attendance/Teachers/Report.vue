@@ -177,15 +177,15 @@ const formatTime = (datetime: string | null) => {
                     <div class="flex items-center gap-4">
                         <button
                             @click="navigateTo('/principal/attendance/dashboard')"
-                            class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                            class="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                         >
-                            <ArrowLeft :size="20" class="text-gray-600 dark:text-gray-400" />
+                            <ArrowLeft :size="20" class="text-slate-600 dark:text-slate-400" />
                         </button>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
                                 {{ title }}
                             </h1>
-                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                 {{ formatDate(filters.start_date) }} - {{ formatDate(filters.end_date) }}
                             </p>
                         </div>
@@ -195,7 +195,7 @@ const formatTime = (datetime: string | null) => {
                         tag="button"
                         :animate="{ scale: showFilters ? 0.95 : 1 }"
                         @click="showFilters = !showFilters"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors"
                     >
                         <Filter :size="18" />
                         Filter
@@ -217,38 +217,38 @@ const formatTime = (datetime: string | null) => {
                 :initial="{ opacity: 0, height: 0 }"
                 :animate="{ opacity: 1, height: 'auto' }"
                 :exit="{ opacity: 0, height: 0 }"
-                class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-100 dark:border-zinc-800"
+                class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-slate-200 dark:border-zinc-800"
             >
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                             Tanggal Mulai
                         </label>
                         <input
                             v-model="filterForm.start_date"
                             type="date"
-                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
+                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
                         />
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                             Tanggal Selesai
                         </label>
                         <input
                             v-model="filterForm.end_date"
                             type="date"
-                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
+                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
                         />
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                             Guru
                         </label>
                         <select
                             v-model="filterForm.teacher_id"
-                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
+                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
                         >
                             <option value="">Semua Guru</option>
                             <option v-for="teacher in teachers" :key="teacher.id" :value="teacher.id">
@@ -268,7 +268,7 @@ const formatTime = (datetime: string | null) => {
                     <button
                         v-if="hasFilters"
                         @click="clearFilters"
-                        class="px-4 py-2 bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors"
+                        class="px-4 py-2 bg-slate-200 dark:bg-zinc-700 hover:bg-slate-300 dark:hover:bg-zinc-600 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-medium transition-colors"
                     >
                         Reset Filter
                     </button>
@@ -282,16 +282,16 @@ const formatTime = (datetime: string | null) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.1 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
                                 <Calendar :size="20" class="text-blue-600 dark:text-blue-400" />
                             </div>
                         </div>
-                        <p class="mt-3 text-2xl font-bold text-gray-900 dark:text-white">
+                        <p class="mt-3 text-2xl font-bold text-slate-900 dark:text-white">
                             {{ statistics.work_days }}
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Hari Kerja</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Hari Kerja</p>
                     </div>
                 </Motion>
 
@@ -300,7 +300,7 @@ const formatTime = (datetime: string | null) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.15 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
                                 <Users :size="20" class="text-green-600 dark:text-green-400" />
@@ -309,7 +309,7 @@ const formatTime = (datetime: string | null) => {
                         <p class="mt-3 text-2xl font-bold text-green-600 dark:text-green-400">
                             {{ statistics.total_present }}
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Total Hadir</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Total Hadir</p>
                     </div>
                 </Motion>
 
@@ -318,7 +318,7 @@ const formatTime = (datetime: string | null) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.2 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-2 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg">
                                 <AlertTriangle :size="20" class="text-yellow-600 dark:text-yellow-400" />
@@ -327,7 +327,7 @@ const formatTime = (datetime: string | null) => {
                         <p class="mt-3 text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                             {{ statistics.total_late }}
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Terlambat</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Terlambat</p>
                     </div>
                 </Motion>
 
@@ -336,7 +336,7 @@ const formatTime = (datetime: string | null) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.25 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
                                 <Clock :size="20" class="text-purple-600 dark:text-purple-400" />
@@ -345,7 +345,7 @@ const formatTime = (datetime: string | null) => {
                         <p class="mt-3 text-2xl font-bold text-purple-600 dark:text-purple-400">
                             {{ statistics.total_hours }}
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Total Jam</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Total Jam</p>
                     </div>
                 </Motion>
 
@@ -354,7 +354,7 @@ const formatTime = (datetime: string | null) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.3 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg">
                                 <TrendingUp :size="20" class="text-emerald-600 dark:text-emerald-400" />
@@ -363,7 +363,7 @@ const formatTime = (datetime: string | null) => {
                         <p class="mt-3 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                             {{ statistics.average_hours }}
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Rata-rata/hari</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Rata-rata/hari</p>
                     </div>
                 </Motion>
             </div>
@@ -374,46 +374,46 @@ const formatTime = (datetime: string | null) => {
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.35 }"
             >
-                <div class="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
-                        <h3 class="font-semibold text-gray-900 dark:text-white">
+                <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-200 dark:border-zinc-800">
+                        <h3 class="font-semibold text-slate-900 dark:text-white">
                             Ringkasan per Guru
                         </h3>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-zinc-800 border-b border-gray-100 dark:border-zinc-700">
+                            <thead class="bg-slate-50 dark:bg-zinc-800 border-b border-slate-200 dark:border-zinc-700">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         Guru
                                     </th>
-                                    <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         Hari Hadir
                                     </th>
-                                    <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         Terlambat
                                     </th>
-                                    <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         Total Jam
                                     </th>
-                                    <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         Rata-rata/Hari
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
+                            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
                                 <tr
                                     v-for="item in attendancesByTeacher"
                                     :key="item.teacher.id"
-                                    class="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                    class="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
                                 >
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div>
-                                            <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                            <div class="text-sm font-medium text-slate-900 dark:text-white">
                                                 {{ item.teacher.name }}
                                             </div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                            <div class="text-xs text-slate-500 dark:text-slate-400">
                                                 {{ item.teacher.email }}
                                             </div>
                                         </div>
@@ -432,15 +432,15 @@ const formatTime = (datetime: string | null) => {
                                             {{ item.stats.late }}x
                                         </Badge>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900 dark:text-white">
+                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-900 dark:text-white">
                                         {{ item.stats.totalHours.toFixed(1) }} jam
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400">
+                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-500 dark:text-slate-400">
                                         {{ item.stats.present > 0 ? (item.stats.totalHours / item.stats.present).toFixed(1) : 0 }} jam
                                     </td>
                                 </tr>
                                 <tr v-if="attendancesByTeacher.length === 0">
-                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                    <td colspan="5" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                         <Users :size="48" class="mx-auto mb-3 opacity-50" />
                                         <p class="text-lg font-medium">Tidak ada data</p>
                                         <p class="text-sm mt-1">Coba ubah filter periode</p>
@@ -458,50 +458,50 @@ const formatTime = (datetime: string | null) => {
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.4 }"
             >
-                <div class="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
-                        <h3 class="font-semibold text-gray-900 dark:text-white">
+                <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-200 dark:border-zinc-800">
+                        <h3 class="font-semibold text-slate-900 dark:text-white">
                             Detail Presensi
                         </h3>
                     </div>
 
                     <div class="overflow-x-auto max-h-96">
                         <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-zinc-800 border-b border-gray-100 dark:border-zinc-700 sticky top-0">
+                            <thead class="bg-slate-50 dark:bg-zinc-800 border-b border-slate-200 dark:border-zinc-700 sticky top-0">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         Tanggal
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         Guru
                                     </th>
-                                    <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         Jam Masuk
                                     </th>
-                                    <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         Jam Keluar
                                     </th>
-                                    <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         Status
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
+                            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
                                 <tr
                                     v-for="attendance in attendances"
                                     :key="attendance.id"
-                                    class="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                    class="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
                                 >
-                                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                    <td class="px-6 py-3 whitespace-nowrap text-sm text-slate-900 dark:text-white">
                                         {{ formatDate(attendance.tanggal) }}
                                     </td>
-                                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                    <td class="px-6 py-3 whitespace-nowrap text-sm text-slate-900 dark:text-white">
                                         {{ attendance.teacher?.name || '-' }}
                                     </td>
-                                    <td class="px-6 py-3 whitespace-nowrap text-center text-sm text-gray-900 dark:text-white">
+                                    <td class="px-6 py-3 whitespace-nowrap text-center text-sm text-slate-900 dark:text-white">
                                         {{ formatTime(attendance.clock_in) }}
                                     </td>
-                                    <td class="px-6 py-3 whitespace-nowrap text-center text-sm text-gray-900 dark:text-white">
+                                    <td class="px-6 py-3 whitespace-nowrap text-center text-sm text-slate-900 dark:text-white">
                                         {{ formatTime(attendance.clock_out) }}
                                     </td>
                                     <td class="px-6 py-3 whitespace-nowrap text-center">

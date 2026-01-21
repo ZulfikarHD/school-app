@@ -161,7 +161,9 @@ const viewPayment = (payment: Payment) => {
 
 const downloadReceipt = (payment: Payment) => {
     haptics.medium();
-    window.open(receipt(payment.id).url, '_blank');
+    // Gunakan URL stream untuk membuka PDF di browser (bukan download)
+    // sehingga user dapat langsung print via browser
+    window.open(`/admin/payments/records/${payment.id}/receipt/stream`, '_blank');
 };
 
 const getStatusConfig = (status: string) => {

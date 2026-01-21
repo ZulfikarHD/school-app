@@ -5,6 +5,10 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Kwitansi {{ $payment->nomor_kwitansi }}</title>
     <style>
+        @page {
+            margin: 10mm;
+            size: A4 portrait;
+        }
         * {
             margin: 0;
             padding: 0;
@@ -12,15 +16,15 @@
         }
         body {
             font-family: 'DejaVu Sans', sans-serif;
-            font-size: 11px;
+            font-size: 12px;
             color: #1e293b;
-            line-height: 1.4;
+            line-height: 1.5;
         }
         .receipt {
             width: 100%;
-            max-width: 148mm; /* A5 width */
+            max-width: 180mm; /* A4 safe width */
             margin: 0 auto;
-            padding: 8mm;
+            padding: 5mm;
         }
         .header {
             text-align: center;

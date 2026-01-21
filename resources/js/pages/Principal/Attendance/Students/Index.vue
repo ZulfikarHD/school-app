@@ -163,15 +163,15 @@ const getClassName = (attendance: Attendance) => {
                     <div class="flex items-center gap-4">
                         <button
                             @click="navigateTo('/principal/attendance/dashboard')"
-                            class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                            class="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                         >
-                            <ArrowLeft :size="20" class="text-gray-600 dark:text-gray-400" />
+                            <ArrowLeft :size="20" class="text-slate-600 dark:text-slate-400" />
                         </button>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
                                 {{ title }}
                             </h1>
-                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                 {{ formatDate(filters.date || new Date().toISOString().split('T')[0]) }}
                             </p>
                         </div>
@@ -182,7 +182,7 @@ const getClassName = (attendance: Attendance) => {
                             tag="button"
                             :animate="{ scale: showFilters ? 0.95 : 1 }"
                             @click="showFilters = !showFilters"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors"
                         >
                             <Filter :size="18" />
                             Filter
@@ -209,11 +209,11 @@ const getClassName = (attendance: Attendance) => {
 
             <!-- Summary Cards -->
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
+                <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total</p>
-                            <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                            <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total</p>
+                            <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
                                 {{ attendances.total }}
                             </p>
                         </div>
@@ -223,30 +223,30 @@ const getClassName = (attendance: Attendance) => {
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Hadir</p>
+                <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Hadir</p>
                     <p class="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
                         {{ summary.hadir }}
                     </p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ attendancePercentage }}%</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">{{ attendancePercentage }}%</p>
                 </div>
 
-                <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Izin</p>
+                <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Izin</p>
                     <p class="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">
                         {{ summary.izin }}
                     </p>
                 </div>
 
-                <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Sakit</p>
+                <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Sakit</p>
                     <p class="mt-1 text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                         {{ summary.sakit }}
                     </p>
                 </div>
 
-                <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-100 dark:border-zinc-800">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Alpha</p>
+                <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Alpha</p>
                     <p class="mt-1 text-2xl font-bold text-red-600 dark:text-red-400">
                         {{ summary.alpha }}
                     </p>
@@ -259,27 +259,27 @@ const getClassName = (attendance: Attendance) => {
                 :initial="{ opacity: 0, height: 0 }"
                 :animate="{ opacity: 1, height: 'auto' }"
                 :exit="{ opacity: 0, height: 0 }"
-                class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-100 dark:border-zinc-800"
+                class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-slate-200 dark:border-zinc-800"
             >
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                             Tanggal
                         </label>
                         <input
                             v-model="filterForm.date"
                             type="date"
-                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
+                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
                         />
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                             Kelas
                         </label>
                         <select
                             v-model="filterForm.class_id"
-                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
+                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
                         >
                             <option value="">Semua Kelas</option>
                             <option v-for="cls in classes" :key="cls.id" :value="cls.id">
@@ -289,12 +289,12 @@ const getClassName = (attendance: Attendance) => {
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                             Status
                         </label>
                         <select
                             v-model="filterForm.status"
-                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
+                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
                         >
                             <option value="">Semua Status</option>
                             <option value="H">Hadir</option>
@@ -315,7 +315,7 @@ const getClassName = (attendance: Attendance) => {
                     <button
                         v-if="hasFilters"
                         @click="clearFilters"
-                        class="px-4 py-2 bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors"
+                        class="px-4 py-2 bg-slate-200 dark:bg-zinc-700 hover:bg-slate-300 dark:hover:bg-zinc-600 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-medium transition-colors"
                     >
                         Reset Filter
                     </button>
@@ -323,72 +323,72 @@ const getClassName = (attendance: Attendance) => {
             </Motion>
 
             <!-- Attendance Table -->
-            <div class="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
+            <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full">
-                        <thead class="bg-gray-50 dark:bg-zinc-800 border-b border-gray-100 dark:border-zinc-700">
+                        <thead class="bg-slate-50 dark:bg-zinc-800 border-b border-slate-200 dark:border-zinc-700">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Tanggal
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Siswa
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Kelas
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Status
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Keterangan
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Dicatat Oleh
                                 </th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
+                        <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
                             <tr
                                 v-for="attendance in attendances.data"
                                 :key="attendance.id"
-                                class="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                class="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
                             >
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">
                                     {{ formatDate(attendance.tanggal) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div>
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                        <div class="text-sm font-medium text-slate-900 dark:text-white">
                                             {{ attendance.student?.nama_lengkap || '-' }}
                                         </div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        <div class="text-sm text-slate-500 dark:text-slate-400">
                                             NIS: {{ attendance.student?.nis || '-' }}
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">
                                     {{ getClassName(attendance) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <AttendanceStatusBadge :status="attendance.status" />
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                                <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 max-w-xs truncate">
                                     {{ attendance.keterangan || '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div>
-                                        <div class="text-sm text-gray-900 dark:text-white">
+                                        <div class="text-sm text-slate-900 dark:text-white">
                                             {{ attendance.recorded_by?.name || '-' }}
                                         </div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                                        <div class="text-xs text-slate-500 dark:text-slate-400">
                                             {{ formatTime(attendance.recorded_at) }}
                                         </div>
                                     </div>
                                 </td>
                             </tr>
                             <tr v-if="attendances.data.length === 0">
-                                <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="6" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                     <Calendar :size="48" class="mx-auto mb-3 opacity-50" />
                                     <p class="text-lg font-medium">Tidak ada data kehadiran</p>
                                     <p class="text-sm mt-1">Coba ubah filter atau pilih tanggal lain</p>
@@ -399,9 +399,9 @@ const getClassName = (attendance: Attendance) => {
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="attendances.last_page > 1" class="px-6 py-4 border-t border-gray-100 dark:border-zinc-800">
+                <div v-if="attendances.last_page > 1" class="px-6 py-4 border-t border-slate-200 dark:border-zinc-800">
                     <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                        <div class="text-sm text-slate-500 dark:text-slate-400">
                             Menampilkan {{ (attendances.current_page - 1) * attendances.per_page + 1 }} -
                             {{ Math.min(attendances.current_page * attendances.per_page, attendances.total) }}
                             dari {{ attendances.total }} data
@@ -415,7 +415,7 @@ const getClassName = (attendance: Attendance) => {
                                     'px-3 py-1 rounded-lg text-sm font-medium transition-colors',
                                     page === attendances.current_page
                                         ? 'bg-emerald-600 text-white'
-                                        : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-zinc-600',
+                                        : 'bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-zinc-600',
                                 ]"
                             >
                                 {{ page }}

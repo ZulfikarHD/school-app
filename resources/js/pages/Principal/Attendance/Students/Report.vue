@@ -183,15 +183,15 @@ const getPercentageBgColor = (percentage: number) => {
                     <div class="flex items-center gap-4">
                         <button
                             @click="navigateTo('/principal/attendance/dashboard')"
-                            class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                            class="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                         >
-                            <ArrowLeft :size="20" class="text-gray-600 dark:text-gray-400" />
+                            <ArrowLeft :size="20" class="text-slate-600 dark:text-slate-400" />
                         </button>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
                                 {{ title }}
                             </h1>
-                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                 {{ formatDate(filters.start_date) }} - {{ formatDate(filters.end_date) }}
                             </p>
                         </div>
@@ -202,7 +202,7 @@ const getPercentageBgColor = (percentage: number) => {
                             tag="button"
                             :animate="{ scale: showFilters ? 0.95 : 1 }"
                             @click="showFilters = !showFilters"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors"
                         >
                             <Filter :size="18" />
                             Filter
@@ -225,38 +225,38 @@ const getPercentageBgColor = (percentage: number) => {
                 :initial="{ opacity: 0, height: 0 }"
                 :animate="{ opacity: 1, height: 'auto' }"
                 :exit="{ opacity: 0, height: 0 }"
-                class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-100 dark:border-zinc-800"
+                class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-slate-200 dark:border-zinc-800"
             >
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                             Tanggal Mulai
                         </label>
                         <input
                             v-model="filterForm.start_date"
                             type="date"
-                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
+                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
                         />
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                             Tanggal Selesai
                         </label>
                         <input
                             v-model="filterForm.end_date"
                             type="date"
-                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
+                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
                         />
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                             Kelas
                         </label>
                         <select
                             v-model="filterForm.class_id"
-                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
+                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
                         >
                             <option value="">Semua Kelas</option>
                             <option v-for="cls in classes" :key="cls.id" :value="cls.id">
@@ -266,12 +266,12 @@ const getPercentageBgColor = (percentage: number) => {
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                             Status
                         </label>
                         <select
                             v-model="filterForm.status"
-                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
+                            class="w-full px-4 py-2.5 bg-slate-50/80 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
                         >
                             <option value="">Semua Status</option>
                             <option value="H">Hadir</option>
@@ -292,7 +292,7 @@ const getPercentageBgColor = (percentage: number) => {
                     <button
                         v-if="hasFilters"
                         @click="clearFilters"
-                        class="px-4 py-2 bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors"
+                        class="px-4 py-2 bg-slate-200 dark:bg-zinc-700 hover:bg-slate-300 dark:hover:bg-zinc-600 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-medium transition-colors"
                     >
                         Reset Filter
                     </button>
@@ -306,16 +306,16 @@ const getPercentageBgColor = (percentage: number) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.1 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-xl">
                                 <Users :size="24" class="text-blue-600 dark:text-blue-400" />
                             </div>
                         </div>
-                        <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-white">
+                        <p class="mt-4 text-3xl font-bold text-slate-900 dark:text-white">
                             {{ statistics.total_records }}
                         </p>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Total Records</p>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Total Records</p>
                     </div>
                 </Motion>
 
@@ -324,7 +324,7 @@ const getPercentageBgColor = (percentage: number) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.15 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-3 bg-green-100 dark:bg-green-900/50 rounded-xl">
                                 <TrendingUp :size="24" class="text-green-600 dark:text-green-400" />
@@ -336,7 +336,7 @@ const getPercentageBgColor = (percentage: number) => {
                         <p class="mt-4 text-3xl font-bold text-green-600 dark:text-green-400">
                             {{ statistics.hadir }}
                         </p>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Total Hadir</p>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Total Hadir</p>
                     </div>
                 </Motion>
 
@@ -345,12 +345,12 @@ const getPercentageBgColor = (percentage: number) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.2 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-100 dark:border-zinc-800">
-                        <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Kehadiran Valid</p>
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-slate-200 dark:border-zinc-800">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Kehadiran Valid</p>
                         <p class="mt-2 text-3xl font-bold" :class="getPercentageColor(statistics.persentase_kehadiran_valid)">
                             {{ statistics.persentase_kehadiran_valid }}%
                         </p>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Hadir + Izin + Sakit</p>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Hadir + Izin + Sakit</p>
                     </div>
                 </Motion>
 
@@ -359,25 +359,25 @@ const getPercentageBgColor = (percentage: number) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.25 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-100 dark:border-zinc-800">
-                        <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Alpha</p>
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-slate-200 dark:border-zinc-800">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total Alpha</p>
                         <p class="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
                             {{ statistics.alpha }}
                         </p>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Tanpa keterangan</p>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Tanpa keterangan</p>
                     </div>
                 </Motion>
             </div>
 
             <!-- Tabs -->
-            <div class="flex gap-2 border-b border-gray-200 dark:border-zinc-700">
+            <div class="flex gap-2 border-b border-slate-200 dark:border-zinc-700">
                 <button
                     @click="activeTab = 'summary'"
                     :class="[
                         'px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px',
                         activeTab === 'summary'
                             ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300',
+                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300',
                     ]"
                 >
                     Ringkasan
@@ -388,7 +388,7 @@ const getPercentageBgColor = (percentage: number) => {
                         'px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px',
                         activeTab === 'low-attendance'
                             ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300',
+                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300',
                     ]"
                 >
                     Kehadiran Rendah
@@ -406,8 +406,8 @@ const getPercentageBgColor = (percentage: number) => {
                     :animate="{ opacity: 1, x: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.3 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-100 dark:border-zinc-800">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-slate-200 dark:border-zinc-800">
+                        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                             Distribusi Status
                         </h3>
                         
@@ -415,12 +415,12 @@ const getPercentageBgColor = (percentage: number) => {
                         <div class="space-y-4">
                             <div v-for="item in pieChartData" :key="item.label" class="space-y-2">
                                 <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">{{ item.label }}</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">
+                                    <span class="text-slate-600 dark:text-slate-400">{{ item.label }}</span>
+                                    <span class="font-medium text-slate-900 dark:text-white">
                                         {{ item.value }} ({{ item.percentage }}%)
                                     </span>
                                 </div>
-                                <div class="h-3 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                <div class="h-3 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                                     <div
                                         class="h-full rounded-full transition-all duration-500"
                                         :style="{ width: `${item.percentage}%`, backgroundColor: item.color }"
@@ -437,8 +437,8 @@ const getPercentageBgColor = (percentage: number) => {
                     :animate="{ opacity: 1, x: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.35 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-100 dark:border-zinc-800">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-slate-200 dark:border-zinc-800">
+                        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                             Detail Status
                         </h3>
                         
@@ -479,17 +479,17 @@ const getPercentageBgColor = (percentage: number) => {
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 dark:border-zinc-800">
                             <div class="flex items-center gap-3">
                                 <div class="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
                                     <AlertTriangle :size="20" class="text-red-600 dark:text-red-400" />
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-gray-900 dark:text-white">
+                                    <h3 class="font-semibold text-slate-900 dark:text-white">
                                         Siswa dengan Kehadiran &lt; 80%
                                     </h3>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">
                                         Risiko tidak naik kelas
                                     </p>
                                 </div>
@@ -498,45 +498,45 @@ const getPercentageBgColor = (percentage: number) => {
 
                         <div class="overflow-x-auto">
                             <table class="w-full">
-                                <thead class="bg-gray-50 dark:bg-zinc-800 border-b border-gray-100 dark:border-zinc-700">
+                                <thead class="bg-slate-50 dark:bg-zinc-800 border-b border-slate-200 dark:border-zinc-700">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Siswa
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Kelas
                                         </th>
-                                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Kehadiran
                                         </th>
-                                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Hadir
                                         </th>
-                                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Alpha
                                         </th>
-                                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Total Hari
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
+                                <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
                                     <tr
                                         v-for="student in lowAttendanceStudents"
                                         :key="student.id"
-                                        class="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                        class="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
                                     >
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div>
-                                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                                <div class="text-sm font-medium text-slate-900 dark:text-white">
                                                     {{ student.nama }}
                                                 </div>
-                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                <div class="text-sm text-slate-500 dark:text-slate-400">
                                                     NIS: {{ student.nis }}
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">
                                             {{ student.kelas }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
@@ -553,12 +553,12 @@ const getPercentageBgColor = (percentage: number) => {
                                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-red-600 dark:text-red-400 font-medium">
                                             {{ student.total_alpha }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400">
+                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-500 dark:text-slate-400">
                                             {{ student.total_hari }}
                                         </td>
                                     </tr>
                                     <tr v-if="lowAttendanceStudents.length === 0">
-                                        <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                        <td colspan="6" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                             <TrendingUp :size="48" class="mx-auto mb-3 text-green-500 opacity-50" />
                                             <p class="text-lg font-medium">Semua siswa memiliki kehadiran baik</p>
                                             <p class="text-sm mt-1">Tidak ada siswa dengan kehadiran di bawah 80%</p>

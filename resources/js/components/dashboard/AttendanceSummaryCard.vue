@@ -78,12 +78,12 @@ const formattedDate = computed(() => {
         role="button"
         tabindex="0"
         :aria-label="`Kehadiran hari ini ${todayAttendance.percentage}%, klik untuk detail`"
-        class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 transition-shadow"
+        class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 transition-shadow flex flex-col"
         @click="viewDetails"
         @keydown.enter="viewDetails"
         @keydown.space.prevent="viewDetails"
     >
-        <div class="p-6">
+        <div class="p-6 flex-1 flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between mb-5">
                 <div class="flex items-center gap-3">
@@ -123,7 +123,7 @@ const formattedDate = computed(() => {
             </div>
 
             <!-- Breakdown Stats -->
-            <div class="grid grid-cols-3 gap-3 p-4 bg-slate-50 dark:bg-zinc-800/50 rounded-xl">
+            <div class="grid grid-cols-3 gap-3 p-4 bg-slate-50 dark:bg-zinc-800/50 rounded-xl mt-auto">
                 <div class="text-center">
                     <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Hadir</p>
                     <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">

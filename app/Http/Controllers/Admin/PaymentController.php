@@ -26,12 +26,14 @@ class PaymentController extends Controller
 
     /**
      * Display list of payments dengan pagination dan filter
+     *
+     * Menampilkan semua pembayaran termasuk yang dibatalkan
+     * untuk keperluan audit trail dan riwayat lengkap
      */
     public function index(Request $request)
     {
         $query = Payment::query()
-            ->with(['bill.paymentCategory', 'student.kelas', 'creator', 'verifier'])
-            ->active();
+            ->with(['bill.paymentCategory', 'student.kelas', 'creator', 'verifier', 'canceller']);
 
         // Search by nomor kwitansi atau nama siswa
         if ($search = $request->input('search')) {
@@ -394,7 +396,10 @@ class PaymentController extends Controller
     }
 
     /**
-     * Export financial report
+     * Export financial report to CSV
+     *
+     * Mengekspor laporan keuangan dalam format CSV yang dapat dibuka
+     * di Excel, Google Sheets, atau aplikasi spreadsheet lainnya
      */
     public function exportReports(Request $request)
     {
@@ -430,6 +435,8 @@ class PaymentController extends Controller
 
         return response()->streamDownload(function () use ($exportData) {
             $output = fopen('php://output', 'w');
+            // Add BOM for UTF-8 Excel compatibility
+            fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
             if ($exportData->isNotEmpty()) {
                 fputcsv($output, array_keys($exportData->first()));
                 foreach ($exportData as $row) {
@@ -438,26 +445,38 @@ class PaymentController extends Controller
             }
             fclose($output);
         }, $filename, [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
     }
 
     /**
      * Delinquent students list for Admin
+     *
+     * Menampilkan daftar siswa yang memiliki tagihan belum lunas
+     * dengan filter untuk student yang valid dan active, serta pagination
      */
     public function delinquents(Request $request)
     {
         $sortBy = $request->input('sort', 'total_tunggakan');
         $sortDir = $request->input('dir', 'desc');
+        $perPage = $request->input('per_page', 15);
+        $page = $request->input('page', 1);
 
         $delinquents = \App\Models\Bill::query()
             ->whereIn('status', ['belum_bayar', 'sebagian'])
+            ->whereHas('student') // Pastikan student exists
             ->with(['student.kelas', 'paymentCategory'])
             ->get()
             ->groupBy('student_id')
             ->map(function ($bills) {
                 $student = $bills->first()->student;
+
+                // Skip jika student null atau tidak aktif
+                if (! $student) {
+                    return null;
+                }
+
                 $totalTunggakan = $bills->sum(fn ($bill) => $bill->sisa_tagihan);
                 $overdueCount = $bills->filter(fn ($bill) => $bill->isOverdue())->count();
                 $oldestDue = $bills->sortBy('tanggal_jatuh_tempo')->first();
@@ -483,19 +502,42 @@ class PaymentController extends Controller
                     ])->values(),
                 ];
             })
+            ->filter() // Remove null entries
             ->values();
 
-        $delinquents = $delinquents->sortBy(
-            $sortBy === 'nama' ? 'student.nama_lengkap' : $sortBy,
-            SORT_REGULAR,
-            $sortDir === 'desc'
-        )->values();
+        // Calculate totals before pagination
+        $totalStudents = $delinquents->count();
+        $totalTunggakan = $delinquents->sum('total_tunggakan');
+
+        // Sorting collection
+        $sortField = $sortBy === 'nama' ? 'student.nama_lengkap' : $sortBy;
+        if ($sortDir === 'desc') {
+            $delinquents = $delinquents->sortByDesc($sortField)->values();
+        } else {
+            $delinquents = $delinquents->sortBy($sortField)->values();
+        }
+
+        // Manual pagination on collection
+        $total = $delinquents->count();
+        $lastPage = (int) ceil($total / $perPage);
+        $from = ($page - 1) * $perPage + 1;
+        $to = min($page * $perPage, $total);
+
+        $paginatedData = $delinquents->slice(($page - 1) * $perPage, $perPage)->values();
 
         return Inertia::render('Admin/Payments/Reports/Delinquents', [
-            'delinquents' => $delinquents,
-            'totalStudents' => $delinquents->count(),
-            'totalTunggakan' => $delinquents->sum('total_tunggakan'),
-            'formattedTotalTunggakan' => 'Rp '.number_format($delinquents->sum('total_tunggakan'), 0, ',', '.'),
+            'delinquents' => [
+                'data' => $paginatedData->toArray(),
+                'current_page' => (int) $page,
+                'last_page' => $lastPage,
+                'per_page' => (int) $perPage,
+                'total' => $total,
+                'from' => $total > 0 ? $from : null,
+                'to' => $total > 0 ? $to : null,
+            ],
+            'totalStudents' => $totalStudents,
+            'totalTunggakan' => $totalTunggakan,
+            'formattedTotalTunggakan' => 'Rp '.number_format($totalTunggakan, 0, ',', '.'),
             'filters' => [
                 'sort' => $sortBy,
                 'dir' => $sortDir,

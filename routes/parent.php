@@ -38,11 +38,14 @@ Route::middleware(['auth', 'role:PARENT'])->group(function () {
             ->except(['show']);
 
         /**
-         * Payments Portal - Melihat tagihan dan riwayat pembayaran
+         * Payments Portal - Melihat tagihan, riwayat pembayaran, dan submit pembayaran
          */
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::get('/', [PaymentController::class, 'index'])->name('index');
             Route::get('history', [PaymentController::class, 'history'])->name('history');
+            Route::get('submit', [PaymentController::class, 'showSubmit'])->name('submit');
+            Route::post('submit', [PaymentController::class, 'submitPayment'])->name('submit.store');
+            Route::get('pending', [PaymentController::class, 'pendingPayments'])->name('pending');
             Route::get('{payment}/receipt', [PaymentController::class, 'downloadReceipt'])->name('receipt');
         });
     });

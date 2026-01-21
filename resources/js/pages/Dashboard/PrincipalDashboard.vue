@@ -350,19 +350,20 @@ const quickActions = [
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.2 }"
                     :whileHover="{ y: -2, scale: 1.01 }"
                     :whileTap="{ scale: 0.97 }"
+                    class="relative"
                 >
+                    <!-- Pending Badge - Outside of overflow-hidden container -->
+                    <div
+                        v-if="realtimeData.pendingTeacherLeaves > 0"
+                        class="absolute -top-2 -right-2 z-10 flex items-center justify-center min-w-[24px] h-6 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white dark:ring-zinc-900"
+                    >
+                        {{ realtimeData.pendingTeacherLeaves > 99 ? '99+' : realtimeData.pendingTeacherLeaves }}
+                    </div>
+
                     <button
                         @click="viewTeacherLeaves"
-                        class="w-full text-left overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-700 transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                        class="w-full text-left rounded-2xl bg-white shadow-sm border border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                     >
-                        <!-- Pending Badge -->
-                        <div
-                            v-if="realtimeData.pendingTeacherLeaves > 0"
-                            class="absolute -top-1 -right-1 flex items-center justify-center min-w-[24px] h-6 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white dark:ring-zinc-900"
-                        >
-                            {{ realtimeData.pendingTeacherLeaves > 99 ? '99+' : realtimeData.pendingTeacherLeaves }}
-                        </div>
-
                         <div class="p-5">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -399,16 +400,18 @@ const quickActions = [
             </div>
 
             <!-- Real-time Attendance Widgets -->
-            <div class="grid gap-4 lg:grid-cols-2">
+            <div class="grid gap-4 lg:grid-cols-2 items-stretch">
                 <Motion
                     :initial="{ opacity: 0, y: 20 }"
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.25 }"
+                    class="h-full"
                 >
                     <AttendanceSummaryCard
                         :today-attendance="realtimeData.todayAttendance"
                         :classes-not-recorded="realtimeData.classesNotRecorded"
                         details-url="/principal/attendance/students"
+                        class="h-full"
                     />
                 </Motion>
 
@@ -416,8 +419,9 @@ const quickActions = [
                     :initial="{ opacity: 0, y: 20 }"
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.3 }"
+                    class="h-full"
                 >
-                    <TeacherPresenceWidget :teacher-presence="realtimeData.teacherPresence" />
+                    <TeacherPresenceWidget :teacher-presence="realtimeData.teacherPresence" class="h-full" />
                 </Motion>
             </div>
 

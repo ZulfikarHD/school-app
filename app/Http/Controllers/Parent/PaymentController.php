@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Parent;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Parent\SubmitPaymentRequest;
 use App\Models\Bill;
 use App\Models\Payment;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 /**
@@ -83,13 +86,24 @@ class PaymentController extends Controller
             ->get()
             ->map(fn ($bill) => $this->formatBill($bill));
 
+        // Get pending payments (menunggu verifikasi)
+        $pendingPayments = Payment::query()
+            ->whereIn('student_id', $studentIds)
+            ->where('status', 'pending')
+            ->with(['bill.paymentCategory', 'student.kelas'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn ($payment) => $this->formatPendingPayment($payment));
+
         // Calculate summary
         $summary = $this->calculateSummary($studentIds);
+        $summary['pending_count'] = $pendingPayments->count();
 
         return Inertia::render('Parent/Payments/Index', [
             'children' => $children,
             'activeBills' => $activeBills,
             'paidBills' => $paidBills,
+            'pendingPayments' => $pendingPayments,
             'summary' => $summary,
         ]);
     }
@@ -100,6 +114,11 @@ class PaymentController extends Controller
     protected function formatBill(Bill $bill): array
     {
         $isOverdue = $bill->isOverdue();
+
+        // Check if bill has pending payment
+        $hasPendingPayment = $bill->payments()
+            ->where('status', 'pending')
+            ->exists();
 
         return [
             'id' => $bill->id,
@@ -127,9 +146,41 @@ class PaymentController extends Controller
             'status' => $bill->status,
             'status_label' => $bill->status_label,
             'is_overdue' => $isOverdue,
+            'has_pending_payment' => $hasPendingPayment,
             'tanggal_jatuh_tempo' => $bill->tanggal_jatuh_tempo?->format('Y-m-d'),
             'formatted_due_date' => $bill->tanggal_jatuh_tempo?->format('d M Y'),
             'created_at' => $bill->created_at?->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    /**
+     * Format pending payment data for frontend
+     */
+    protected function formatPendingPayment(Payment $payment): array
+    {
+        return [
+            'id' => $payment->id,
+            'nomor_kwitansi' => $payment->nomor_kwitansi,
+            'bill' => [
+                'id' => $payment->bill->id,
+                'nomor_tagihan' => $payment->bill->nomor_tagihan,
+                'category' => $payment->bill->paymentCategory->nama,
+                'periode' => $payment->bill->nama_bulan.' '.$payment->bill->tahun,
+            ],
+            'student' => [
+                'id' => $payment->student->id,
+                'nama_lengkap' => $payment->student->nama_lengkap,
+                'nis' => $payment->student->nis,
+                'kelas' => $payment->student->kelas?->nama_lengkap ?? '-',
+            ],
+            'nominal' => (float) $payment->nominal,
+            'formatted_nominal' => 'Rp '.number_format($payment->nominal, 0, ',', '.'),
+            'metode_pembayaran' => $payment->metode_pembayaran,
+            'tanggal_bayar' => $payment->tanggal_bayar?->format('d M Y'),
+            'status' => $payment->status,
+            'status_label' => 'Menunggu Verifikasi',
+            'created_at' => $payment->created_at?->format('d M Y H:i'),
+            'has_bukti' => ! empty($payment->bukti_transfer),
         ];
     }
 
@@ -328,5 +379,206 @@ class PaymentController extends Controller
             'status_label' => $payment->status_label,
             'created_at' => $payment->created_at?->format('d M Y H:i'),
         ];
+    }
+
+    /**
+     * Menampilkan halaman submit pembayaran dengan tagihan terpilih
+     *
+     * Halaman ini menampilkan form untuk upload bukti transfer
+     * dengan ringkasan tagihan yang akan dibayar
+     */
+    public function showSubmit(Request $request)
+    {
+        $user = $request->user();
+        $guardian = $user->guardian;
+
+        if (! $guardian) {
+            return redirect()->route('parent.payments.index')
+                ->with('error', 'Data orang tua tidak ditemukan.');
+        }
+
+        // Get student IDs belonging to this parent
+        $studentIds = $guardian->students()
+            ->where('status', 'aktif')
+            ->pluck('students.id');
+
+        // Get selected bill IDs from query param
+        $billIds = $request->query('bills', []);
+        if (is_string($billIds)) {
+            $billIds = explode(',', $billIds);
+        }
+
+        if (empty($billIds)) {
+            return redirect()->route('parent.payments.index')
+                ->with('error', 'Pilih tagihan yang akan dibayar.');
+        }
+
+        // Get bills with validation
+        $bills = Bill::query()
+            ->whereIn('id', $billIds)
+            ->whereIn('student_id', $studentIds)
+            ->whereIn('status', ['belum_bayar', 'sebagian'])
+            ->with(['student.kelas', 'paymentCategory'])
+            ->get()
+            ->map(fn ($bill) => $this->formatBill($bill));
+
+        if ($bills->isEmpty()) {
+            return redirect()->route('parent.payments.index')
+                ->with('error', 'Tagihan tidak valid atau sudah lunas.');
+        }
+
+        // Calculate total
+        $totalAmount = $bills->sum('sisa_tagihan');
+
+        // Bank info (configurable via settings in future)
+        $bankInfo = [
+            'bank_name' => 'BCA',
+            'account_number' => '1234567890',
+            'account_name' => 'Yayasan Pendidikan ABC',
+            'note' => 'Pastikan transfer sesuai dengan total tagihan. Simpan bukti transfer untuk diupload.',
+        ];
+
+        return Inertia::render('Parent/Payments/Submit', [
+            'bills' => $bills,
+            'totalAmount' => $totalAmount,
+            'formattedTotal' => 'Rp '.number_format($totalAmount, 0, ',', '.'),
+            'bankInfo' => $bankInfo,
+        ]);
+    }
+
+    /**
+     * Submit pembayaran dengan bukti transfer
+     *
+     * Membuat payment record dengan status pending untuk setiap tagihan terpilih
+     * Satu bukti transfer dapat digunakan untuk multiple tagihan
+     */
+    public function submitPayment(SubmitPaymentRequest $request)
+    {
+        $user = $request->user();
+        $guardian = $user->guardian;
+
+        // Get student IDs for authorization check
+        $studentIds = $guardian->students()
+            ->where('status', 'aktif')
+            ->pluck('students.id');
+
+        // Get bills
+        $bills = Bill::query()
+            ->whereIn('id', $request->bill_ids)
+            ->whereIn('student_id', $studentIds)
+            ->whereIn('status', ['belum_bayar', 'sebagian'])
+            ->with('paymentCategory')
+            ->get();
+
+        if ($bills->isEmpty()) {
+            return back()->withErrors(['error' => 'Tagihan tidak valid atau sudah lunas.']);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Upload bukti transfer
+            $buktiPath = null;
+            if ($request->hasFile('bukti_transfer')) {
+                $file = $request->file('bukti_transfer');
+                $filename = 'bukti_'.now()->format('Ymd_His').'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                $buktiPath = $file->storeAs('payment-proofs', $filename, 'public');
+            }
+
+            $createdPayments = [];
+
+            // Create pending payment for each bill
+            foreach ($bills as $bill) {
+                $payment = Payment::create([
+                    'nomor_kwitansi' => Payment::generateNomorKwitansi(),
+                    'bill_id' => $bill->id,
+                    'student_id' => $bill->student_id,
+                    'nominal' => $bill->sisa_tagihan,
+                    'metode_pembayaran' => 'transfer',
+                    'tanggal_bayar' => $request->tanggal_bayar,
+                    'waktu_bayar' => now()->format('H:i:s'),
+                    'status' => 'pending',
+                    'bukti_transfer' => $buktiPath,
+                    'keterangan' => $request->catatan ?? 'Upload bukti transfer oleh orang tua',
+                    'created_by' => $user->id,
+                ]);
+
+                $createdPayments[] = $payment;
+            }
+
+            DB::commit();
+
+            Log::info('Parent submitted bulk payment', [
+                'user_id' => $user->id,
+                'guardian_id' => $guardian->id,
+                'bill_ids' => $request->bill_ids,
+                'payment_count' => count($createdPayments),
+                'total_amount' => $bills->sum('sisa_tagihan'),
+            ]);
+
+            return redirect()->route('parent.payments.index')
+                ->with('success', 'Pembayaran berhasil disubmit. Menunggu verifikasi dari Admin.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Clean up uploaded file if exists
+            if ($buktiPath) {
+                Storage::disk('public')->delete($buktiPath);
+            }
+
+            Log::error('Failed to submit bulk payment', [
+                'user_id' => $user->id,
+                'bill_ids' => $request->bill_ids,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors(['error' => 'Gagal menyimpan pembayaran. Silakan coba lagi.']);
+        }
+    }
+
+    /**
+     * Get pending payments for parent (payments waiting verification)
+     */
+    public function pendingPayments(Request $request)
+    {
+        $user = $request->user();
+        $guardian = $user->guardian;
+
+        if (! $guardian) {
+            return Inertia::render('Parent/Payments/Pending', [
+                'payments' => [],
+                'message' => 'Data orang tua tidak ditemukan.',
+            ]);
+        }
+
+        $studentIds = $guardian->students()
+            ->where('status', 'aktif')
+            ->pluck('students.id');
+
+        $pendingPayments = Payment::query()
+            ->whereIn('student_id', $studentIds)
+            ->where('status', 'pending')
+            ->with(['bill.paymentCategory', 'student.kelas'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn ($payment) => $this->formatPaymentWithProof($payment));
+
+        return Inertia::render('Parent/Payments/Pending', [
+            'payments' => $pendingPayments,
+        ]);
+    }
+
+    /**
+     * Format payment with proof URL for frontend
+     */
+    protected function formatPaymentWithProof(Payment $payment): array
+    {
+        $data = $this->formatPayment($payment);
+        $data['bukti_transfer_url'] = $payment->bukti_transfer
+            ? Storage::disk('public')->url($payment->bukti_transfer)
+            : null;
+
+        return $data;
     }
 }

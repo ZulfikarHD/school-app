@@ -35,6 +35,8 @@ import DialogModal from '@/components/ui/DialogModal.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import Alert from '@/components/ui/Alert.vue';
 import SessionTimeoutModal from '@/components/ui/SessionTimeoutModal.vue';
+import Breadcrumb from '@/components/ui/Breadcrumb.vue';
+import { useAutoBreadcrumb } from '@/composables/useAutoBreadcrumb';
 import {
     Home,
     Users,
@@ -71,7 +73,7 @@ import {
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
-const pendingCounts = computed(() => (page.props as any).pendingCounts ?? { leaveRequests: 0 });
+const pendingCounts = computed(() => (page.props as any).pendingCounts ?? { leaveRequests: 0, pendingPayments: 0 });
 const haptics = useHaptics();
 const modal = useModal();
 const showProfileMenu = ref(false);
@@ -104,6 +106,9 @@ const { showWarning, remainingSeconds, extendSession, logout: sessionLogout } = 
 
 // Destructure modal states for template usage
 const { dialogState, alertState } = modal;
+
+// Auto-generate breadcrumb items berdasarkan current URL
+const { breadcrumbItems } = useAutoBreadcrumb();
 
 /**
  * Helper function untuk generate route URL menggunakan Wayfinder
@@ -237,7 +242,8 @@ const toggleDropdown = (groupName: string) => {
 };
 
 /**
- * Check active route
+ * Check active route dengan logic yang lebih presisi
+ * untuk menghindari konflik antara route dengan prefix serupa
  */
 const isActive = (route: string) => {
     const routeUrl = getRouteUrl(route);
@@ -257,6 +263,31 @@ const isActive = (route: string) => {
     if (route === 'teacher.attendance.subject.index') {
         // Match /teacher/attendance/subject/history
         return currentUrl.startsWith('/teacher/attendance/subject/history');
+    }
+
+    // Payment routes - handle exact matching untuk menghindari konflik
+    // Generate Tagihan hanya aktif saat di halaman generate
+    if (route === 'admin.payments.bills.generate') {
+        return currentUrl === '/admin/payments/bills/generate';
+    }
+
+    // Daftar Tagihan aktif saat di /admin/payments/bills (index) tapi bukan /generate
+    if (route === 'admin.payments.bills.index') {
+        return currentUrl === '/admin/payments/bills' || 
+               (currentUrl.startsWith('/admin/payments/bills') && !currentUrl.includes('/generate'));
+    }
+
+    // Catat Pembayaran hanya aktif saat di halaman create
+    if (route === 'admin.payments.records.create') {
+        return currentUrl === '/admin/payments/records/create';
+    }
+
+    // Riwayat Pembayaran aktif saat di /admin/payments/records (index atau show) tapi bukan /create atau /verification
+    if (route === 'admin.payments.records.index') {
+        return currentUrl === '/admin/payments/records' || 
+               (currentUrl.startsWith('/admin/payments/records') && 
+                !currentUrl.includes('/create') && 
+                !currentUrl.includes('/verification'));
     }
 
     // Default: starts with
@@ -299,6 +330,8 @@ const menuItems = computed((): MenuItem[] => {
     ];
 
     if (role === 'SUPERADMIN' || role === 'ADMIN') {
+        const pendingPaymentsBadge = pendingCounts.value.pendingPayments;
+
         return [
             ...commonItems,
             { name: 'Manajemen User', route: 'admin.users.index', icon: Users, badge: 0 },
@@ -315,12 +348,13 @@ const menuItems = computed((): MenuItem[] => {
             {
                 name: 'Pembayaran',
                 icon: Wallet,
+                badge: pendingPaymentsBadge, // Badge pada grup Pembayaran untuk menunjukkan ada pending
                 children: [
                     { name: 'Kategori Pembayaran', route: 'admin.payment-categories.index', icon: Tags, badge: 0 },
                     { name: 'Generate Tagihan', route: 'admin.payments.bills.generate', icon: Receipt, badge: 0 },
                     { name: 'Daftar Tagihan', route: 'admin.payments.bills.index', icon: FileText, badge: 0 },
                     { name: 'Catat Pembayaran', route: 'admin.payments.records.create', icon: CreditCard, badge: 0 },
-                    { name: 'Riwayat Pembayaran', route: 'admin.payments.records.index', icon: History, badge: 0 },
+                    { name: 'Riwayat Pembayaran', route: 'admin.payments.records.index', icon: History, badge: pendingPaymentsBadge },
                     { name: 'Rekonsiliasi Bank', route: 'admin.payments.reconciliation.index', icon: FileSpreadsheet, badge: 0 },
                     { name: 'Laporan Keuangan', route: 'admin.payments.reports.index', icon: Activity, badge: 0 },
                 ]
@@ -1029,6 +1063,13 @@ defineExpose({ getSpringConfig });
                     </div>
                 </div>
             </header>
+
+            <!-- BREADCRUMB (Auto-generated from current route) -->
+            <div v-if="breadcrumbItems.length > 0" class="border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 px-4 lg:px-8 py-2">
+                <div class="max-w-7xl mx-auto">
+                    <Breadcrumb :items="breadcrumbItems" />
+                </div>
+            </div>
 
             <!-- PAGE CONTENT -->
             <main class="flex-1 w-full pb-28 lg:pb-8 relative">

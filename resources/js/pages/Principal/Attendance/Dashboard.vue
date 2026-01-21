@@ -145,32 +145,33 @@ const getAttendancePercentage = (classItem: ClassItem) => {
             >
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
                             {{ title }}
                         </h1>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                             {{ formatDate(filters.date) }}
                         </p>
                     </div>
 
                     <div class="flex items-center gap-3">
                         <div class="flex items-center gap-2">
-                            <Calendar :size="18" class="text-gray-400" />
+                            <Calendar :size="18" class="text-slate-400" />
                             <input
                                 v-model="selectedDate"
                                 type="date"
                                 @change="changeDate"
-                                class="px-3 py-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                class="px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                             />
                         </div>
                         <button
                             @click="changeDate"
                             :disabled="isLoading"
-                            class="p-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                            class="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                            aria-label="Refresh data"
                         >
                             <RefreshCw
                                 :size="18"
-                                :class="['text-gray-600 dark:text-gray-400', isLoading && 'animate-spin']"
+                                :class="['text-slate-600 dark:text-slate-400', isLoading && 'animate-spin']"
                             />
                         </button>
                     </div>
@@ -187,21 +188,21 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                     :whileHover="{ y: -2, scale: 1.01 }"
                     :whileTap="{ scale: 0.97 }"
                 >
-                    <div
-                        class="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-gray-100 dark:border-zinc-800 cursor-pointer"
+                    <button
+                        class="w-full text-left bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                         @click="navigateTo('/principal/attendance/students')"
                     >
                         <div class="flex items-center justify-between">
                             <div class="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-xl">
                                 <GraduationCap :size="24" class="text-blue-600 dark:text-blue-400" />
                             </div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">Total</span>
                         </div>
-                        <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-white">
+                        <p class="mt-4 text-3xl font-bold text-slate-900 dark:text-white">
                             {{ summary.total_students }}
                         </p>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Siswa Aktif</p>
-                    </div>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Siswa Aktif</p>
+                    </button>
                 </Motion>
 
                 <!-- Hadir -->
@@ -212,7 +213,7 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                     :whileHover="{ y: -2, scale: 1.01 }"
                     :whileTap="{ scale: 0.97 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-3 bg-green-100 dark:bg-green-900/50 rounded-xl">
                                 <CheckCircle :size="24" class="text-green-600 dark:text-green-400" />
@@ -224,7 +225,7 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                         <p class="mt-4 text-3xl font-bold text-green-600 dark:text-green-400">
                             {{ summary.by_status.hadir }}
                         </p>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Siswa Hadir</p>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Siswa Hadir</p>
                     </div>
                 </Motion>
 
@@ -236,7 +237,7 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                     :whileHover="{ y: -2, scale: 1.01 }"
                     :whileTap="{ scale: 0.97 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="p-3 bg-red-100 dark:bg-red-900/50 rounded-xl">
                                 <XCircle :size="24" class="text-red-600 dark:text-red-400" />
@@ -245,7 +246,7 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                         <p class="mt-4 text-3xl font-bold text-red-600 dark:text-red-400">
                             {{ summary.by_status.alpha }}
                         </p>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Alpha</p>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Alpha</p>
                     </div>
                 </Motion>
 
@@ -257,28 +258,28 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                     :whileHover="{ y: -2, scale: 1.01 }"
                     :whileTap="{ scale: 0.97 }"
                 >
-                    <div
-                        class="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-gray-100 dark:border-zinc-800 cursor-pointer"
+                    <button
+                        class="w-full text-left bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                         @click="navigateTo('/principal/attendance/teachers')"
                     >
                         <div class="flex items-center justify-between">
                             <div class="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-xl">
                                 <Users :size="24" class="text-purple-600 dark:text-purple-400" />
                             </div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                            <span class="text-xs text-slate-500 dark:text-slate-400">
                                 {{ teacherPresence.clocked_in }}/{{ teacherPresence.total }}
                             </span>
                         </div>
                         <p class="mt-4 text-3xl font-bold text-purple-600 dark:text-purple-400">
                             {{ teacherPresence.clocked_in }}
                         </p>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                             Guru Hadir
                             <span v-if="teacherPresence.late > 0" class="text-yellow-600 dark:text-yellow-400">
                                 ({{ teacherPresence.late }} terlambat)
                             </span>
                         </p>
-                    </div>
+                    </button>
                 </Motion>
             </div>
 
@@ -318,33 +319,33 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                     :animate="{ opacity: 1, x: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.3 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 dark:border-zinc-800">
                             <div class="flex items-center gap-3">
                                 <div class="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
                                     <AlertCircle :size="20" class="text-red-600 dark:text-red-400" />
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-gray-900 dark:text-white">
+                                    <h3 class="font-semibold text-slate-900 dark:text-white">
                                         Belum Input Absensi
                                     </h3>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">
                                         {{ classesWithoutAttendanceList.length }} kelas
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div class="divide-y divide-gray-100 dark:divide-zinc-800 max-h-80 overflow-y-auto">
+                        <div class="divide-y divide-slate-100 dark:divide-zinc-800 max-h-80 overflow-y-auto">
                             <div
                                 v-for="cls in classesWithoutAttendanceList"
                                 :key="cls.id"
-                                class="px-6 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                                class="px-6 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
                             >
                                 <div>
-                                    <p class="font-medium text-gray-900 dark:text-white">
+                                    <p class="font-medium text-slate-900 dark:text-white">
                                         {{ cls.nama_lengkap }}
                                     </p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">
                                         {{ cls.jumlah_siswa }} siswa
                                         <span v-if="cls.wali_kelas">
                                             • Wali: {{ cls.wali_kelas.name }}
@@ -357,7 +358,7 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                             </div>
                             <div v-if="classesWithoutAttendanceList.length === 0" class="px-6 py-8 text-center">
                                 <CheckCircle :size="40" class="mx-auto text-green-500 mb-2" />
-                                <p class="text-gray-500 dark:text-gray-400">
+                                <p class="text-slate-500 dark:text-slate-400">
                                     Semua kelas sudah input absensi
                                 </p>
                             </div>
@@ -371,34 +372,34 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                     :animate="{ opacity: 1, x: 0 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.35 }"
                 >
-                    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
+                    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 dark:border-zinc-800">
                             <div class="flex items-center gap-3">
                                 <div class="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
                                     <CheckCircle :size="20" class="text-green-600 dark:text-green-400" />
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-gray-900 dark:text-white">
+                                    <h3 class="font-semibold text-slate-900 dark:text-white">
                                         Sudah Input Absensi
                                     </h3>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">
                                         {{ classesWithAttendance.length }} kelas
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div class="divide-y divide-gray-100 dark:divide-zinc-800 max-h-80 overflow-y-auto">
+                        <div class="divide-y divide-slate-100 dark:divide-zinc-800 max-h-80 overflow-y-auto">
                             <div
                                 v-for="cls in classesWithAttendance"
                                 :key="cls.id"
-                                class="px-6 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                                class="px-6 py-3 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
                             >
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="font-medium text-gray-900 dark:text-white">
+                                        <p class="font-medium text-slate-900 dark:text-white">
                                             {{ cls.nama_lengkap }}
                                         </p>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        <p class="text-sm text-slate-500 dark:text-slate-400">
                                             {{ cls.jumlah_siswa }} siswa
                                         </p>
                                     </div>
@@ -433,8 +434,8 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                                 </div>
                             </div>
                             <div v-if="classesWithAttendance.length === 0" class="px-6 py-8 text-center">
-                                <Clock :size="40" class="mx-auto text-gray-400 mb-2" />
-                                <p class="text-gray-500 dark:text-gray-400">
+                                <Clock :size="40" class="mx-auto text-slate-400 mb-2" />
+                                <p class="text-slate-500 dark:text-slate-400">
                                     Belum ada kelas yang input absensi
                                 </p>
                             </div>
@@ -454,15 +455,15 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                 >
                     <button
                         @click="navigateTo('/principal/attendance/students')"
-                        class="w-full p-4 bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                        class="w-full p-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
                     >
                         <div class="flex items-center gap-3">
                             <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
                                 <Users :size="20" class="text-blue-600 dark:text-blue-400" />
                             </div>
                             <div>
-                                <p class="font-medium text-gray-900 dark:text-white">Absensi Siswa</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Lihat detail</p>
+                                <p class="font-medium text-slate-900 dark:text-white">Absensi Siswa</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Lihat detail</p>
                             </div>
                         </div>
                     </button>
@@ -477,15 +478,15 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                 >
                     <button
                         @click="navigateTo('/principal/attendance/students/report')"
-                        class="w-full p-4 bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 text-left hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
+                        class="w-full p-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 text-left hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
                     >
                         <div class="flex items-center gap-3">
                             <div class="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg">
                                 <FileText :size="20" class="text-emerald-600 dark:text-emerald-400" />
                             </div>
                             <div>
-                                <p class="font-medium text-gray-900 dark:text-white">Laporan Siswa</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Rekap bulanan</p>
+                                <p class="font-medium text-slate-900 dark:text-white">Laporan Siswa</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Rekap bulanan</p>
                             </div>
                         </div>
                     </button>
@@ -500,15 +501,15 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                 >
                     <button
                         @click="navigateTo('/principal/attendance/teachers')"
-                        class="w-full p-4 bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 text-left hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
+                        class="w-full p-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 text-left hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
                     >
                         <div class="flex items-center gap-3">
                             <div class="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
                                 <Clock :size="20" class="text-purple-600 dark:text-purple-400" />
                             </div>
                             <div>
-                                <p class="font-medium text-gray-900 dark:text-white">Presensi Guru</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Clock in/out</p>
+                                <p class="font-medium text-slate-900 dark:text-white">Presensi Guru</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Clock in/out</p>
                             </div>
                         </div>
                     </button>
@@ -523,15 +524,15 @@ const getAttendancePercentage = (classItem: ClassItem) => {
                 >
                     <button
                         @click="navigateTo('/principal/attendance/teachers/report')"
-                        class="w-full p-4 bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 text-left hover:border-orange-300 dark:hover:border-orange-700 transition-colors"
+                        class="w-full p-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 text-left hover:border-orange-300 dark:hover:border-orange-700 transition-colors"
                     >
                         <div class="flex items-center gap-3">
                             <div class="p-2 bg-orange-100 dark:bg-orange-900/50 rounded-lg">
                                 <FileText :size="20" class="text-orange-600 dark:text-orange-400" />
                             </div>
                             <div>
-                                <p class="font-medium text-gray-900 dark:text-white">Laporan Guru</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Rekap presensi</p>
+                                <p class="font-medium text-slate-900 dark:text-white">Laporan Guru</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Rekap presensi</p>
                             </div>
                         </div>
                     </button>

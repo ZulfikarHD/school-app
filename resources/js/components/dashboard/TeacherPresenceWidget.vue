@@ -81,12 +81,12 @@ const viewDetails = () => {
         role="button"
         tabindex="0"
         :aria-label="`Presensi guru ${presencePercentage}%, ${teacherPresence.clocked_in} dari ${teacherPresence.total_teachers} sudah clock in, klik untuk detail`"
-        class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 transition-shadow"
+        class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 transition-shadow flex flex-col"
         @click="viewDetails"
         @keydown.enter="viewDetails"
         @keydown.space.prevent="viewDetails"
     >
-        <div class="p-6">
+        <div class="p-6 flex-1 flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between mb-5">
                 <div class="flex items-center gap-3">
