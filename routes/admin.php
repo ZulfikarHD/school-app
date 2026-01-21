@@ -5,13 +5,15 @@
  *
  * File ini berisi semua routes yang berhubungan dengan fungsi administrasi,
  * yaitu: user management, student management, attendance management,
- * audit logs, leave request verification, dan payment management
+ * audit logs, leave request verification, payment management, dan grade management
  */
 
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BankReconciliationController;
 use App\Http\Controllers\Admin\BillController;
+use App\Http\Controllers\Admin\GradeController;
+use App\Http\Controllers\Admin\GradeWeightController;
 use App\Http\Controllers\Admin\LeaveRequestController;
 use App\Http\Controllers\Admin\PaymentCategoryController;
 use App\Http\Controllers\Admin\PaymentController;
@@ -171,5 +173,22 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('students/search', [PaymentController::class, 'searchStudents'])->name('students.search');
         Route::get('students/{student}/unpaid-bills', [PaymentController::class, 'getUnpaidBills'])->name('students.unpaid-bills');
+    });
+
+    /**
+     * Grade Management - Rekap nilai dan konfigurasi bobot
+     */
+    Route::prefix('grades')->name('grades.')->group(function () {
+        Route::get('/', [GradeController::class, 'index'])->name('index');
+        Route::get('summary', [GradeController::class, 'summary'])->name('summary');
+        Route::get('export', [GradeController::class, 'export'])->name('export');
+    });
+
+    /**
+     * Grade Weight Configuration - Pengaturan bobot nilai K13
+     */
+    Route::prefix('settings/grade-weights')->name('settings.grade-weights.')->group(function () {
+        Route::get('/', [GradeWeightController::class, 'index'])->name('index');
+        Route::put('/', [GradeWeightController::class, 'update'])->name('update');
     });
 });

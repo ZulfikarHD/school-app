@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: services
     content: "Create Services: GradeCalculationService (formula K13), ReportCardService (PDF generation)"
-    status: pending
+    status: in_progress
   - id: teacher-grades
     content: "Implement Teacher: Grade Input (CRUD for UH/UTS/UAS/Praktik)"
     status: completed
@@ -19,7 +19,7 @@ todos:
     status: completed
   - id: admin-config
     content: "Implement Admin: Grade Weight Configuration"
-    status: pending
+    status: completed
   - id: admin-reportcard
     content: "Implement Admin: Report Card Generation Wizard"
     status: pending

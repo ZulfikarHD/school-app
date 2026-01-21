@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: sprint-3-admin
     content: "Sprint 3: Admin Config - Bobot nilai + Rekap nilai + Export Excel"
-    status: pending
+    status: completed
   - id: sprint-4-reportcard
     content: "Sprint 4: Report Card Generation - Generate PDF + Preview + Catatan Wali Kelas"
     status: pending

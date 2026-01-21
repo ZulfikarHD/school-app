@@ -25,6 +25,8 @@ import { index as principalTeacherLeavesIndex } from '@/routes/principal/teacher
 import { reports as principalFinancialReports, delinquents as principalFinancialDelinquents } from '@/routes/principal/financial';
 import { index as adminPaymentReportsIndex, delinquents as adminPaymentDelinquents } from '@/routes/admin/payments/reports';
 import { index as adminPaymentReconciliationIndex } from '@/routes/admin/payments/reconciliation';
+import { index as adminGradesIndex, summary as adminGradesSummary } from '@/routes/admin/grades';
+import { index as adminGradeWeightsIndex } from '@/routes/admin/settings/grade-weights';
 import { index as teacherStudentsIndex } from '@/routes/teacher/students';
 import { index as teacherAttendanceIndex } from '@/routes/teacher/attendance';
 import { create as teacherAttendanceSubjectCreate, index as teacherAttendanceSubjectIndex } from '@/routes/teacher/attendance/subject';
@@ -143,6 +145,9 @@ const getRouteUrl = (routeName: string): string => {
         'admin.payments.reports.index': adminPaymentReportsIndex().url,
         'admin.payments.reports.delinquents': adminPaymentDelinquents().url,
         'admin.payments.reconciliation.index': adminPaymentReconciliationIndex().url,
+        'admin.grades.index': adminGradesIndex().url,
+        'admin.grades.summary': adminGradesSummary().url,
+        'admin.settings.grade-weights.index': adminGradeWeightsIndex().url,
         'teacher.students.index': teacherStudentsIndex().url,
         'teacher.attendance.index': teacherAttendanceIndex().url,
         'teacher.attendance.subject.create': teacherAttendanceSubjectCreate().url,
@@ -363,6 +368,15 @@ const menuItems = computed((): MenuItem[] => {
                     { name: 'Riwayat Pembayaran', route: 'admin.payments.records.index', icon: History, badge: pendingPaymentsBadge },
                     { name: 'Rekonsiliasi Bank', route: 'admin.payments.reconciliation.index', icon: FileSpreadsheet, badge: 0 },
                     { name: 'Laporan Keuangan', route: 'admin.payments.reports.index', icon: Activity, badge: 0 },
+                ]
+            },
+            {
+                name: 'Penilaian',
+                icon: Award,
+                children: [
+                    { name: 'Rekap Nilai', route: 'admin.grades.index', icon: GraduationCap, badge: 0 },
+                    { name: 'Summary Nilai', route: 'admin.grades.summary', icon: FileSpreadsheet, badge: 0 },
+                    { name: 'Bobot Nilai', route: 'admin.settings.grade-weights.index', icon: Settings, badge: 0 },
                 ]
             },
             { name: 'Audit Log', route: 'admin.audit-logs.index', icon: Activity, badge: 0 },
