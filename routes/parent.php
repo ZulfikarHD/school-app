@@ -21,13 +21,23 @@ Route::middleware(['auth', 'role:PARENT'])->group(function () {
 
     Route::prefix('parent')->name('parent.')->group(function () {
         /**
-         * Children Portal - Melihat data dan kehadiran anak
+         * Children Portal - Melihat data, kehadiran, nilai, dan rapor anak
          */
         Route::prefix('children')->name('children.')->group(function () {
             Route::get('/', [ChildController::class, 'index'])->name('index');
             Route::get('{student}', [ChildController::class, 'show'])->name('show');
             Route::get('{student}/attendance', [ChildController::class, 'attendance'])->name('attendance');
             Route::get('{student}/attendance/export', [ChildController::class, 'exportAttendance'])->name('attendance.export');
+
+            // Grades - Rekap nilai anak
+            Route::get('{student}/grades', [ChildController::class, 'grades'])->name('grades');
+
+            // Report Cards - Rapor anak
+            Route::prefix('{student}/report-cards')->name('report-cards.')->group(function () {
+                Route::get('/', [ChildController::class, 'reportCards'])->name('index');
+                Route::get('{reportCard}', [ChildController::class, 'showReportCard'])->name('show');
+                Route::get('{reportCard}/download', [ChildController::class, 'downloadReportCard'])->name('download');
+            });
         });
 
         /**

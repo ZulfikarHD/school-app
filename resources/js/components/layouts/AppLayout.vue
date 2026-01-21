@@ -37,6 +37,8 @@ import { index as teacherGradesIndex } from '@/routes/teacher/grades';
 import { index as teacherAttitudeGradesIndex } from '@/routes/teacher/attitude-grades';
 import { index as teacherReportCardsIndex } from '@/routes/teacher/report-cards';
 import { index as adminReportCardsIndex } from '@/routes/admin/report-cards';
+import { index as principalReportCardsIndex } from '@/routes/principal/report-cards';
+import { dashboard as principalAcademicDashboard, grades as principalAcademicGrades } from '@/routes/principal/academic';
 import DialogModal from '@/components/ui/DialogModal.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import Alert from '@/components/ui/Alert.vue';
@@ -161,6 +163,9 @@ const getRouteUrl = (routeName: string): string => {
         'teacher.attitude-grades.index': teacherAttitudeGradesIndex().url,
         'teacher.report-cards.index': teacherReportCardsIndex().url,
         'admin.report-cards.index': adminReportCardsIndex().url,
+        'principal.report-cards.index': principalReportCardsIndex().url,
+        'principal.academic.dashboard': principalAcademicDashboard().url,
+        'principal.academic.grades': principalAcademicGrades().url,
         'parent.children': parentChildrenIndex().url,
         'parent.leave-requests': parentLeaveRequestsIndex().url,
         'parent.payments.index': parentPaymentsIndex().url,
@@ -399,6 +404,15 @@ const menuItems = computed((): MenuItem[] => {
                     { name: 'Dashboard', route: 'principal.attendance.dashboard', icon: Home, badge: 0 },
                     { name: 'Absensi Siswa', route: 'principal.attendance.students.index', icon: Users, badge: 0 },
                     { name: 'Presensi Guru', route: 'principal.attendance.teachers.index', icon: Clock, badge: 0 },
+                ]
+            },
+            {
+                name: 'Akademik',
+                icon: Award,
+                children: [
+                    { name: 'Dashboard', route: 'principal.academic.dashboard', icon: Activity, badge: 0 },
+                    { name: 'Rekap Nilai', route: 'principal.academic.grades', icon: BookOpen, badge: 0 },
+                    { name: 'Approval Rapor', route: 'principal.report-cards.index', icon: FileText, badge: 0 },
                 ]
             },
             {

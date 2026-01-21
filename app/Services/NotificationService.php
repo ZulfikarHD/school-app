@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AttendanceNotification;
 use App\Models\Bill;
 use App\Models\PaymentReminderLog;
+use App\Models\ReportCard;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -203,6 +204,113 @@ class NotificationService
             deliveryMethod: 'whatsapp',
             subject: 'Reminder Input Absensi'
         );
+    }
+
+    // ============================================================
+    // REPORT CARD NOTIFICATION METHODS
+    // ============================================================
+
+    /**
+     * Queue notification ke orang tua saat rapor dirilis
+     *
+     * @param  ReportCard  $reportCard  Rapor yang baru dirilis
+     */
+    public function queueReportCardReleasedNotification(ReportCard $reportCard): void
+    {
+        // Load necessary relationships
+        $reportCard->loadMissing(['student.guardians', 'class']);
+
+        $student = $reportCard->student;
+
+        if (! $student) {
+            Log::warning('Report card notification skipped: No student found', [
+                'report_card_id' => $reportCard->id,
+            ]);
+
+            return;
+        }
+
+        // Get all guardians for the student
+        $guardians = $student->guardians;
+
+        if ($guardians->isEmpty()) {
+            Log::warning('Report card notification skipped: No guardians found', [
+                'report_card_id' => $reportCard->id,
+                'student_id' => $student->id,
+            ]);
+
+            return;
+        }
+
+        // Build message
+        $message = $this->buildReportCardReleasedMessage($reportCard);
+        $schoolName = config('app.school_name', 'Sekolah');
+
+        // Queue notification untuk setiap guardian yang memiliki user account
+        foreach ($guardians as $guardian) {
+            if (! $guardian->user) {
+                continue;
+            }
+
+            $this->queueNotification(
+                type: 'report_card_released',
+                recipient: $guardian->user,
+                message: $message,
+                deliveryMethod: 'whatsapp',
+                subject: "Rapor Semester {$reportCard->semester} Tersedia",
+                referenceType: 'report_card',
+                referenceId: $reportCard->id
+            );
+
+            Log::info('Report card release notification queued', [
+                'report_card_id' => $reportCard->id,
+                'student_id' => $student->id,
+                'guardian_id' => $guardian->id,
+            ]);
+        }
+    }
+
+    /**
+     * Build message untuk notifikasi rapor dirilis
+     *
+     * @param  ReportCard  $reportCard  Rapor
+     * @return string Pesan notifikasi
+     */
+    protected function buildReportCardReleasedMessage(ReportCard $reportCard): string
+    {
+        $studentName = $reportCard->student->nama_lengkap;
+        $className = $reportCard->class?->nama_lengkap ?? '-';
+        $semester = $reportCard->semester === '1' ? 'Ganjil' : 'Genap';
+        $tahunAjaran = $reportCard->tahun_ajaran;
+        $average = number_format($reportCard->average_score ?? 0, 1);
+        $rank = $reportCard->rank ?? '-';
+        $schoolName = config('app.school_name', 'Sekolah');
+        $appUrl = config('app.url');
+
+        return <<<MSG
+Yth. Bapak/Ibu Orang Tua/Wali,
+
+*RAPOR SEMESTER {$semester} TELAH TERSEDIA*
+
+Rapor anak Anda sudah dapat dilihat:
+- Nama: {$studentName}
+- Kelas: {$className}
+- Semester: {$semester}
+- Tahun Ajaran: {$tahunAjaran}
+
+Ringkasan:
+- Rata-rata Nilai: {$average}
+- Peringkat: {$rank}
+
+Silakan login ke portal orang tua untuk melihat detail rapor dan mengunduh PDF.
+
+{$appUrl}
+
+Terima kasih atas dukungan Bapak/Ibu selama semester ini.
+
+Salam,
+{$schoolName}
+MSG;
     }
 
     // ============================================================

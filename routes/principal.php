@@ -5,13 +5,15 @@
  *
  * File ini berisi semua routes yang berhubungan dengan fungsi principal,
  * yaitu: dashboard monitoring, student viewing (read-only), teacher leave approval,
- * attendance monitoring, dan audit log viewing
+ * attendance monitoring, audit log viewing, academic dashboard, dan report card approval
  */
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Dashboard\PrincipalDashboardController;
+use App\Http\Controllers\Principal\AcademicDashboardController;
 use App\Http\Controllers\Principal\AttendanceController;
 use App\Http\Controllers\Principal\FinancialReportController;
+use App\Http\Controllers\Principal\ReportCardController;
 use App\Http\Controllers\Principal\StudentController;
 use App\Http\Controllers\Principal\TeacherLeaveController;
 use Illuminate\Support\Facades\Route;
@@ -70,6 +72,25 @@ Route::middleware(['auth', 'role:PRINCIPAL'])->group(function () {
             Route::get('reports', [FinancialReportController::class, 'index'])->name('reports');
             Route::get('reports/export', [FinancialReportController::class, 'export'])->name('reports.export');
             Route::get('delinquents', [FinancialReportController::class, 'delinquents'])->name('delinquents');
+        });
+
+        /**
+         * Academic Dashboard - Dashboard akademik dengan analytics nilai
+         */
+        Route::prefix('academic')->name('academic.')->group(function () {
+            Route::get('dashboard', [AcademicDashboardController::class, 'index'])->name('dashboard');
+            Route::get('grades', [AcademicDashboardController::class, 'grades'])->name('grades');
+        });
+
+        /**
+         * Report Card Approval - Workflow approval rapor oleh kepala sekolah
+         */
+        Route::prefix('report-cards')->name('report-cards.')->group(function () {
+            Route::get('/', [ReportCardController::class, 'index'])->name('index');
+            Route::get('{reportCard}', [ReportCardController::class, 'show'])->name('show');
+            Route::post('{reportCard}/approve', [ReportCardController::class, 'approve'])->name('approve');
+            Route::post('{reportCard}/reject', [ReportCardController::class, 'reject'])->name('reject');
+            Route::post('bulk-approve', [ReportCardController::class, 'bulkApprove'])->name('bulk-approve');
         });
     });
 });
