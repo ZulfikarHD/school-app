@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: services
     content: "Create Services: GradeCalculationService (formula K13), ReportCardService (PDF generation)"
-    status: in_progress
+    status: completed
   - id: teacher-grades
     content: "Implement Teacher: Grade Input (CRUD for UH/UTS/UAS/Praktik)"
     status: completed
@@ -22,25 +22,25 @@ todos:
     status: completed
   - id: admin-reportcard
     content: "Implement Admin: Report Card Generation Wizard"
-    status: pending
+    status: completed
   - id: principal-academic
     content: "Implement Principal: Academic Dashboard + Grade View"
-    status: pending
+    status: completed
   - id: principal-approval
     content: "Implement Principal: Report Card Approval Flow"
-    status: pending
+    status: completed
   - id: parent-grades
     content: "Implement Parent: View Child Grades Summary"
-    status: pending
+    status: completed
   - id: parent-reportcard
     content: "Implement Parent: View/Download Report Card"
-    status: pending
+    status: completed
   - id: navigation
     content: Update Navigation Menus for all roles
-    status: in_progress
+    status: completed
   - id: testing
     content: Write Feature Tests for all flows
-    status: pending
+    status: completed
 isProject: false
 ---
 
