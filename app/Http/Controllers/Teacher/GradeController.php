@@ -179,7 +179,7 @@ class GradeController extends Controller
      * Show form untuk edit penilaian yang sudah ada
      * dengan data siswa dan nilai yang sudah diinput sebelumnya
      */
-    public function edit(Request $request, Grade $grade): Response
+    public function edit(Request $request, Grade $grade): Response|RedirectResponse
     {
         $teacher = auth()->user();
 

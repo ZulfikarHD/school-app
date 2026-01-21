@@ -12,10 +12,13 @@ class UpdateGradeWeightRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     * Hanya ADMIN yang bisa mengakses fitur ini
      */
     public function authorize(): bool
     {
-        return $this->user()->hasRole(['SUPERADMIN', 'ADMIN']);
+        $user = $this->user();
+
+        return $user && $user->role === 'ADMIN';
     }
 
     /**
