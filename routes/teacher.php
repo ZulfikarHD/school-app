@@ -15,6 +15,7 @@ use App\Http\Controllers\Teacher\AttitudeGradeController;
 use App\Http\Controllers\Teacher\ClockController;
 use App\Http\Controllers\Teacher\GradeController;
 use App\Http\Controllers\Teacher\LeaveRequestController;
+use App\Http\Controllers\Teacher\ReportCardController;
 use App\Http\Controllers\Teacher\StudentController;
 use App\Http\Controllers\Teacher\SubjectAttendanceController;
 use App\Http\Controllers\Teacher\TeacherLeaveController;
@@ -147,6 +148,19 @@ Route::middleware(['auth', 'role:TEACHER'])->group(function () {
             Route::get('/', [AttitudeGradeController::class, 'index'])->name('index');
             Route::get('/create', [AttitudeGradeController::class, 'create'])->name('create');
             Route::post('/', [AttitudeGradeController::class, 'store'])->name('store');
+        });
+
+        /**
+         * Report Cards - Wali Kelas mengelola rapor siswa di kelasnya
+         * termasuk input catatan dan submit untuk approval
+         */
+        Route::prefix('report-cards')->name('report-cards.')->group(function () {
+            Route::get('/', [ReportCardController::class, 'index'])->name('index');
+            Route::get('{reportCard}', [ReportCardController::class, 'show'])->name('show');
+            Route::put('{reportCard}/notes', [ReportCardController::class, 'updateNotes'])->name('notes.update');
+            Route::post('{reportCard}/submit', [ReportCardController::class, 'submitForApproval'])->name('submit');
+            Route::post('submit-all', [ReportCardController::class, 'submitAllForApproval'])->name('submit-all');
+            Route::get('{reportCard}/download', [ReportCardController::class, 'downloadPdf'])->name('download');
         });
     });
 });

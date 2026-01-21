@@ -35,6 +35,8 @@ import { index as teacherLeaveRequestsIndex } from '@/routes/teacher/leave-reque
 import { index as teacherTeacherLeavesIndex } from '@/routes/teacher/teacher-leaves';
 import { index as teacherGradesIndex } from '@/routes/teacher/grades';
 import { index as teacherAttitudeGradesIndex } from '@/routes/teacher/attitude-grades';
+import { index as teacherReportCardsIndex } from '@/routes/teacher/report-cards';
+import { index as adminReportCardsIndex } from '@/routes/admin/report-cards';
 import DialogModal from '@/components/ui/DialogModal.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import Alert from '@/components/ui/Alert.vue';
@@ -157,6 +159,8 @@ const getRouteUrl = (routeName: string): string => {
         'teacher.teacher-leaves.index': teacherTeacherLeavesIndex().url,
         'teacher.grades.index': teacherGradesIndex().url,
         'teacher.attitude-grades.index': teacherAttitudeGradesIndex().url,
+        'teacher.report-cards.index': teacherReportCardsIndex().url,
+        'admin.report-cards.index': adminReportCardsIndex().url,
         'parent.children': parentChildrenIndex().url,
         'parent.leave-requests': parentLeaveRequestsIndex().url,
         'parent.payments.index': parentPaymentsIndex().url,
@@ -376,6 +380,7 @@ const menuItems = computed((): MenuItem[] => {
                 children: [
                     { name: 'Rekap Nilai', route: 'admin.grades.index', icon: GraduationCap, badge: 0 },
                     { name: 'Summary Nilai', route: 'admin.grades.summary', icon: FileSpreadsheet, badge: 0 },
+                    { name: 'Rapor', route: 'admin.report-cards.index', icon: FileText, badge: 0 },
                     { name: 'Bobot Nilai', route: 'admin.settings.grade-weights.index', icon: Settings, badge: 0 },
                 ]
             },
@@ -429,6 +434,7 @@ const menuItems = computed((): MenuItem[] => {
                 children: [
                     { name: 'Input Nilai', route: 'teacher.grades.index', icon: Award, badge: 0 },
                     { name: 'Nilai Sikap', route: 'teacher.attitude-grades.index', icon: Heart, badge: 0 },
+                    { name: 'Rapor Kelas', route: 'teacher.report-cards.index', icon: FileText, badge: 0 },
                 ]
             },
             {

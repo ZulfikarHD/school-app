@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\GradeWeightController;
 use App\Http\Controllers\Admin\LeaveRequestController;
 use App\Http\Controllers\Admin\PaymentCategoryController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\ReportCardController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TeacherAttendanceController;
 use App\Http\Controllers\Admin\UserController;
@@ -190,5 +191,20 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
     Route::prefix('settings/grade-weights')->name('settings.grade-weights.')->group(function () {
         Route::get('/', [GradeWeightController::class, 'index'])->name('index');
         Route::put('/', [GradeWeightController::class, 'update'])->name('update');
+    });
+
+    /**
+     * Report Card Management - Generate dan kelola rapor siswa
+     */
+    Route::prefix('report-cards')->name('report-cards.')->group(function () {
+        Route::get('/', [ReportCardController::class, 'index'])->name('index');
+        Route::get('generate', [ReportCardController::class, 'generate'])->name('generate');
+        Route::post('validate', [ReportCardController::class, 'validateCompleteness'])->name('validate');
+        Route::post('generate', [ReportCardController::class, 'processGenerate'])->name('process-generate');
+        Route::get('download-zip', [ReportCardController::class, 'downloadZip'])->name('download-zip');
+        Route::get('{reportCard}', [ReportCardController::class, 'show'])->name('show');
+        Route::get('{reportCard}/download', [ReportCardController::class, 'downloadPdf'])->name('download');
+        Route::post('{reportCard}/unlock', [ReportCardController::class, 'unlock'])->name('unlock');
+        Route::post('{reportCard}/regenerate', [ReportCardController::class, 'regenerate'])->name('regenerate');
     });
 });
