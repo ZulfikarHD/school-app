@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
-import { Users, CreditCard, GraduationCap, FileText, ChevronRight } from 'lucide-vue-next';
+import { Users, CreditCard, GraduationCap, FileText, ChevronRight, AlertTriangle } from 'lucide-vue-next';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import ChildAttendanceSummaryWidget from '@/components/dashboard/ChildAttendanceSummaryWidget.vue';
 import { useHaptics } from '@/composables/useHaptics';
 import { useModal } from '@/composables/useModal';
 import { index as parentChildrenIndex } from '@/routes/parent/children';
 import { index as parentLeaveRequestsIndex } from '@/routes/parent/leave-requests';
+import { index as parentPaymentsIndex } from '@/routes/parent/payments';
 
 /**
  * Dashboard untuk Orang Tua dengan informasi anak,
@@ -42,6 +43,13 @@ interface ChildWithAttendance {
     attendance_summary: AttendanceSummary;
 }
 
+interface PaymentSummary {
+    total_unpaid: number;
+    total_tunggakan: number;
+    formatted_tunggakan: string;
+    total_overdue: number;
+}
+
 interface Props {
     stats: {
         children: any[];
@@ -51,6 +59,7 @@ interface Props {
     };
     childrenWithAttendance: ChildWithAttendance[];
     pendingLeaveRequests: number;
+    paymentSummary: PaymentSummary;
 }
 
 defineProps<Props>();
@@ -111,7 +120,7 @@ const showComingSoon = (featureName: string) => {
                     </Link>
                 </Motion>
 
-                <!-- Tagihan Pending Card (Coming Soon) -->
+                <!-- Tagihan Pending Card -->
                 <Motion
                     :initial="{ opacity: 0, y: 20, scale: 0.95 }"
                     :animate="{ opacity: 1, y: 0, scale: 1 }"
@@ -119,31 +128,40 @@ const showComingSoon = (featureName: string) => {
                     :whileHover="{ y: -2, scale: 1.01 }"
                     :whileTap="{ scale: 0.97 }"
                 >
-                    <button
-                        @click="showComingSoon('Tagihan')"
-                        class="w-full text-left overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                    <Link
+                        :href="parentPaymentsIndex().url"
+                        @click="handleCardClick"
+                        class="block overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                     >
                         <div class="p-5">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
-                                        Tagihan Pending
+                                        Tagihan Belum Bayar
                                     </p>
                                     <p class="mt-1.5 text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
-                                        {{ stats.pending_payments }}
+                                        {{ paymentSummary.total_unpaid }}
                                     </p>
                                 </div>
                                 <div class="p-3 bg-amber-100 dark:bg-amber-500/20 rounded-xl">
                                     <CreditCard :size="24" class="text-amber-600 dark:text-amber-400" />
                                 </div>
                             </div>
-                            <div class="mt-3 flex items-center text-xs">
-                                <span class="text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">
-                                    Segera Hadir
-                                </span>
+                            <div class="mt-3 flex items-center text-xs text-slate-500 dark:text-slate-400">
+                                <template v-if="paymentSummary.total_overdue > 0">
+                                    <AlertTriangle :size="14" class="mr-1 text-red-500" />
+                                    <span class="text-red-600 dark:text-red-400">{{ paymentSummary.total_overdue }} jatuh tempo</span>
+                                </template>
+                                <template v-else-if="paymentSummary.total_unpaid > 0">
+                                    <span>{{ paymentSummary.formatted_tunggakan }}</span>
+                                </template>
+                                <template v-else>
+                                    <span>Semua lunas</span>
+                                </template>
+                                <ChevronRight :size="14" class="ml-1" />
                             </div>
                         </div>
-                    </button>
+                    </Link>
                 </Motion>
 
                 <!-- Nilai Terbaru Card (Coming Soon) -->

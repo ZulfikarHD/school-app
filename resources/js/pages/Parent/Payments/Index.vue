@@ -2,16 +2,18 @@
 /**
  * Parent Payments Index Page - Halaman tagihan untuk orang tua
  * Menampilkan summary pembayaran, tagihan aktif, dan riwayat pembayaran
+ * dengan download kwitansi untuk pembayaran lunas
  */
 import { ref, computed } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import { useHaptics } from '@/composables/useHaptics';
 import {
     CreditCard, Clock, AlertCircle, CheckCircle2, Calendar, AlertTriangle,
-    Receipt, Wallet, FileText, ChevronRight
+    Receipt, Wallet, FileText, ChevronRight, Download, History
 } from 'lucide-vue-next';
 import { Motion } from 'motion-v';
+import { history as paymentsHistory } from '@/routes/parent/payments';
 
 interface Student {
     id: number;
@@ -52,6 +54,8 @@ interface Bill {
     is_overdue: boolean;
     tanggal_jatuh_tempo: string;
     formatted_due_date: string;
+    // Payment info for paid bills (optional)
+    last_payment_id?: number;
 }
 
 interface Summary {
@@ -395,6 +399,18 @@ const switchTab = (tab: 'active' | 'history') => {
                                             </p>
                                         </div>
                                     </div>
+                                </div>
+                                <!-- Link to Full History -->
+                                <div class="p-4 bg-slate-50 dark:bg-zinc-800/50">
+                                    <Link
+                                        :href="paymentsHistory().url"
+                                        class="flex items-center justify-center gap-2 text-sm font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors"
+                                        @click="haptics.light()"
+                                    >
+                                        <History class="w-4 h-4" />
+                                        Lihat Semua Riwayat Pembayaran
+                                        <ChevronRight class="w-4 h-4" />
+                                    </Link>
                                 </div>
                             </template>
                             <div v-else class="p-12 text-center">

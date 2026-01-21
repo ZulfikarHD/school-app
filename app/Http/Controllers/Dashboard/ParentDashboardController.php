@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bill;
 use App\Models\LeaveRequest;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -79,15 +80,52 @@ class ParentDashboardController extends Controller
             ->pending()
             ->count();
 
+        // Get payment summary untuk semua anak
+        $paymentSummary = $this->getPaymentSummary($childIds);
+
         return Inertia::render('Dashboard/ParentDashboard', [
             'stats' => [
                 'children' => $children,
-                'pending_payments' => 0,
+                'pending_payments' => $paymentSummary['total_unpaid'],
                 'recent_grades' => [],
                 'attendance_summary' => $childrenWithAttendance,
             ],
             'childrenWithAttendance' => $childrenWithAttendance,
             'pendingLeaveRequests' => $pendingLeaveRequests,
+            'paymentSummary' => $paymentSummary,
         ]);
+    }
+
+    /**
+     * Get payment summary untuk anak-anak
+     *
+     * @param  \Illuminate\Support\Collection  $studentIds
+     * @return array
+     */
+    protected function getPaymentSummary($studentIds): array
+    {
+        if ($studentIds->isEmpty()) {
+            return [
+                'total_unpaid' => 0,
+                'total_tunggakan' => 0,
+                'formatted_tunggakan' => 'Rp 0',
+                'total_overdue' => 0,
+            ];
+        }
+
+        $unpaidBills = Bill::query()
+            ->whereIn('student_id', $studentIds)
+            ->whereIn('status', ['belum_bayar', 'sebagian'])
+            ->get();
+
+        $totalTunggakan = $unpaidBills->sum(fn ($bill) => $bill->sisa_tagihan);
+        $overdueCount = $unpaidBills->filter(fn ($bill) => $bill->isOverdue())->count();
+
+        return [
+            'total_unpaid' => $unpaidBills->count(),
+            'total_tunggakan' => $totalTunggakan,
+            'formatted_tunggakan' => 'Rp '.number_format($totalTunggakan, 0, ',', '.'),
+            'total_overdue' => $overdueCount,
+        ];
     }
 }

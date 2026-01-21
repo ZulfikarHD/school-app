@@ -11,6 +11,7 @@
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Dashboard\PrincipalDashboardController;
 use App\Http\Controllers\Principal\AttendanceController;
+use App\Http\Controllers\Principal\FinancialReportController;
 use App\Http\Controllers\Principal\StudentController;
 use App\Http\Controllers\Principal\TeacherLeaveController;
 use Illuminate\Support\Facades\Route;
@@ -60,6 +61,15 @@ Route::middleware(['auth', 'role:PRINCIPAL'])->group(function () {
             // Teacher Attendance Reports
             Route::get('teachers', [AttendanceController::class, 'teachersIndex'])->name('teachers.index');
             Route::get('teachers/report', [AttendanceController::class, 'teacherReport'])->name('teachers.report');
+        });
+
+        /**
+         * Financial Reports - Read-only access untuk laporan keuangan
+         */
+        Route::prefix('financial')->name('financial.')->group(function () {
+            Route::get('reports', [FinancialReportController::class, 'index'])->name('reports');
+            Route::get('reports/export', [FinancialReportController::class, 'export'])->name('reports.export');
+            Route::get('delinquents', [FinancialReportController::class, 'delinquents'])->name('delinquents');
         });
     });
 });

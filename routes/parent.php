@@ -42,6 +42,8 @@ Route::middleware(['auth', 'role:PARENT'])->group(function () {
          */
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::get('/', [PaymentController::class, 'index'])->name('index');
+            Route::get('history', [PaymentController::class, 'history'])->name('history');
+            Route::get('{payment}/receipt', [PaymentController::class, 'downloadReceipt'])->name('receipt');
         });
     });
 });

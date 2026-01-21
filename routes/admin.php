@@ -128,6 +128,15 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
     });
 
     /**
+     * Payment Reports - Laporan keuangan untuk Admin/TU
+     */
+    Route::prefix('payments/reports')->name('payments.reports.')->group(function () {
+        Route::get('/', [PaymentController::class, 'reports'])->name('index');
+        Route::get('export', [PaymentController::class, 'exportReports'])->name('export');
+        Route::get('delinquents', [PaymentController::class, 'delinquents'])->name('delinquents');
+    });
+
+    /**
      * API Endpoints untuk Payment (AJAX)
      */
     Route::prefix('api')->name('api.')->group(function () {

@@ -22,6 +22,8 @@ import { index as adminPaymentRecordsIndex, create as adminPaymentRecordsCreate 
 import { index as parentPaymentsIndex } from '@/routes/parent/payments';
 import { index as principalStudentsIndex } from '@/routes/principal/students';
 import { index as principalTeacherLeavesIndex } from '@/routes/principal/teacher-leaves';
+import { reports as principalFinancialReports, delinquents as principalFinancialDelinquents } from '@/routes/principal/financial';
+import { index as adminPaymentReportsIndex, delinquents as adminPaymentDelinquents } from '@/routes/admin/payments/reports';
 import { index as teacherStudentsIndex } from '@/routes/teacher/students';
 import { index as teacherAttendanceIndex } from '@/routes/teacher/attendance';
 import { create as teacherAttendanceSubjectCreate, index as teacherAttendanceSubjectIndex } from '@/routes/teacher/attendance/subject';
@@ -125,6 +127,10 @@ const getRouteUrl = (routeName: string): string => {
         'principal.attendance.dashboard': '/principal/attendance/dashboard',
         'principal.attendance.students.index': '/principal/attendance/students',
         'principal.attendance.teachers.index': '/principal/attendance/teachers',
+        'principal.financial.reports': principalFinancialReports().url,
+        'principal.financial.delinquents': principalFinancialDelinquents().url,
+        'admin.payments.reports.index': adminPaymentReportsIndex().url,
+        'admin.payments.reports.delinquents': adminPaymentDelinquents().url,
         'teacher.students.index': teacherStudentsIndex().url,
         'teacher.attendance.index': teacherAttendanceIndex().url,
         'teacher.attendance.subject.create': teacherAttendanceSubjectCreate().url,
@@ -312,6 +318,7 @@ const menuItems = computed((): MenuItem[] => {
                     { name: 'Daftar Tagihan', route: 'admin.payments.bills.index', icon: FileText, badge: 0 },
                     { name: 'Catat Pembayaran', route: 'admin.payments.records.create', icon: CreditCard, badge: 0 },
                     { name: 'Riwayat Pembayaran', route: 'admin.payments.records.index', icon: History, badge: 0 },
+                    { name: 'Laporan Keuangan', route: 'admin.payments.reports.index', icon: Activity, badge: 0 },
                 ]
             },
             { name: 'Audit Log', route: 'admin.audit-logs.index', icon: Activity, badge: 0 },
@@ -329,6 +336,14 @@ const menuItems = computed((): MenuItem[] => {
                     { name: 'Dashboard', route: 'principal.attendance.dashboard', icon: Home, badge: 0 },
                     { name: 'Absensi Siswa', route: 'principal.attendance.students.index', icon: Users, badge: 0 },
                     { name: 'Presensi Guru', route: 'principal.attendance.teachers.index', icon: Clock, badge: 0 },
+                ]
+            },
+            {
+                name: 'Keuangan',
+                icon: Wallet,
+                children: [
+                    { name: 'Laporan Keuangan', route: 'principal.financial.reports', icon: Receipt, badge: 0 },
+                    { name: 'Siswa Menunggak', route: 'principal.financial.delinquents', icon: CreditCard, badge: 0 },
                 ]
             },
             { name: 'Izin Guru', route: 'principal.teacher-leaves.index', icon: ClipboardList, badge: 0 },
