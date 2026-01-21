@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
             StudentSeeder::class,             // Creates additional test students
             AttendanceQuickSeeder::class,     // Creates attendance test data
             AttendanceTestSeeder::class,      // Creates more test data
-
+            PaymentSeeder::class,             // Creates payment categories, bills, and sample payments
         ]);
     }
 }
