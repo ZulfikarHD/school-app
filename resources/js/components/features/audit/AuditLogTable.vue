@@ -5,9 +5,7 @@ import {
     Search,
     ChevronDown,
     ChevronUp,
-    Activity,
-    CheckCircle,
-    XCircle
+    Activity
 } from 'lucide-vue-next';
 import { useHaptics } from '@/composables/useHaptics';
 import { index as adminAuditLogsIndex } from '@/routes/admin/audit-logs';
@@ -176,14 +174,23 @@ const getStatusBadgeVariant = (status: string): 'success' | 'error' => {
                     class="w-full text-sm rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2.5 px-3 min-h-[44px] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                 >
                     <option value="">Semua Aksi</option>
-                    <option value="login">Login</option>
-                    <option value="logout">Logout</option>
-                    <option value="create_user">Create User</option>
-                    <option value="update_user">Update User</option>
-                    <option value="delete_user">Delete User</option>
-                    <option value="failed_login">Failed Login</option>
-                    <option value="password_change">Change Password</option>
-                    <option value="password_reset">Reset Password</option>
+                    <optgroup label="Autentikasi">
+                        <option value="login">Login</option>
+                        <option value="logout">Logout</option>
+                        <option value="failed_login">Failed Login</option>
+                        <option value="password_change">Change Password</option>
+                        <option value="password_reset">Reset Password</option>
+                    </optgroup>
+                    <optgroup label="User Management">
+                        <option value="create_user">Create User</option>
+                        <option value="update_user">Update User</option>
+                        <option value="delete_user">Delete User</option>
+                    </optgroup>
+                    <optgroup label="Pembayaran">
+                        <option value="record_payment">Catat Pembayaran</option>
+                        <option value="verify_payment">Verifikasi Pembayaran</option>
+                        <option value="cancel_payment">Batalkan Pembayaran</option>
+                    </optgroup>
                 </select>
             </div>
 

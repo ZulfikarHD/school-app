@@ -51,6 +51,12 @@ return Application::configure(basePath: dirname(__DIR__))
             ->dailyAt('10:00')
             ->timezone('Asia/Jakarta')
             ->weekdays();
+
+        // Send payment reminders at 06:00 WIB daily
+        $schedule->command('payments:send-reminders')
+            ->dailyAt('06:00')
+            ->timezone('Asia/Jakarta')
+            ->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [

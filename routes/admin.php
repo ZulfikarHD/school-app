@@ -10,6 +10,7 @@
 
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\BankReconciliationController;
 use App\Http\Controllers\Admin\BillController;
 use App\Http\Controllers\Admin\LeaveRequestController;
 use App\Http\Controllers\Admin\PaymentCategoryController;
@@ -134,6 +135,21 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
         Route::get('/', [PaymentController::class, 'reports'])->name('index');
         Route::get('export', [PaymentController::class, 'exportReports'])->name('export');
         Route::get('delinquents', [PaymentController::class, 'delinquents'])->name('delinquents');
+    });
+
+    /**
+     * Bank Reconciliation - Rekonsiliasi bank dengan pembayaran
+     */
+    Route::prefix('payments/reconciliation')->name('payments.reconciliation.')->group(function () {
+        Route::get('/', [BankReconciliationController::class, 'index'])->name('index');
+        Route::post('upload', [BankReconciliationController::class, 'upload'])->name('upload');
+        Route::get('{reconciliation}/match', [BankReconciliationController::class, 'showMatch'])->name('match');
+        Route::post('{reconciliation}/auto-match', [BankReconciliationController::class, 'autoMatch'])->name('auto-match');
+        Route::post('{reconciliation}/match', [BankReconciliationController::class, 'storeMatch'])->name('match.store');
+        Route::post('{reconciliation}/items/{item}/unmatch', [BankReconciliationController::class, 'unmatch'])->name('unmatch');
+        Route::post('{reconciliation}/verify', [BankReconciliationController::class, 'verify'])->name('verify');
+        Route::get('{reconciliation}/export', [BankReconciliationController::class, 'export'])->name('export');
+        Route::delete('{reconciliation}', [BankReconciliationController::class, 'destroy'])->name('destroy');
     });
 
     /**

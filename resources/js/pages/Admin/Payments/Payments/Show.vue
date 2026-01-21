@@ -44,6 +44,10 @@ interface Payment {
     creator: { id: number; name: string } | null;
     verifier: { id: number; name: string } | null;
     verified_at: string | null;
+    // Cancellation fields
+    canceller: { id: number; name: string } | null;
+    cancelled_at: string | null;
+    cancellation_reason: string | null;
     created_at: string;
 }
 
@@ -341,6 +345,28 @@ const statusConfig = getStatusConfig(props.payment.status);
                                         {{ payment.verifier.name }}
                                         <span class="text-sm text-slate-500 dark:text-slate-400"> • {{ payment.verified_at }}</span>
                                     </p>
+                                </div>
+                                <!-- Cancellation Details Section -->
+                                <div v-if="payment.canceller" class="pt-3 border-t border-red-200 dark:border-red-800/50">
+                                    <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 -mx-2">
+                                        <p class="text-sm font-medium text-red-600 dark:text-red-400 mb-2 flex items-center gap-1.5">
+                                            <XCircle class="w-4 h-4" />
+                                            Pembayaran Dibatalkan
+                                        </p>
+                                        <div class="space-y-2">
+                                            <div>
+                                                <p class="text-xs text-red-500/70 dark:text-red-400/70">Dibatalkan oleh</p>
+                                                <p class="text-sm font-medium text-red-700 dark:text-red-300">
+                                                    {{ payment.canceller.name }}
+                                                    <span class="text-red-500/70 dark:text-red-400/70"> • {{ payment.cancelled_at }}</span>
+                                                </p>
+                                            </div>
+                                            <div v-if="payment.cancellation_reason">
+                                                <p class="text-xs text-red-500/70 dark:text-red-400/70">Alasan Pembatalan</p>
+                                                <p class="text-sm text-red-700 dark:text-red-300">{{ payment.cancellation_reason }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

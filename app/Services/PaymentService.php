@@ -9,7 +9,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Service untuk mengelola pembayaran siswa
@@ -258,6 +257,9 @@ class PaymentService
 
     /**
      * Format payment data untuk response
+     *
+     * Menyertakan data pembayaran lengkap termasuk informasi verifikasi
+     * dan pembatalan untuk ditampilkan di halaman detail
      */
     public function formatPaymentForResponse(Payment $payment): array
     {
@@ -295,6 +297,13 @@ class PaymentService
                 'name' => $payment->verifier->name,
             ] : null,
             'verified_at' => $payment->verified_at?->format('d M Y H:i'),
+            // Cancellation fields - untuk menampilkan detail pembatalan
+            'canceller' => $payment->canceller ? [
+                'id' => $payment->canceller->id,
+                'name' => $payment->canceller->name,
+            ] : null,
+            'cancelled_at' => $payment->cancelled_at?->format('d M Y H:i'),
+            'cancellation_reason' => $payment->cancellation_reason,
             'created_at' => $payment->created_at?->format('d M Y H:i'),
         ];
     }
@@ -303,7 +312,6 @@ class PaymentService
      * Get payment statistics for dashboard
      *
      * @param  string|null  $date  Filter by date (Y-m-d format)
-     * @return array
      */
     public function getPaymentStatistics(?string $date = null): array
     {
@@ -335,7 +343,6 @@ class PaymentService
      * Generate receipt PDF
      *
      * @param  Payment  $payment  Payment to generate receipt for
-     * @return \Barryvdh\DomPDF\PDF
      */
     public function generateReceiptPdf(Payment $payment): \Barryvdh\DomPDF\PDF
     {

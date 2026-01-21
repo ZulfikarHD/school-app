@@ -3,10 +3,18 @@
 namespace App\Services;
 
 use App\Models\AttendanceNotification;
+use App\Models\Bill;
+use App\Models\PaymentReminderLog;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Service untuk mengelola pengiriman notifikasi
+ *
+ * Menyediakan fitur pengiriman notifikasi melalui WhatsApp dan Email
+ * untuk berbagai keperluan seperti kehadiran dan pembayaran
+ */
 class NotificationService
 {
     /**
@@ -195,5 +203,238 @@ class NotificationService
             deliveryMethod: 'whatsapp',
             subject: 'Reminder Input Absensi'
         );
+    }
+
+    // ============================================================
+    // PAYMENT REMINDER METHODS
+    // ============================================================
+
+    /**
+     * Send payment reminder ke guardian siswa
+     *
+     * @param  Bill  $bill  Tagihan yang akan di-remind
+     * @param  string  $reminderType  Tipe reminder (h_minus_5, due_date, h_plus_7)
+     * @return PaymentReminderLog|null Log reminder yang dibuat
+     */
+    public function sendPaymentReminder(Bill $bill, string $reminderType): ?PaymentReminderLog
+    {
+        // Load necessary relationships
+        $bill->loadMissing(['student.guardians', 'student.kelas', 'paymentCategory']);
+
+        // Get primary guardian
+        $guardian = $bill->student->guardians()->first();
+
+        if (! $guardian || ! $guardian->no_hp) {
+            Log::warning('Payment reminder skipped: No guardian or phone number', [
+                'bill_id' => $bill->id,
+                'student_id' => $bill->student_id,
+            ]);
+
+            return null;
+        }
+
+        // Check if reminder already sent
+        if (PaymentReminderLog::hasBeenSent($bill->id, $reminderType)) {
+            Log::info('Payment reminder skipped: Already sent', [
+                'bill_id' => $bill->id,
+                'reminder_type' => $reminderType,
+            ]);
+
+            return null;
+        }
+
+        // Build message
+        $message = $this->buildPaymentReminderMessage($bill, $reminderType);
+
+        // Create reminder log
+        $reminderLog = PaymentReminderLog::create([
+            'bill_id' => $bill->id,
+            'reminder_type' => $reminderType,
+            'channel' => PaymentReminderLog::CHANNEL_WHATSAPP,
+            'recipient' => $guardian->no_hp,
+            'message' => $message,
+            'status' => PaymentReminderLog::STATUS_PENDING,
+        ]);
+
+        // Send WhatsApp
+        $success = $this->sendPaymentReminderWhatsApp($reminderLog);
+
+        return $reminderLog;
+    }
+
+    /**
+     * Send payment reminder via WhatsApp
+     */
+    protected function sendPaymentReminderWhatsApp(PaymentReminderLog $reminderLog): bool
+    {
+        try {
+            $apiKey = config('whatsapp.fonnte_api_key');
+            $phone = $this->formatPhoneNumber($reminderLog->recipient);
+
+            if (! $apiKey) {
+                throw new \Exception('WhatsApp API key not configured');
+            }
+
+            if (! $phone) {
+                throw new \Exception('Recipient phone number not available');
+            }
+
+            $response = Http::withHeaders([
+                'Authorization' => $apiKey,
+            ])->post('https://api.fonnte.com/send', [
+                'target' => $phone,
+                'message' => $reminderLog->message,
+                'countryCode' => '62',
+            ]);
+
+            if ($response->successful()) {
+                $reminderLog->markAsSent();
+                Log::info('Payment reminder sent via WhatsApp', [
+                    'reminder_log_id' => $reminderLog->id,
+                    'bill_id' => $reminderLog->bill_id,
+                    'recipient' => $phone,
+                ]);
+
+                return true;
+            }
+
+            throw new \Exception('WhatsApp API returned error: '.$response->body());
+        } catch (\Exception $e) {
+            $reminderLog->markAsFailed($e->getMessage());
+            Log::error('Payment reminder failed via WhatsApp', [
+                'reminder_log_id' => $reminderLog->id,
+                'bill_id' => $reminderLog->bill_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Build message untuk payment reminder berdasarkan tipe
+     *
+     * @param  Bill  $bill  Tagihan
+     * @param  string  $reminderType  Tipe reminder
+     * @return string Pesan reminder
+     */
+    protected function buildPaymentReminderMessage(Bill $bill, string $reminderType): string
+    {
+        $studentName = $bill->student->nama_lengkap;
+        $className = $bill->student->kelas?->nama_lengkap ?? '-';
+        $category = $bill->paymentCategory->nama;
+        $periode = $bill->nama_bulan.' '.$bill->tahun;
+        $nominal = $bill->formatted_sisa;
+        $dueDate = $bill->tanggal_jatuh_tempo?->format('d M Y') ?? '-';
+        $schoolName = config('app.school_name', 'Sekolah');
+
+        return match ($reminderType) {
+            PaymentReminderLog::TYPE_H_MINUS_5 => $this->getHMinus5Message($studentName, $className, $category, $periode, $nominal, $dueDate, $schoolName),
+            PaymentReminderLog::TYPE_DUE_DATE => $this->getDueDateMessage($studentName, $className, $category, $periode, $nominal, $dueDate, $schoolName),
+            PaymentReminderLog::TYPE_H_PLUS_7 => $this->getHPlus7Message($studentName, $className, $category, $periode, $nominal, $dueDate, $schoolName),
+            default => $this->getDueDateMessage($studentName, $className, $category, $periode, $nominal, $dueDate, $schoolName),
+        };
+    }
+
+    /**
+     * Template pesan H-5 (5 hari sebelum jatuh tempo)
+     */
+    protected function getHMinus5Message(
+        string $studentName,
+        string $className,
+        string $category,
+        string $periode,
+        string $nominal,
+        string $dueDate,
+        string $schoolName
+    ): string {
+        return <<<MSG
+Yth. Bapak/Ibu Wali Murid,
+
+Tagihan *{$category}* untuk anak Anda:
+- Nama: {$studentName}
+- Kelas: {$className}
+- Periode: {$periode}
+- Nominal: {$nominal}
+
+akan *jatuh tempo pada {$dueDate}* (5 hari lagi).
+
+Mohon segera melakukan pembayaran sebelum tanggal jatuh tempo untuk menghindari denda keterlambatan.
+
+Terima kasih.
+
+Salam,
+{$schoolName}
+MSG;
+    }
+
+    /**
+     * Template pesan jatuh tempo (H-0)
+     */
+    protected function getDueDateMessage(
+        string $studentName,
+        string $className,
+        string $category,
+        string $periode,
+        string $nominal,
+        string $dueDate,
+        string $schoolName
+    ): string {
+        return <<<MSG
+Yth. Bapak/Ibu Wali Murid,
+
+*PENGINGAT - HARI INI JATUH TEMPO*
+
+Tagihan *{$category}* untuk anak Anda:
+- Nama: {$studentName}
+- Kelas: {$className}
+- Periode: {$periode}
+- Nominal: {$nominal}
+
+*JATUH TEMPO HARI INI ({$dueDate})*
+
+Mohon segera melakukan pembayaran untuk menghindari denda keterlambatan.
+
+Terima kasih atas perhatiannya.
+
+Salam,
+{$schoolName}
+MSG;
+    }
+
+    /**
+     * Template pesan H+7 (7 hari setelah jatuh tempo - overdue)
+     */
+    protected function getHPlus7Message(
+        string $studentName,
+        string $className,
+        string $category,
+        string $periode,
+        string $nominal,
+        string $dueDate,
+        string $schoolName
+    ): string {
+        return <<<MSG
+Yth. Bapak/Ibu Wali Murid,
+
+*PEMBERITAHUAN TUNGGAKAN*
+
+Tagihan *{$category}* untuk anak Anda:
+- Nama: {$studentName}
+- Kelas: {$className}
+- Periode: {$periode}
+- Nominal: {$nominal}
+
+telah *MELEWATI JATUH TEMPO* sejak {$dueDate}.
+
+Mohon segera melakukan pembayaran untuk menghindari sanksi administrasi.
+
+Jika sudah melakukan pembayaran, mohon abaikan pesan ini.
+
+Terima kasih atas perhatiannya.
+
+Salam,
+{$schoolName}
+MSG;
     }
 }

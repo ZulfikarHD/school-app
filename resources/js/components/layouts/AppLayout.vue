@@ -24,6 +24,7 @@ import { index as principalStudentsIndex } from '@/routes/principal/students';
 import { index as principalTeacherLeavesIndex } from '@/routes/principal/teacher-leaves';
 import { reports as principalFinancialReports, delinquents as principalFinancialDelinquents } from '@/routes/principal/financial';
 import { index as adminPaymentReportsIndex, delinquents as adminPaymentDelinquents } from '@/routes/admin/payments/reports';
+import { index as adminPaymentReconciliationIndex } from '@/routes/admin/payments/reconciliation';
 import { index as teacherStudentsIndex } from '@/routes/teacher/students';
 import { index as teacherAttendanceIndex } from '@/routes/teacher/attendance';
 import { create as teacherAttendanceSubjectCreate, index as teacherAttendanceSubjectIndex } from '@/routes/teacher/attendance/subject';
@@ -57,7 +58,8 @@ import {
     Wallet,
     Tags,
     Receipt,
-    CreditCard
+    CreditCard,
+    FileSpreadsheet
 } from 'lucide-vue-next';
 
 /**
@@ -131,6 +133,7 @@ const getRouteUrl = (routeName: string): string => {
         'principal.financial.delinquents': principalFinancialDelinquents().url,
         'admin.payments.reports.index': adminPaymentReportsIndex().url,
         'admin.payments.reports.delinquents': adminPaymentDelinquents().url,
+        'admin.payments.reconciliation.index': adminPaymentReconciliationIndex().url,
         'teacher.students.index': teacherStudentsIndex().url,
         'teacher.attendance.index': teacherAttendanceIndex().url,
         'teacher.attendance.subject.create': teacherAttendanceSubjectCreate().url,
@@ -318,6 +321,7 @@ const menuItems = computed((): MenuItem[] => {
                     { name: 'Daftar Tagihan', route: 'admin.payments.bills.index', icon: FileText, badge: 0 },
                     { name: 'Catat Pembayaran', route: 'admin.payments.records.create', icon: CreditCard, badge: 0 },
                     { name: 'Riwayat Pembayaran', route: 'admin.payments.records.index', icon: History, badge: 0 },
+                    { name: 'Rekonsiliasi Bank', route: 'admin.payments.reconciliation.index', icon: FileSpreadsheet, badge: 0 },
                     { name: 'Laporan Keuangan', route: 'admin.payments.reports.index', icon: Activity, badge: 0 },
                 ]
             },

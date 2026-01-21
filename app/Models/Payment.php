@@ -40,6 +40,7 @@ class Payment extends Model
         'cancelled_at',
         'cancellation_reason',
         'created_by',
+        'updated_by',
     ];
 
     /**
@@ -59,7 +60,10 @@ class Payment extends Model
     }
 
     /**
-     * Boot method untuk auto-fill created_by
+     * Boot method untuk auto-fill created_by dan updated_by
+     *
+     * Secara otomatis mencatat user yang membuat dan mengupdate
+     * data pembayaran untuk keperluan audit trail
      */
     protected static function boot(): void
     {
@@ -68,6 +72,12 @@ class Payment extends Model
         static::creating(function ($model) {
             if (auth()->check()) {
                 $model->created_by = auth()->id();
+            }
+        });
+
+        static::updating(function ($model) {
+            if (auth()->check()) {
+                $model->updated_by = auth()->id();
             }
         });
 
@@ -120,6 +130,14 @@ class Payment extends Model
     public function canceller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    /**
+     * Relationship many-to-one dengan User (updater)
+     */
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     /**
