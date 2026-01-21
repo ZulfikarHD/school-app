@@ -16,6 +16,9 @@ import { index as parentLeaveRequestsIndex } from '@/routes/parent/leave-request
 import { index as adminAttendanceStudentsIndex } from '@/routes/admin/attendance/students';
 import { index as adminAttendanceTeachersIndex } from '@/routes/admin/attendance/teachers';
 import { index as adminLeaveRequestsIndex } from '@/routes/admin/leave-requests';
+import { index as adminPaymentCategoriesIndex } from '@/routes/admin/payment-categories';
+import { index as adminBillsIndex, generate as adminBillsGenerate } from '@/routes/admin/payments/bills';
+import { index as parentPaymentsIndex } from '@/routes/parent/payments';
 import { index as principalStudentsIndex } from '@/routes/principal/students';
 import { index as principalTeacherLeavesIndex } from '@/routes/principal/teacher-leaves';
 import { index as teacherStudentsIndex } from '@/routes/teacher/students';
@@ -47,7 +50,11 @@ import {
     BookOpen,
     History,
     MoreHorizontal,
-    X
+    X,
+    Wallet,
+    Tags,
+    Receipt,
+    CreditCard
 } from 'lucide-vue-next';
 
 /**
@@ -104,6 +111,9 @@ const getRouteUrl = (routeName: string): string => {
         'admin.attendance.students.index': adminAttendanceStudentsIndex().url,
         'admin.attendance.teachers.index': adminAttendanceTeachersIndex().url,
         'admin.leave-requests.index': adminLeaveRequestsIndex().url,
+        'admin.payment-categories.index': adminPaymentCategoriesIndex().url,
+        'admin.payments.bills.index': adminBillsIndex().url,
+        'admin.payments.bills.generate': adminBillsGenerate().url,
         'admin.audit-logs.index': adminAuditLogsIndex().url,
         'audit-logs.index': auditLogsIndex().url,
         'profile.show': profileShow().url,
@@ -121,6 +131,7 @@ const getRouteUrl = (routeName: string): string => {
         'teacher.teacher-leaves.index': teacherTeacherLeavesIndex().url,
         'parent.children': parentChildrenIndex().url,
         'parent.leave-requests': parentLeaveRequestsIndex().url,
+        'parent.payments.index': parentPaymentsIndex().url,
     };
 
     return routeMap[routeName] || '#';
@@ -289,6 +300,15 @@ const menuItems = computed((): MenuItem[] => {
                 ]
             },
             { name: 'Verifikasi Izin', route: 'admin.leave-requests.index', icon: FileText, badge: leaveRequestsBadge },
+            {
+                name: 'Pembayaran',
+                icon: Wallet,
+                children: [
+                    { name: 'Kategori Pembayaran', route: 'admin.payment-categories.index', icon: Tags, badge: 0 },
+                    { name: 'Generate Tagihan', route: 'admin.payments.bills.generate', icon: Receipt, badge: 0 },
+                    { name: 'Daftar Tagihan', route: 'admin.payments.bills.index', icon: FileText, badge: 0 },
+                ]
+            },
             { name: 'Audit Log', route: 'admin.audit-logs.index', icon: Activity, badge: 0 },
         ];
     }
@@ -341,6 +361,7 @@ const menuItems = computed((): MenuItem[] => {
         return [
             ...commonItems,
             { name: 'Data Anak', route: 'parent.children', icon: Users, badge: 0 },
+            { name: 'Pembayaran', route: 'parent.payments.index', icon: CreditCard, badge: 0 },
             { name: 'Pengajuan Izin', route: 'parent.leave-requests', icon: FileText, badge: 0 },
         ];
     }

@@ -17,6 +17,7 @@ todos:
   - id: wayfinder-generate
     content: Run php artisan wayfinder:generate to create TypeScript route helpers
     status: completed
+isProject: false
 ---
 
 # Sprint B: Admin Leave Verification (P0)
@@ -196,6 +197,8 @@ flowchart TD
     AS -->|Update Status| LR
 ```
 
+
+
 ---
 
 ## Key Files Summary
@@ -230,3 +233,4 @@ flowchart TD
 2. **AttendanceService methods are role-agnostic** - Can be called by Teacher or Admin
 3. **UI pattern established** - Copy and enhance `Teacher/LeaveRequest/Index.vue`
 4. **Class filter needed** - Admin needs to filter by class since they see all requests
+

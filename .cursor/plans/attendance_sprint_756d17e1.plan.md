@@ -1,3 +1,10 @@
+---
+name: ""
+overview: ""
+todos: []
+isProject: false
+---
+
 # Sprint 2: Core Attendance Features Implementation
 
 ## Executive Summary
@@ -10,14 +17,14 @@ Sprint 2 focuses on completing the 4 critical features that enable basic attenda
 
 - Database migrations for all 5 attendance tables
 - Eloquent models: `StudentAttendance`, `LeaveRequest`, `TeacherAttendance`, `SubjectAttendance`, `TeacherLeave`
-- [`app/Services/AttendanceService.php`](app/Services/AttendanceService.php) - Complete business logic (462 lines)
+- `[app/Services/AttendanceService.php](app/Services/AttendanceService.php)` - Complete business logic (462 lines)
 - Backend controllers with TODO markers for UI:
-  - [`app/Http/Controllers/Teacher/AttendanceController.php`](app/Http/Controllers/Teacher/AttendanceController.php)
-  - [`app/Http/Controllers/Teacher/ClockController.php`](app/Http/Controllers/Teacher/ClockController.php)
-  - [`app/Http/Controllers/Parent/LeaveRequestController.php`](app/Http/Controllers/Parent/LeaveRequestController.php)
-  - [`app/Http/Controllers/Teacher/LeaveRequestController.php`](app/Http/Controllers/Teacher/LeaveRequestController.php)
-- Form Request validation classes (all exist in [`app/Http/Requests/`](app/Http/Requests/))
-- API routes in [`routes/web.php`](routes/web.php) (lines 90-119, 127-133)
+  - `[app/Http/Controllers/Teacher/AttendanceController.php](app/Http/Controllers/Teacher/AttendanceController.php)`
+  - `[app/Http/Controllers/Teacher/ClockController.php](app/Http/Controllers/Teacher/ClockController.php)`
+  - `[app/Http/Controllers/Parent/LeaveRequestController.php](app/Http/Controllers/Parent/LeaveRequestController.php)`
+  - `[app/Http/Controllers/Teacher/LeaveRequestController.php](app/Http/Controllers/Teacher/LeaveRequestController.php)`
+- Form Request validation classes (all exist in `[app/Http/Requests/](app/Http/Requests/)`)
+- API routes in `[routes/web.php](routes/web.php)` (lines 90-119, 127-133)
 
 ### ❌ Missing (Sprint 2 Scope)
 
@@ -37,13 +44,13 @@ Sprint 2 focuses on completing the 4 critical features that enable basic attenda
 
 |---------|---------------------|----------------------|-----------|
 
-| **Daily Attendance Input** | Teacher - [`Teacher/Attendance/Create.vue`](resources/js/pages/Teacher/Attendance/) | Teacher (history), Admin/TU (reports), Parent (view child), Principal (dashboard) | Teacher selects class → Input H/I/S/A for each student → POST `/teacher/attendance/daily` → StudentAttendances table |
+| **Daily Attendance Input** | Teacher - `[Teacher/Attendance/Create.vue](resources/js/pages/Teacher/Attendance/)` | Teacher (history), Admin/TU (reports), Parent (view child), Principal (dashboard) | Teacher selects class → Input H/I/S/A for each student → POST `/teacher/attendance/daily` → StudentAttendances table |
 
-| **Clock In/Out Widget** | Teacher - Widget in [`Dashboard/TeacherDashboard.vue`](resources/js/pages/Dashboard/TeacherDashboard.vue) | TU/Admin (payroll report), Principal (presence monitor) | Teacher clicks "Masuk" → Browser requests GPS → POST `/teacher/clock/in` → TeacherAttendances table |
+| **Clock In/Out Widget** | Teacher - Widget in `[Dashboard/TeacherDashboard.vue](resources/js/pages/Dashboard/TeacherDashboard.vue)` | TU/Admin (payroll report), Principal (presence monitor) | Teacher clicks "Masuk" → Browser requests GPS → POST `/teacher/clock/in` → TeacherAttendances table |
 
-| **Leave Request Form** | Parent - [`Parent/LeaveRequest/Create.vue`](resources/js/pages/Parent/LeaveRequest/) | Teacher (verification), TU (monitor), Parent (history) | Parent fills form → Upload attachment → POST `/parent/leave-requests` → LeaveRequests table (status: PENDING) |
+| **Leave Request Form** | Parent - `[Parent/LeaveRequest/Create.vue](resources/js/pages/Parent/LeaveRequest/)` | Teacher (verification), TU (monitor), Parent (history) | Parent fills form → Upload attachment → POST `/parent/leave-requests` → LeaveRequests table (status: PENDING) |
 
-| **Leave Verification** | Teacher - [`Teacher/LeaveRequest/Index.vue`](resources/js/pages/Teacher/LeaveRequest/) | Parent (notification), Admin (monitor) | Teacher reviews request → Click Approve → POST `/teacher/leave-requests/{id}/approve` → Auto-sync to StudentAttendances |
+| **Leave Verification** | Teacher - `[Teacher/LeaveRequest/Index.vue](resources/js/pages/Teacher/LeaveRequest/)` | Parent (notification), Admin (monitor) | Teacher reviews request → Click Approve → POST `/teacher/leave-requests/{id}/approve` → Auto-sync to StudentAttendances |
 
 ---
 
@@ -96,6 +103,8 @@ graph LR
     TC1 --> PC2
 ```
 
+
+
 ---
 
 ## PHASE 3: MISSING IMPLEMENTATION DETECTION
@@ -104,18 +113,18 @@ graph LR
 
 #### Owner Side (Teacher Creates Data)
 
-- ❌ **UI Form**: [`resources/js/pages/Teacher/Attendance/Create.vue`](resources/js/pages/Teacher/Attendance/) - Does not exist
-- ✅ **Validation**: [`app/Http/Requests/StoreStudentAttendanceRequest.php`](app/Http/Requests/StoreStudentAttendanceRequest.php) exists
+- ❌ **UI Form**: `[resources/js/pages/Teacher/Attendance/Create.vue](resources/js/pages/Teacher/Attendance/)` - Does not exist
+- ✅ **Validation**: `[app/Http/Requests/StoreStudentAttendanceRequest.php](app/Http/Requests/StoreStudentAttendanceRequest.php)` exists
 - ❌ **Edit Capability**: Update attendance (controller method exists, no UI)
 - ❌ **Bulk Input**: Radio buttons for each student in class
 - ❌ **Class Selection**: Dropdown for teacher's classes
 
 #### Consumer Side (Where Data Appears)
 
-- ❌ **Attendance History**: [`Teacher/Attendance/Index.vue`](resources/js/pages/Teacher/Attendance/) - Returns empty render
-- ❌ **Parent View**: No attendance tab in [`Parent/Children/Show.vue`](resources/js/pages/Parent/Children/Show.vue)
-- ❌ **Admin Reports**: [`Admin/Attendance/StudentsIndex.vue`](resources/js/pages/Admin/Attendance/) - Does not exist
-- ❌ **Principal Dashboard**: No attendance card in [`Dashboard/PrincipalDashboard.vue`](resources/js/pages/Dashboard/PrincipalDashboard.vue)
+- ❌ **Attendance History**: `[Teacher/Attendance/Index.vue](resources/js/pages/Teacher/Attendance/)` - Returns empty render
+- ❌ **Parent View**: No attendance tab in `[Parent/Children/Show.vue](resources/js/pages/Parent/Children/Show.vue)`
+- ❌ **Admin Reports**: `[Admin/Attendance/StudentsIndex.vue](resources/js/pages/Admin/Attendance/)` - Does not exist
+- ❌ **Principal Dashboard**: No attendance card in `[Dashboard/PrincipalDashboard.vue](resources/js/pages/Dashboard/PrincipalDashboard.vue)`
 
 #### Integration Points
 
@@ -130,15 +139,15 @@ graph LR
 
 #### Owner Side (Teacher Creates Data)
 
-- ❌ **Widget UI**: No clock widget in [`Dashboard/TeacherDashboard.vue`](resources/js/pages/Dashboard/TeacherDashboard.vue)
-- ✅ **Validation**: [`app/Http/Requests/ClockInRequest.php`](app/Http/Requests/ClockInRequest.php) exists
+- ❌ **Widget UI**: No clock widget in `[Dashboard/TeacherDashboard.vue](resources/js/pages/Dashboard/TeacherDashboard.vue)`
+- ✅ **Validation**: `[app/Http/Requests/ClockInRequest.php](app/Http/Requests/ClockInRequest.php)` exists
 - ❌ **GPS Permission**: Browser geolocation API integration
 - ❌ **Status Display**: "Belum Clock In" vs "Sudah Clock In 07:15"
 - ❌ **Real-time Update**: Widget updates after clock in/out
 
 #### Consumer Side (Where Data Appears)
 
-- ❌ **TU Payroll Report**: [`Admin/Attendance/TeachersIndex.vue`](resources/js/pages/Admin/Attendance/) - Does not exist
+- ❌ **TU Payroll Report**: `[Admin/Attendance/TeachersIndex.vue](resources/js/pages/Admin/Attendance/)` - Does not exist
 - ❌ **Principal Monitor**: No teacher presence card in Principal dashboard
 
 #### Integration Points
@@ -153,8 +162,8 @@ graph LR
 
 #### Owner Side (Parent Creates Data)
 
-- ❌ **Form UI**: [`resources/js/pages/Parent/LeaveRequest/Create.vue`](resources/js/pages/Parent/LeaveRequest/) - Does not exist
-- ✅ **Validation**: [`app/Http/Requests/StoreLeaveRequestRequest.php`](app/Http/Requests/StoreLeaveRequestRequest.php) exists
+- ❌ **Form UI**: `[resources/js/pages/Parent/LeaveRequest/Create.vue](resources/js/pages/Parent/LeaveRequest/)` - Does not exist
+- ✅ **Validation**: `[app/Http/Requests/StoreLeaveRequestRequest.php](app/Http/Requests/StoreLeaveRequestRequest.php)` exists
 - ❌ **File Upload**: Attachment photo (surat dokter)
 - ❌ **Date Range Picker**: Start date - End date
 - ❌ **Child Selection**: Dropdown for multiple children
@@ -162,7 +171,7 @@ graph LR
 
 #### Consumer Side (Where Data Appears)
 
-- ❌ **History View**: [`Parent/LeaveRequest/Index.vue`](resources/js/pages/Parent/LeaveRequest/) - Exists but needs UI enhancement
+- ❌ **History View**: `[Parent/LeaveRequest/Index.vue](resources/js/pages/Parent/LeaveRequest/)` - Exists but needs UI enhancement
 - ❌ **Status Badge**: Pending/Approved/Rejected with colors
 - ❌ **Detail Modal**: View full leave request with attachment
 
@@ -178,8 +187,8 @@ graph LR
 
 #### Owner Side (Teacher/TU Verifies Data)
 
-- ❌ **Verification Page**: [`Teacher/LeaveRequest/Index.vue`](resources/js/pages/Teacher/LeaveRequest/) - Exists but returns empty
-- ✅ **Validation**: [`app/Http/Requests/ApproveLeaveRequestRequest.php`](app/Http/Requests/ApproveLeaveRequestRequest.php) exists
+- ❌ **Verification Page**: `[Teacher/LeaveRequest/Index.vue](resources/js/pages/Teacher/LeaveRequest/)` - Exists but returns empty
+- ✅ **Validation**: `[app/Http/Requests/ApproveLeaveRequestRequest.php](app/Http/Requests/ApproveLeaveRequestRequest.php)` exists
 - ❌ **Approve/Reject Buttons**: Action buttons with confirmation modal
 - ❌ **Rejection Reason**: Textarea for rejection feedback
 - ❌ **Attachment Preview**: Lightbox for viewing attachment
@@ -192,7 +201,7 @@ graph LR
 #### Integration Points
 
 - ✅ **API Endpoint**: `POST /teacher/leave-requests/{id}/approve` (exists)
-- ✅ **Auto-sync Logic**: [`AttendanceService::syncLeaveToAttendance()`](app/Services/AttendanceService.php) line 249 (exists)
+- ✅ **Auto-sync Logic**: `[AttendanceService::syncLeaveToAttendance()](app/Services/AttendanceService.php)` line 249 (exists)
 - ❌ **Optimistic UI**: Update list immediately after approval
 - ❌ **Toast Feedback**: Success/error messages
 
@@ -242,6 +251,8 @@ flowchart TD
     style AC fill:#ef4444
     style PC2 fill:#ef4444
 ```
+
+
 
 **Gap Summary**: Sprint 2 focuses on **Owner UIs (data creation)**. Consumer UIs beyond basic verification are deferred to P2 (Reports phase).
 
@@ -294,6 +305,8 @@ graph TD
     I2 --> I3
 ```
 
+
+
 ### Priority Matrix
 
 | Component | Priority | Estimation | Dependency | Can Parallelize? |
@@ -336,9 +349,10 @@ graph TD
 
 #### TypeScript Types
 
-- **File**: [`resources/js/types/attendance.ts`](resources/js/types/attendance.ts)
+- **File**: `[resources/js/types/attendance.ts](resources/js/types/attendance.ts)`
 - **Priority**: P0
 - **Content**:
+
 ```typescript
 export interface StudentAttendance {
     id: number;
@@ -381,114 +395,95 @@ export interface TeacherAttendance {
 }
 ```
 
-
 #### Shared Components (P0)
 
 1. **AttendanceStatusBadge.vue**
-
-   - **Path**: [`resources/js/components/features/attendance/AttendanceStatusBadge.vue`](resources/js/components/features/attendance/)
-   - **Props**: `status: 'H' | 'I' | 'S' | 'A'`
-   - **Usage**: All attendance displays
-   - **Design**: Emerald for H, Amber for I, Sky for S, Red for A
-
+  - **Path**: `[resources/js/components/features/attendance/AttendanceStatusBadge.vue](resources/js/components/features/attendance/)`
+  - **Props**: `status: 'H' | 'I' | 'S' | 'A'`
+  - **Usage**: All attendance displays
+  - **Design**: Emerald for H, Amber for I, Sky for S, Red for A
 2. **LeaveStatusBadge.vue**
-
-   - **Path**: [`resources/js/components/features/attendance/LeaveStatusBadge.vue`](resources/js/components/features/attendance/)
-   - **Props**: `status: 'PENDING' | 'APPROVED' | 'REJECTED'`
-   - **Usage**: Leave request cards
-   - **Design**: Amber for PENDING, Emerald for APPROVED, Red for REJECTED
-
+  - **Path**: `[resources/js/components/features/attendance/LeaveStatusBadge.vue](resources/js/components/features/attendance/)`
+  - **Props**: `status: 'PENDING' | 'APPROVED' | 'REJECTED'`
+  - **Usage**: Leave request cards
+  - **Design**: Amber for PENDING, Emerald for APPROVED, Red for REJECTED
 3. **ClockWidget.vue**
-
-   - **Path**: [`resources/js/components/features/attendance/ClockWidget.vue`](resources/js/components/features/attendance/)
-   - **Props**: `teacher: User`
-   - **Features**: Clock in/out buttons, GPS request, status display, duration counter
-   - **Usage**: Teacher dashboard
-
+  - **Path**: `[resources/js/components/features/attendance/ClockWidget.vue](resources/js/components/features/attendance/)`
+  - **Props**: `teacher: User`
+  - **Features**: Clock in/out buttons, GPS request, status display, duration counter
+  - **Usage**: Teacher dashboard
 4. **LeaveRequestCard.vue**
-
-   - **Path**: [`resources/js/components/features/attendance/LeaveRequestCard.vue`](resources/js/components/features/attendance/)
-   - **Props**: `leaveRequest: LeaveRequest`
-   - **Features**: Student info, date range, attachment preview, approve/reject buttons
-   - **Usage**: Teacher verification page
+  - **Path**: `[resources/js/components/features/attendance/LeaveRequestCard.vue](resources/js/components/features/attendance/)`
+  - **Props**: `leaveRequest: LeaveRequest`
+  - **Features**: Student info, date range, attachment preview, approve/reject buttons
+  - **Usage**: Teacher verification page
 
 #### Feature Pages (P0)
 
 1. **Daily Attendance Input**
-
-   - **Path**: [`resources/js/pages/Teacher/Attendance/Create.vue`](resources/js/pages/Teacher/Attendance/)
-   - **Layout**: Class selector dropdown → Student table with radio buttons (H/I/S/A) → Submit button
-   - **Features**: 
-     - Auto-load class students
-     - Default all to "Hadir"
-     - Keterangan textarea for non-present
-     - Summary count: "Hadir: 28, Alpha: 2"
-     - Validation: prevent duplicate for same date
-   - **Backend**: Uses existing `POST /teacher/attendance/daily`
-
+  - **Path**: `[resources/js/pages/Teacher/Attendance/Create.vue](resources/js/pages/Teacher/Attendance/)`
+  - **Layout**: Class selector dropdown → Student table with radio buttons (H/I/S/A) → Submit button
+  - **Features**: 
+    - Auto-load class students
+    - Default all to "Hadir"
+    - Keterangan textarea for non-present
+    - Summary count: "Hadir: 28, Alpha: 2"
+    - Validation: prevent duplicate for same date
+  - **Backend**: Uses existing `POST /teacher/attendance/daily`
 2. **Attendance History**
-
-   - **Path**: [`resources/js/pages/Teacher/Attendance/Index.vue`](resources/js/pages/Teacher/Attendance/)
-   - **Layout**: Date filter → Class filter → Table with edit buttons
-   - **Features**:
-     - Pagination
-     - Date range picker
-     - Edit attendance (update status)
-     - Summary cards
-   - **Backend**: Create new `GET /teacher/attendance` controller method
-
+  - **Path**: `[resources/js/pages/Teacher/Attendance/Index.vue](resources/js/pages/Teacher/Attendance/)`
+  - **Layout**: Date filter → Class filter → Table with edit buttons
+  - **Features**:
+    - Pagination
+    - Date range picker
+    - Edit attendance (update status)
+    - Summary cards
+  - **Backend**: Create new `GET /teacher/attendance` controller method
 3. **Clock In/Out Widget**
-
-   - **Path**: Update [`resources/js/pages/Dashboard/TeacherDashboard.vue`](resources/js/pages/Dashboard/TeacherDashboard.vue)
-   - **Location**: Add as first card in dashboard grid
-   - **Features**:
-     - Check status on mount: `GET /teacher/clock/status`
-     - "Masuk" button → request GPS → `POST /teacher/clock/in`
-     - "Pulang" button → request GPS → `POST /teacher/clock/out`
-     - Display: "Sudah Clock In 07:15 WIB" or "Belum Clock In"
-     - Show duration if clocked out
-   - **Backend**: Uses existing clock endpoints
-
+  - **Path**: Update `[resources/js/pages/Dashboard/TeacherDashboard.vue](resources/js/pages/Dashboard/TeacherDashboard.vue)`
+  - **Location**: Add as first card in dashboard grid
+  - **Features**:
+    - Check status on mount: `GET /teacher/clock/status`
+    - "Masuk" button → request GPS → `POST /teacher/clock/in`
+    - "Pulang" button → request GPS → `POST /teacher/clock/out`
+    - Display: "Sudah Clock In 07:15 WIB" or "Belum Clock In"
+    - Show duration if clocked out
+  - **Backend**: Uses existing clock endpoints
 4. **Leave Request Form**
-
-   - **Path**: [`resources/js/pages/Parent/LeaveRequest/Create.vue`](resources/js/pages/Parent/LeaveRequest/)
-   - **Layout**: Child selector → Leave type (Izin/Sakit) → Date range → Reason textarea → File upload → Submit
-   - **Features**:
-     - Child dropdown (multi-child support)
-     - Date range validation (start <= end)
-     - File upload with preview
-     - Max file size: 2MB
-     - Supported: JPG, PNG, PDF
-   - **Backend**: Uses existing `POST /parent/leave-requests`
-
+  - **Path**: `[resources/js/pages/Parent/LeaveRequest/Create.vue](resources/js/pages/Parent/LeaveRequest/)`
+  - **Layout**: Child selector → Leave type (Izin/Sakit) → Date range → Reason textarea → File upload → Submit
+  - **Features**:
+    - Child dropdown (multi-child support)
+    - Date range validation (start <= end)
+    - File upload with preview
+    - Max file size: 2MB
+    - Supported: JPG, PNG, PDF
+  - **Backend**: Uses existing `POST /parent/leave-requests`
 5. **Leave Request History**
-
-   - **Path**: Update [`resources/js/pages/Parent/LeaveRequest/Index.vue`](resources/js/pages/Parent/LeaveRequest/)
-   - **Layout**: Create button → Table with status badges → Detail modal
-   - **Features**:
-     - Filter by status
-     - Filter by child
-     - View attachment in modal
-     - Status badge with color coding
-   - **Backend**: Already implemented, just needs UI enhancement
-
+  - **Path**: Update `[resources/js/pages/Parent/LeaveRequest/Index.vue](resources/js/pages/Parent/LeaveRequest/)`
+  - **Layout**: Create button → Table with status badges → Detail modal
+  - **Features**:
+    - Filter by status
+    - Filter by child
+    - View attachment in modal
+    - Status badge with color coding
+  - **Backend**: Already implemented, just needs UI enhancement
 6. **Leave Verification Page**
-
-   - **Path**: Update [`resources/js/pages/Teacher/LeaveRequest/Index.vue`](resources/js/pages/Teacher/LeaveRequest/)
-   - **Layout**: Pending requests grid → Each card has student info, dates, reason, attachment, approve/reject buttons
-   - **Features**:
-     - Filter: Pending/Approved/Rejected
-     - Attachment lightbox preview
-     - Approve confirmation: "Izin akan otomatis tercatat di absensi"
-     - Reject modal: Textarea for reason
-     - Optimistic UI update
-   - **Backend**: Uses existing `POST /teacher/leave-requests/{id}/approve`
+  - **Path**: Update `[resources/js/pages/Teacher/LeaveRequest/Index.vue](resources/js/pages/Teacher/LeaveRequest/)`
+  - **Layout**: Pending requests grid → Each card has student info, dates, reason, attachment, approve/reject buttons
+  - **Features**:
+    - Filter: Pending/Approved/Rejected
+    - Attachment lightbox preview
+    - Approve confirmation: "Izin akan otomatis tercatat di absensi"
+    - Reject modal: Textarea for reason
+    - Optimistic UI update
+  - **Backend**: Uses existing `POST /teacher/leave-requests/{id}/approve`
 
 ### Navigation Menu Updates
 
 #### Teacher Sidebar
 
-- **File**: [`resources/js/components/layouts/AppLayout.vue`](resources/js/components/layouts/AppLayout.vue) (navigation section)
+- **File**: `[resources/js/components/layouts/AppLayout.vue](resources/js/components/layouts/AppLayout.vue)` (navigation section)
 - **Add Menu Item**:
   - Icon: `ClipboardCheck` from lucide-vue-next
   - Label: "Absensi"
@@ -506,9 +501,9 @@ export interface TeacherAttendance {
 
 ### Wayfinder Routes
 
-- **File**: Create [`resources/js/routes/teacher/attendance.ts`](resources/js/routes/teacher/)
-- **File**: Create [`resources/js/routes/teacher/leave-requests.ts`](resources/js/routes/teacher/)
-- **File**: Create [`resources/js/routes/parent/leave-requests.ts`](resources/js/routes/parent/)
+- **File**: Create `[resources/js/routes/teacher/attendance.ts](resources/js/routes/teacher/)`
+- **File**: Create `[resources/js/routes/teacher/leave-requests.ts](resources/js/routes/teacher/)`
+- **File**: Create `[resources/js/routes/parent/leave-requests.ts](resources/js/routes/parent/)`
 - **Regenerate**: Run `php artisan wayfinder:generate` after defining routes
 
 ---
@@ -521,14 +516,14 @@ export interface TeacherAttendance {
 
 1. Teacher logs in at 07:00, navigates to `/teacher/dashboard`
 2. Teacher clicks sidebar menu "Absensi" → "Input Harian"
-3. Page loads [`Teacher/Attendance/Create.vue`](resources/js/pages/Teacher/Attendance/Create.vue)
+3. Page loads `[Teacher/Attendance/Create.vue](resources/js/pages/Teacher/Attendance/Create.vue)`
 4. System auto-selects teacher's homeroom class (kelas wali)
 5. Table displays all 30 students, all pre-checked as "Hadir" (H)
 6. Teacher changes 2 students to "Alpha" (A), adds keterangan "Tidak ada kabar"
 7. Teacher clicks "Simpan Absensi" button
 8. Form validation: checks no duplicate for today's date
 9. `POST /teacher/attendance/daily` with payload:
-   ```json
+  ```json
    {
      "class_id": 5,
      "tanggal": "2025-12-28",
@@ -538,16 +533,15 @@ export interface TeacherAttendance {
        ...
      ]
    }
-   ```
-
-10. Backend calls [`AttendanceService::recordDailyAttendance()`](app/Services/AttendanceService.php)
+  ```
+10. Backend calls `[AttendanceService::recordDailyAttendance()](app/Services/AttendanceService.php)`
 11. Success: Toast "Berhasil menyimpan presensi untuk 30 siswa. Hadir: 28, Alpha: 2"
 12. Redirect to `/teacher/attendance` (history page)
 
 **Consumer Journey (Parent Sees Attendance)**:
 
 1. Parent logs in at 19:00, navigates to `/parent/children`
-2. Parent clicks child card → [`Parent/Children/Show.vue`](resources/js/pages/Parent/Children/Show.vue)
+2. Parent clicks child card → `[Parent/Children/Show.vue](resources/js/pages/Parent/Children/Show.vue)`
 3. **TODO P2**: Add "Absensi" tab in `StudentDetailTabs.vue`
 4. Tab shows attendance calendar with color-coded dates
 5. Parent sees today marked red (Alpha), clicks for detail
@@ -558,7 +552,7 @@ export interface TeacherAttendance {
 **Owner Journey (Teacher)**:
 
 1. Teacher arrives at school at 07:15, opens dashboard on mobile
-2. [`Dashboard/TeacherDashboard.vue`](resources/js/pages/Dashboard/TeacherDashboard.vue) loads
+2. `[Dashboard/TeacherDashboard.vue](resources/js/pages/Dashboard/TeacherDashboard.vue)` loads
 3. `ClockWidget.vue` component calls `GET /teacher/clock/status` on mount
 4. Response: `{ "is_clocked_in": false }`
 5. Widget displays: "Belum Clock In" with green "Masuk" button
@@ -566,10 +560,10 @@ export interface TeacherAttendance {
 7. Browser prompts: "Allow geolocation?"
 8. Teacher allows → GPS captured: `{ lat: -6.2088, lng: 106.8456 }`
 9. `POST /teacher/clock/in` with `{ latitude: -6.2088, longitude: 106.8456 }`
-10. Backend calls [`AttendanceService::clockIn()`](app/Services/AttendanceService.php)
+10. Backend calls `[AttendanceService::clockIn()](app/Services/AttendanceService.php)`
 11. Clock in time: 07:15:34 (late by 15 minutes)
 12. Response:
-    ```json
+  ```json
     {
       "success": true,
       "data": {
@@ -578,8 +572,7 @@ export interface TeacherAttendance {
         "is_late": true
       }
     }
-    ```
-
+  ```
 13. Widget updates: "Sudah Clock In pada 07:15 WIB ⚠️ Terlambat"
 14. Button changes to "Pulang" (disabled until afternoon)
 
@@ -595,21 +588,19 @@ export interface TeacherAttendance {
 
 1. Parent child is sick at 06:30, opens parent portal on phone
 2. Parent navigates to sidebar menu "Pengajuan Izin"
-3. Page loads [`Parent/LeaveRequest/Create.vue`](resources/js/pages/Parent/LeaveRequest/Create.vue)
+3. Page loads `[Parent/LeaveRequest/Create.vue](resources/js/pages/Parent/LeaveRequest/Create.vue)`
 4. Form displays:
-
-   - Dropdown: "Pilih Anak" → Selects "Ahmad Fauzi"
-   - Radio: "Jenis" → Selects "Sakit"
-   - Date Range: Start: 2025-12-28, End: 2025-12-29 (2 days)
-   - Textarea: "Alasan" → Types "Demam tinggi 39°C"
-   - File Upload: Takes photo of doctor's letter
-
+  - Dropdown: "Pilih Anak" → Selects "Ahmad Fauzi"
+  - Radio: "Jenis" → Selects "Sakit"
+  - Date Range: Start: 2025-12-28, End: 2025-12-29 (2 days)
+  - Textarea: "Alasan" → Types "Demam tinggi 39°C"
+  - File Upload: Takes photo of doctor's letter
 5. Parent previews attachment (image lightbox)
 6. Parent taps "Kirim Pengajuan" (haptic: medium)
 7. Form validation passes
 8. File uploads to `storage/app/public/leave-attachments/abc123.jpg`
 9. `POST /parent/leave-requests` with payload:
-   ```json
+  ```json
    {
      "student_id": 15,
      "jenis": "SAKIT",
@@ -618,9 +609,8 @@ export interface TeacherAttendance {
      "alasan": "Demam tinggi 39°C",
      "attachment_path": "leave-attachments/abc123.jpg"
    }
-   ```
-
-10. Backend calls [`AttendanceService::submitLeaveRequest()`](app/Services/AttendanceService.php)
+  ```
+10. Backend calls `[AttendanceService::submitLeaveRequest()](app/Services/AttendanceService.php)`
 11. Success: Toast "Permohonan izin berhasil dikirim. Menunggu persetujuan wali kelas."
 12. Redirect to `/parent/leave-requests` → Status badge: "PENDING (amber)"
 
@@ -628,29 +618,23 @@ export interface TeacherAttendance {
 
 1. Teacher logs in at 07:30, sidebar shows badge notification "1 izin pending"
 2. Teacher clicks "Absensi" → "Verifikasi Izin"
-3. [`Teacher/LeaveRequest/Index.vue`](resources/js/pages/Teacher/LeaveRequest/Index.vue) loads
+3. `[Teacher/LeaveRequest/Index.vue](resources/js/pages/Teacher/LeaveRequest/Index.vue)` loads
 4. Card displays:
-
-   - Student: "Ahmad Fauzi - Kelas 4A"
-   - Tanggal: "28-29 Des 2025 (2 hari)"
-   - Jenis: "Sakit" (sky badge)
-   - Alasan: "Demam tinggi 39°C"
-   - Attachment: Thumbnail of doctor's letter
-   - Buttons: "Setujui (emerald)" | "Tolak (red)"
-
+  - Student: "Ahmad Fauzi - Kelas 4A"
+  - Tanggal: "28-29 Des 2025 (2 hari)"
+  - Jenis: "Sakit" (sky badge)
+  - Alasan: "Demam tinggi 39°C"
+  - Attachment: Thumbnail of doctor's letter
+  - Buttons: "Setujui (emerald)" | "Tolak (red)"
 5. Teacher clicks thumbnail → Lightbox opens with full image
 6. Teacher clicks "Setujui" → Confirmation modal:
-
-   - "Permohonan ini akan disetujui dan otomatis tercatat sebagai SAKIT di absensi siswa untuk tanggal 28-29 Desember 2025."
-
+  - "Permohonan ini akan disetujui dan otomatis tercatat sebagai SAKIT di absensi siswa untuk tanggal 28-29 Desember 2025."
 7. Teacher confirms (haptic: medium)
 8. `POST /teacher/leave-requests/123/approve` with `{ action: 'approve' }`
-9. Backend calls [`AttendanceService::approveLeaveRequest()`](app/Services/AttendanceService.php)
+9. Backend calls `[AttendanceService::approveLeaveRequest()](app/Services/AttendanceService.php)`
 10. Auto-sync: Creates 2 `StudentAttendance` records:
-
-    - Date: 2025-12-28, Status: S, Keterangan: "Auto-generated from leave request: Demam tinggi 39°C"
+  - Date: 2025-12-28, Status: S, Keterangan: "Auto-generated from leave request: Demam tinggi 39°C"
     - Date: 2025-12-29, Status: S, Keterangan: (same)
-
 11. Success: Toast "Permohonan izin berhasil disetujui"
 12. Card removed from pending list (optimistic UI update)
 13. **TODO P2**: Parent receives notification "Permohonan izin Ahmad disetujui"
@@ -661,9 +645,9 @@ export interface TeacherAttendance {
 
 ### Step 1: Foundation (Day 1 Morning, 4 hours)
 
-1. Create [`resources/js/types/attendance.ts`](resources/js/types/attendance.ts) with all interfaces
-2. Run `php artisan wayfinder:generate` (routes already defined in [`routes/web.php`](routes/web.php))
-3. Create component folder: [`resources/js/components/features/attendance/`](resources/js/components/features/attendance/)
+1. Create `[resources/js/types/attendance.ts](resources/js/types/attendance.ts)` with all interfaces
+2. Run `php artisan wayfinder:generate` (routes already defined in `[routes/web.php](routes/web.php)`)
+3. Create component folder: `[resources/js/components/features/attendance/](resources/js/components/features/attendance/)`
 4. Build `AttendanceStatusBadge.vue` (H/I/S/A colors)
 5. Build `LeaveStatusBadge.vue` (Pending/Approved/Rejected colors)
 
@@ -671,13 +655,13 @@ export interface TeacherAttendance {
 
 **Track A: Daily Attendance** (1 person)
 
-- Build [`Teacher/Attendance/Create.vue`](resources/js/pages/Teacher/Attendance/Create.vue)
+- Build `[Teacher/Attendance/Create.vue](resources/js/pages/Teacher/Attendance/Create.vue)`
   - Class selector with API call to get classes
   - Student table with radio buttons (H/I/S/A)
   - Keterangan textarea (conditional: show if not H)
   - Summary counter
   - Submit with `useForm` helper
-- Update [`Teacher/Attendance/Index.vue`](resources/js/pages/Teacher/Attendance/Index.vue)
+- Update `[Teacher/Attendance/Index.vue](resources/js/pages/Teacher/Attendance/Index.vue)`
   - Attendance history table
   - Date/class filters
   - Edit modal
@@ -692,21 +676,21 @@ export interface TeacherAttendance {
   - Clock out button
   - Display duration
   - Error states (already clocked, GPS denied)
-- Update [`Dashboard/TeacherDashboard.vue`](resources/js/pages/Dashboard/TeacherDashboard.vue)
+- Update `[Dashboard/TeacherDashboard.vue](resources/js/pages/Dashboard/TeacherDashboard.vue)`
   - Add `ClockWidget` as first stat card
   - Replace static card with dynamic widget
 - Test: Clock in → Check database → Clock out → Verify duration
 
 **Track C: Leave Request Form** (1 person)
 
-- Build [`Parent/LeaveRequest/Create.vue`](resources/js/pages/Parent/LeaveRequest/Create.vue)
+- Build `[Parent/LeaveRequest/Create.vue](resources/js/pages/Parent/LeaveRequest/Create.vue)`
   - Child selector (fetch from API)
   - Leave type radio (Izin/Sakit)
   - Date range picker
   - Reason textarea
   - File upload with preview
   - Submit with `useForm` and file handling
-- Update [`Parent/LeaveRequest/Index.vue`](resources/js/pages/Parent/LeaveRequest/Index.vue)
+- Update `[Parent/LeaveRequest/Index.vue](resources/js/pages/Parent/LeaveRequest/Index.vue)`
   - Leave request history table
   - Status filter
   - Attachment preview modal
@@ -720,7 +704,7 @@ export interface TeacherAttendance {
   - Attachment thumbnail
   - Approve/Reject buttons
   - Rejection reason modal
-- Update [`Teacher/LeaveRequest/Index.vue`](resources/js/pages/Teacher/LeaveRequest/Index.vue)
+- Update `[Teacher/LeaveRequest/Index.vue](resources/js/pages/Teacher/LeaveRequest/Index.vue)`
   - Grid of leave request cards
   - Filter by status
   - Approve confirmation modal
@@ -730,7 +714,7 @@ export interface TeacherAttendance {
 
 ### Step 3: Navigation Integration (Day 5 Morning, 3 hours)
 
-1. Update [`resources/js/components/layouts/AppLayout.vue`](resources/js/components/layouts/AppLayout.vue)
+1. Update `[resources/js/components/layouts/AppLayout.vue](resources/js/components/layouts/AppLayout.vue)`
 2. Add Teacher sidebar: "Absensi" submenu (Input Harian, Riwayat, Verifikasi Izin)
 3. Add Parent sidebar: "Pengajuan Izin" menu item
 4. Add badge count for pending leave requests (Teacher sidebar)
@@ -738,25 +722,19 @@ export interface TeacherAttendance {
 ### Step 4: Testing & Polish (Day 5 PM - Day 6)
 
 1. **Manual Testing**:
-
-   - Full flow: Teacher records attendance → Parent submits leave → Teacher approves → Verify auto-sync
-   - Clock widget: Clock in (late) → Clock out → Check duration
-   - File upload: Large file rejection, unsupported format
-   - Edge cases: Duplicate attendance, already clocked in, GPS denied
-
+  - Full flow: Teacher records attendance → Parent submits leave → Teacher approves → Verify auto-sync
+  - Clock widget: Clock in (late) → Clock out → Check duration
+  - File upload: Large file rejection, unsupported format
+  - Edge cases: Duplicate attendance, already clocked in, GPS denied
 2. **UI Polish**:
-
-   - Ensure all iOS design patterns followed (emerald accent, slate bg, refined borders)
-   - Haptic feedback on all button taps
-   - Loading states (skeleton during data fetch)
-   - Empty states ("Belum ada absensi hari ini")
-
+  - Ensure all iOS design patterns followed (emerald accent, slate bg, refined borders)
+  - Haptic feedback on all button taps
+  - Loading states (skeleton during data fetch)
+  - Empty states ("Belum ada absensi hari ini")
 3. **Create PHPUnit Tests**:
-
-   - `php artisan make:test --phpunit Teacher/AttendanceTest`
-   - `php artisan make:test --phpunit Parent/LeaveRequestTest`
-   - Test validation, authorization, business logic
-
+  - `php artisan make:test --phpunit Teacher/AttendanceTest`
+  - `php artisan make:test --phpunit Parent/LeaveRequestTest`
+  - Test validation, authorization, business logic
 4. **Run Linter**: `vendor/bin/pint` for backend, `npm run lint` for frontend
 
 ---
@@ -765,26 +743,26 @@ export interface TeacherAttendance {
 
 ### New Files (Create)
 
-- [`resources/js/types/attendance.ts`](resources/js/types/attendance.ts)
-- [`resources/js/components/features/attendance/AttendanceStatusBadge.vue`](resources/js/components/features/attendance/)
-- [`resources/js/components/features/attendance/LeaveStatusBadge.vue`](resources/js/components/features/attendance/)
-- [`resources/js/components/features/attendance/ClockWidget.vue`](resources/js/components/features/attendance/)
-- [`resources/js/components/features/attendance/LeaveRequestCard.vue`](resources/js/components/features/attendance/)
-- [`resources/js/pages/Teacher/Attendance/Create.vue`](resources/js/pages/Teacher/Attendance/)
-- [`resources/js/pages/Teacher/Attendance/Index.vue`](resources/js/pages/Teacher/Attendance/)
-- [`resources/js/pages/Parent/LeaveRequest/Create.vue`](resources/js/pages/Parent/LeaveRequest/)
+- `[resources/js/types/attendance.ts](resources/js/types/attendance.ts)`
+- `[resources/js/components/features/attendance/AttendanceStatusBadge.vue](resources/js/components/features/attendance/)`
+- `[resources/js/components/features/attendance/LeaveStatusBadge.vue](resources/js/components/features/attendance/)`
+- `[resources/js/components/features/attendance/ClockWidget.vue](resources/js/components/features/attendance/)`
+- `[resources/js/components/features/attendance/LeaveRequestCard.vue](resources/js/components/features/attendance/)`
+- `[resources/js/pages/Teacher/Attendance/Create.vue](resources/js/pages/Teacher/Attendance/)`
+- `[resources/js/pages/Teacher/Attendance/Index.vue](resources/js/pages/Teacher/Attendance/)`
+- `[resources/js/pages/Parent/LeaveRequest/Create.vue](resources/js/pages/Parent/LeaveRequest/)`
 
 ### Existing Files (Modify)
 
-- [`resources/js/pages/Dashboard/TeacherDashboard.vue`](resources/js/pages/Dashboard/TeacherDashboard.vue) - Add `ClockWidget`
-- [`resources/js/pages/Parent/LeaveRequest/Index.vue`](resources/js/pages/Parent/LeaveRequest/Index.vue) - Enhance UI
-- [`resources/js/pages/Teacher/LeaveRequest/Index.vue`](resources/js/pages/Teacher/LeaveRequest/Index.vue) - Build verification UI
-- [`resources/js/components/layouts/AppLayout.vue`](resources/js/components/layouts/AppLayout.vue) - Add navigation items
+- `[resources/js/pages/Dashboard/TeacherDashboard.vue](resources/js/pages/Dashboard/TeacherDashboard.vue)` - Add `ClockWidget`
+- `[resources/js/pages/Parent/LeaveRequest/Index.vue](resources/js/pages/Parent/LeaveRequest/Index.vue)` - Enhance UI
+- `[resources/js/pages/Teacher/LeaveRequest/Index.vue](resources/js/pages/Teacher/LeaveRequest/Index.vue)` - Build verification UI
+- `[resources/js/components/layouts/AppLayout.vue](resources/js/components/layouts/AppLayout.vue)` - Add navigation items
 
 ### Backend (NO CHANGES NEEDED - Already Complete)
 
 - ✅ All controllers, services, models, migrations, validation exist
-- ✅ Routes defined in [`routes/web.php`](routes/web.php)
+- ✅ Routes defined in `[routes/web.php](routes/web.php)`
 - ✅ Only frontend work required
 
 ---
@@ -889,3 +867,4 @@ const requestLocation = () => {
   );
 };
 ```
+

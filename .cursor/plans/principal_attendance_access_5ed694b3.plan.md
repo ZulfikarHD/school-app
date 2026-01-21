@@ -32,6 +32,7 @@ todos:
   - id: wayfinder-generate
     content: Run php artisan wayfinder:generate to create TypeScript route helpers
     status: pending
+isProject: false
 ---
 
 # Sprint A: Principal Attendance Access (P0)
@@ -253,6 +254,8 @@ flowchart TD
     AS --> SC
 ```
 
+
+
 ---
 
 ## Key Files to Create/Modify
@@ -284,3 +287,4 @@ flowchart TD
 - All pages are read-only (no edit/delete actions)
 - Navigation menu shows Attendance section for Principal role
 - Dashboard quick actions link to correct Principal routes
+

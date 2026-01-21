@@ -20,6 +20,7 @@ todos:
   - id: navigation-updates
     content: Update sidebar navigation for Principal and Teacher to include Data Siswa menu
     status: completed
+isProject: false
 ---
 
 # Student Management - Cross-Frontend Implementation Strategy
@@ -83,6 +84,8 @@ flowchart TD
     
     Parent -->|Views Own Child| StudentProfile
 ```
+
+
 
 ---
 
@@ -169,33 +172,25 @@ flowchart TD
 ### Critical Gaps (P0 - Feature Unusable Without)
 
 1. **Principal Cannot View Students**
-
-   - Dashboard shows stats but no way to drill down
-   - Missing: `/principal/students` route and page
-   - Missing: `/principal/students/{id}` detail page
-
+  - Dashboard shows stats but no way to drill down
+  - Missing: `/principal/students` route and page
+  - Missing: `/principal/students/{id}` detail page
 2. **Teacher Cannot View Class Students**
-
-   - Can only input attendance, cannot view student profiles
-   - Missing: `/teacher/students` route and page
-   - Missing: `/teacher/students/{id}` detail page (read-only)
+  - Can only input attendance, cannot view student profiles
+  - Missing: `/teacher/students` route and page
+  - Missing: `/teacher/students/{id}` detail page (read-only)
 
 ### Important Gaps (P1 - Feature Incomplete)
 
 1. **Export Excel Not Implemented**
-
-   - Controller method returns "coming soon"
-   - Need Laravel Excel package integration
-
+  - Controller method returns "coming soon"
+  - Need Laravel Excel package integration
 2. **Import Excel Not Implemented**
-
-   - Template download missing
-   - Preview/validation UI missing
-
+  - Template download missing
+  - Preview/validation UI missing
 3. **Reset Parent Password**
-
-   - Referenced in spec but not implemented
-   - Admin should be able to reset from student detail
+  - Referenced in spec but not implemented
+  - Admin should be able to reset from student detail
 
 ### Enhancement Gaps (P2 - Nice to Have)
 
@@ -415,3 +410,4 @@ resources/js/pages/
 4. **Sprint 4 (P1):** Reset parent password feature (0.5 day)
 5. **Sprint 5 (P2):** Print PDF profile (1 day)
 6. **Future:** ID Card generation with QR
+

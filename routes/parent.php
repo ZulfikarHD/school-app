@@ -4,12 +4,14 @@
  * Parent Routes - Routes untuk role PARENT (Orang Tua/Wali)
  *
  * File ini berisi semua routes yang berhubungan dengan fungsi orang tua,
- * yaitu: dashboard, children viewing, attendance history, dan leave request management
+ * yaitu: dashboard, children viewing, attendance history, leave request management,
+ * dan payment/billing viewing
  */
 
 use App\Http\Controllers\Dashboard\ParentDashboardController;
 use App\Http\Controllers\Parent\ChildController;
 use App\Http\Controllers\Parent\LeaveRequestController;
+use App\Http\Controllers\Parent\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'role:PARENT'])->group(function () {
@@ -34,5 +36,12 @@ Route::middleware(['auth', 'role:PARENT'])->group(function () {
          */
         Route::resource('leave-requests', LeaveRequestController::class)
             ->except(['show']);
+
+        /**
+         * Payments Portal - Melihat tagihan dan riwayat pembayaran
+         */
+        Route::prefix('payments')->name('payments.')->group(function () {
+            Route::get('/', [PaymentController::class, 'index'])->name('index');
+        });
     });
 });

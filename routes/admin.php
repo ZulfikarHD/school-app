@@ -5,11 +5,12 @@
  *
  * File ini berisi semua routes yang berhubungan dengan fungsi administrasi,
  * yaitu: user management, student management, attendance management,
- * audit logs, dan leave request verification
+ * audit logs, leave request verification, dan payment management
  */
 
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\BillController;
 use App\Http\Controllers\Admin\LeaveRequestController;
 use App\Http\Controllers\Admin\PaymentCategoryController;
 use App\Http\Controllers\Admin\StudentController;
@@ -98,4 +99,15 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
     Route::patch('payment-categories/{payment_category}/toggle-status', [PaymentCategoryController::class, 'toggleStatus'])
         ->name('payment-categories.toggle-status');
     Route::resource('payment-categories', PaymentCategoryController::class);
+
+    /**
+     * Bills Management - Generate dan kelola tagihan siswa
+     */
+    Route::prefix('payments/bills')->name('payments.bills.')->group(function () {
+        Route::get('/', [BillController::class, 'index'])->name('index');
+        Route::get('generate', [BillController::class, 'showGenerate'])->name('generate');
+        Route::post('preview', [BillController::class, 'preview'])->name('preview');
+        Route::post('/', [BillController::class, 'store'])->name('store');
+        Route::delete('{bill}', [BillController::class, 'destroy'])->name('destroy');
+    });
 });
