@@ -43,11 +43,23 @@ interface ChildWithAttendance {
     attendance_summary: AttendanceSummary;
 }
 
+interface NearestBill {
+    id: number;
+    category: string;
+    periode: string;
+    student_name: string;
+    amount: number;
+    formatted_amount: string;
+    due_date: string;
+    is_overdue: boolean;
+}
+
 interface PaymentSummary {
     total_unpaid: number;
     total_tunggakan: number;
     formatted_tunggakan: string;
     total_overdue: number;
+    nearest_bill: NearestBill | null;
 }
 
 interface Props {
@@ -131,7 +143,8 @@ const showComingSoon = (featureName: string) => {
                     <Link
                         :href="parentPaymentsIndex().url"
                         @click="handleCardClick"
-                        class="block overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                        class="block overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                        :class="paymentSummary.total_overdue > 0 ? 'hover:border-red-200 dark:hover:border-red-700 border-red-100 dark:border-red-900/50' : 'hover:border-amber-200 dark:hover:border-amber-700'"
                     >
                         <div class="p-5">
                             <div class="flex items-center justify-between">
@@ -139,12 +152,12 @@ const showComingSoon = (featureName: string) => {
                                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
                                         Tagihan Belum Bayar
                                     </p>
-                                    <p class="mt-1.5 text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
+                                    <p class="mt-1.5 text-3xl font-bold tabular-nums" :class="paymentSummary.total_overdue > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'">
                                         {{ paymentSummary.total_unpaid }}
                                     </p>
                                 </div>
-                                <div class="p-3 bg-amber-100 dark:bg-amber-500/20 rounded-xl">
-                                    <CreditCard :size="24" class="text-amber-600 dark:text-amber-400" />
+                                <div class="p-3 rounded-xl" :class="paymentSummary.total_overdue > 0 ? 'bg-red-100 dark:bg-red-500/20' : 'bg-amber-100 dark:bg-amber-500/20'">
+                                    <CreditCard :size="24" :class="paymentSummary.total_overdue > 0 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'" />
                                 </div>
                             </div>
                             <div class="mt-3 flex items-center text-xs text-slate-500 dark:text-slate-400">
@@ -156,7 +169,7 @@ const showComingSoon = (featureName: string) => {
                                     <span>{{ paymentSummary.formatted_tunggakan }}</span>
                                 </template>
                                 <template v-else>
-                                    <span>Semua lunas</span>
+                                    <span class="text-emerald-600 dark:text-emerald-400">Semua lunas</span>
                                 </template>
                                 <ChevronRight :size="14" class="ml-1" />
                             </div>
@@ -235,11 +248,62 @@ const showComingSoon = (featureName: string) => {
                 </Motion>
             </div>
 
+            <!-- SPP Status Widget - Show nearest bill if exists -->
+            <Motion
+                v-if="paymentSummary.nearest_bill"
+                :initial="{ opacity: 0, y: 20 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.25 }"
+            >
+                <Link
+                    :href="parentPaymentsIndex().url"
+                    @click="handleCardClick"
+                    class="block bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border overflow-hidden transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                    :class="paymentSummary.nearest_bill.is_overdue ? 'border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700' : 'border-slate-200 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-700'"
+                >
+                    <div class="p-5">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-2.5 rounded-xl" :class="paymentSummary.nearest_bill.is_overdue ? 'bg-red-100 dark:bg-red-900/30' : 'bg-amber-100 dark:bg-amber-900/30'">
+                                <AlertTriangle v-if="paymentSummary.nearest_bill.is_overdue" :size="20" class="text-red-600 dark:text-red-400" />
+                                <CreditCard v-else :size="20" class="text-amber-600 dark:text-amber-400" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-semibold text-slate-900 dark:text-white">
+                                    {{ paymentSummary.nearest_bill.is_overdue ? 'Tagihan Jatuh Tempo' : 'Tagihan Terdekat' }}
+                                </h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">
+                                    {{ paymentSummary.nearest_bill.student_name }}
+                                </p>
+                            </div>
+                            <ChevronRight :size="20" class="text-slate-400 shrink-0" />
+                        </div>
+                        <div class="flex items-center justify-between p-3 rounded-xl" :class="paymentSummary.nearest_bill.is_overdue ? 'bg-red-50 dark:bg-red-900/20' : 'bg-amber-50 dark:bg-amber-900/20'">
+                            <div>
+                                <p class="font-medium text-slate-900 dark:text-white">
+                                    {{ paymentSummary.nearest_bill.category }}
+                                </p>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">
+                                    {{ paymentSummary.nearest_bill.periode }}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold" :class="paymentSummary.nearest_bill.is_overdue ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'">
+                                    {{ paymentSummary.nearest_bill.formatted_amount }}
+                                </p>
+                                <p class="text-xs" :class="paymentSummary.nearest_bill.is_overdue ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'">
+                                    {{ paymentSummary.nearest_bill.is_overdue ? 'Lewat jatuh tempo' : `Jatuh tempo: ${paymentSummary.nearest_bill.due_date}` }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </Link>
+            </Motion>
+
             <!-- Attendance Summary Widget Section -->
             <Motion
                 :initial="{ opacity: 0, y: 20 }"
                 :animate="{ opacity: 1, y: 0 }"
-                :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.25 }"
+                :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: paymentSummary.nearest_bill ? 0.3 : 0.25 }"
             >
                 <ChildAttendanceSummaryWidget
                     :children="childrenWithAttendance"

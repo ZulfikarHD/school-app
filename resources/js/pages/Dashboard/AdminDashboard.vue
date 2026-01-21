@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
-import { Users, CreditCard, FileText, UserCog, GraduationCap, ChevronRight } from 'lucide-vue-next';
+import {
+    Users, CreditCard, FileText, UserCog, GraduationCap, ChevronRight,
+    Wallet, AlertTriangle, Clock, TrendingUp
+} from 'lucide-vue-next';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import { useHaptics } from '@/composables/useHaptics';
 import { useModal } from '@/composables/useModal';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as adminStudentsIndex } from '@/routes/admin/students';
+import { index as paymentReportsIndex } from '@/routes/admin/payments/reports';
+import { create as paymentRecordCreate } from '@/routes/admin/payments/records';
+import { verification as paymentVerification } from '@/routes/admin/payments/records';
 
 /**
  * Dashboard untuk Admin/TU dengan akses ke Student Management,
@@ -19,7 +25,19 @@ import { index as adminStudentsIndex } from '@/routes/admin/students';
  * - Removed duplicate header (using AppLayout slot)
  * - Stat cards dengan link ke halaman terkait
  * - Focus states untuk accessibility
+ * - Payment summary widget dengan real-time data
  */
+
+interface PaymentSummary {
+    total_payments: number;
+    today_income: number;
+    formatted_today_income: string;
+    pending_verification: number;
+    overdue_count: number;
+    overdue_amount: number;
+    formatted_overdue_amount: string;
+    total_unpaid_bills: number;
+}
 
 interface Props {
     stats: {
@@ -28,9 +46,10 @@ interface Props {
         pending_psb: number;
         total_users: number;
     };
+    paymentSummary: PaymentSummary;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const haptics = useHaptics();
 const modal = useModal();
@@ -66,13 +85,13 @@ const statCards = [
     },
     {
         key: 'payments',
-        label: 'Total Pembayaran',
+        label: 'Pembayaran Hari Ini',
         statKey: 'total_payments',
         icon: CreditCard,
-        bgColor: 'bg-green-100 dark:bg-green-500/20',
-        iconColor: 'text-green-600 dark:text-green-400',
-        route: null, // Coming soon
-        linkText: 'Segera hadir',
+        bgColor: 'bg-emerald-100 dark:bg-emerald-500/20',
+        iconColor: 'text-emerald-600 dark:text-emerald-400',
+        route: paymentReportsIndex,
+        linkText: 'Lihat laporan',
     },
     {
         key: 'psb',
@@ -121,26 +140,24 @@ const quickActions = [
         route: adminUsersIndex,
     },
     {
-        key: 'payment',
-        title: 'Pembayaran',
-        description: 'Kelola pembayaran SPP dan lainnya',
+        key: 'payment-record',
+        title: 'Catat Pembayaran',
+        description: 'Input pembayaran siswa',
         icon: CreditCard,
-        bgColor: 'bg-green-100 dark:bg-green-500/20',
-        iconColor: 'text-green-600 dark:text-green-400',
-        hoverBorder: 'hover:border-green-200 dark:hover:border-green-700',
-        route: null, // Coming soon
-        comingSoon: true,
+        bgColor: 'bg-emerald-100 dark:bg-emerald-500/20',
+        iconColor: 'text-emerald-600 dark:text-emerald-400',
+        hoverBorder: 'hover:border-emerald-200 dark:hover:border-emerald-700',
+        route: paymentRecordCreate,
     },
     {
-        key: 'psb',
-        title: 'PSB',
-        description: 'Penerimaan Siswa Baru',
-        icon: FileText,
-        bgColor: 'bg-amber-100 dark:bg-amber-500/20',
-        iconColor: 'text-amber-600 dark:text-amber-400',
-        hoverBorder: 'hover:border-amber-200 dark:hover:border-amber-700',
-        route: null, // Coming soon
-        comingSoon: true,
+        key: 'payment-reports',
+        title: 'Laporan Keuangan',
+        description: 'Lihat laporan pembayaran',
+        icon: TrendingUp,
+        bgColor: 'bg-violet-100 dark:bg-violet-500/20',
+        iconColor: 'text-violet-600 dark:text-violet-400',
+        hoverBorder: 'hover:border-violet-200 dark:hover:border-violet-700',
+        route: paymentReportsIndex,
     },
 ];
 </script>
@@ -218,11 +235,104 @@ const quickActions = [
                 </Motion>
             </div>
 
-            <!-- Quick Actions -->
+            <!-- Payment Summary Widget -->
             <Motion
                 :initial="{ opacity: 0, y: 20 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.2 }"
+            >
+                <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="p-5 sm:p-6">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between mb-5">
+                            <div class="flex items-center gap-3">
+                                <div class="p-3 bg-violet-100 dark:bg-violet-900/30 rounded-xl">
+                                    <Wallet :size="22" class="text-violet-600 dark:text-violet-400" />
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                                        Ringkasan Keuangan
+                                    </h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                                        Hari ini
+                                    </p>
+                                </div>
+                            </div>
+                            <Link
+                                :href="paymentReportsIndex().url"
+                                @click="handleCardClick"
+                                class="text-sm text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1"
+                            >
+                                Lihat Laporan
+                                <ChevronRight :size="14" />
+                            </Link>
+                        </div>
+
+                        <!-- Summary Grid -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Pendapatan Hari Ini -->
+                            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+                                <p class="text-sm text-slate-600 dark:text-slate-400">Pendapatan</p>
+                                <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                                    {{ paymentSummary.formatted_today_income }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    {{ paymentSummary.total_payments }} transaksi
+                                </p>
+                            </div>
+
+                            <!-- Pending Verifikasi -->
+                            <Link
+                                :href="paymentVerification().url"
+                                @click="handleCardClick"
+                                class="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-slate-600 dark:text-slate-400">Verifikasi</p>
+                                    <Clock :size="16" class="text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <p class="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">
+                                    {{ paymentSummary.pending_verification }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    Pending
+                                </p>
+                            </Link>
+
+                            <!-- Tagihan Jatuh Tempo -->
+                            <div class="p-4 rounded-xl" :class="paymentSummary.overdue_count > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-slate-50 dark:bg-zinc-800'">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-slate-600 dark:text-slate-400">Jatuh Tempo</p>
+                                    <AlertTriangle v-if="paymentSummary.overdue_count > 0" :size="16" class="text-red-500" />
+                                </div>
+                                <p class="text-xl font-bold mt-1" :class="paymentSummary.overdue_count > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'">
+                                    {{ paymentSummary.overdue_count }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    {{ paymentSummary.formatted_overdue_amount }}
+                                </p>
+                            </div>
+
+                            <!-- Total Tagihan Belum Bayar -->
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800">
+                                <p class="text-sm text-slate-600 dark:text-slate-400">Belum Bayar</p>
+                                <p class="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                                    {{ paymentSummary.total_unpaid_bills }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    Tagihan aktif
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Motion>
+
+            <!-- Quick Actions -->
+            <Motion
+                :initial="{ opacity: 0, y: 20 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.25 }"
             >
                 <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Aksi Cepat</h2>
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -231,7 +341,7 @@ const quickActions = [
                         :key="action.key"
                         :initial="{ opacity: 0, scale: 0.95 }"
                         :animate="{ opacity: 1, scale: 1 }"
-                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.25 + (index * 0.05) }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.3 + (index * 0.05) }"
                         :whileHover="{ y: -2, scale: 1.01 }"
                         :whileTap="{ scale: 0.97 }"
                     >

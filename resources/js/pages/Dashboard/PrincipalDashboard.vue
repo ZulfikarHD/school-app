@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { Head, router, Link } from '@inertiajs/vue3';
 import { Motion } from 'motion-v';
 import {
     Bell,
@@ -12,11 +12,16 @@ import {
     LayoutDashboard,
     Clock,
     CheckCircle,
+    Wallet,
+    TrendingUp,
+    AlertTriangle,
+    PieChart,
 } from 'lucide-vue-next';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import AttendanceSummaryCard from '@/components/dashboard/AttendanceSummaryCard.vue';
 import TeacherPresenceWidget from '@/components/dashboard/TeacherPresenceWidget.vue';
 import { useHaptics } from '@/composables/useHaptics';
+import { reports as financialReports, delinquents as financialDelinquents } from '@/routes/principal/financial';
 import axios from 'axios';
 
 /**
@@ -30,7 +35,18 @@ import axios from 'axios';
  * - Added focus states untuk keyboard navigation
  * - Consistent icon styling dan backgrounds
  * - Real-time polling dengan visual feedback
+ * - Financial summary widget untuk monitoring keuangan
  */
+
+interface FinancialSummary {
+    monthly_income: number;
+    formatted_monthly_income: string;
+    transaction_count: number;
+    total_piutang: number;
+    formatted_piutang: string;
+    collectibility: number;
+    overdue_students: number;
+}
 
 interface Props {
     stats: {
@@ -64,6 +80,7 @@ interface Props {
         }>;
     };
     pendingTeacherLeaves: number;
+    financialSummary: FinancialSummary;
 }
 
 const props = defineProps<Props>();
@@ -84,6 +101,23 @@ const realtimeData = ref({
     classesNotRecorded: props.classesNotRecorded,
     teacherPresence: props.teacherPresence,
     pendingTeacherLeaves: props.pendingTeacherLeaves,
+});
+
+/**
+ * Warna kolektibilitas berdasarkan persentase
+ */
+const collectibilityColor = computed(() => {
+    const value = props.financialSummary.collectibility;
+    if (value >= 80) return 'text-emerald-600 dark:text-emerald-400';
+    if (value >= 60) return 'text-amber-600 dark:text-amber-400';
+    return 'text-red-600 dark:text-red-400';
+});
+
+const collectibilityBgColor = computed(() => {
+    const value = props.financialSummary.collectibility;
+    if (value >= 80) return 'bg-emerald-50 dark:bg-emerald-900/20';
+    if (value >= 60) return 'bg-amber-50 dark:bg-amber-900/20';
+    return 'bg-red-50 dark:bg-red-900/20';
 });
 
 let pollingInterval: number | null = null;
@@ -387,11 +421,109 @@ const quickActions = [
                 </Motion>
             </div>
 
-            <!-- Quick Actions -->
+            <!-- Financial Summary Widget -->
             <Motion
                 :initial="{ opacity: 0, y: 20 }"
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.35 }"
+            >
+                <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="p-5 sm:p-6">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between mb-5">
+                            <div class="flex items-center gap-3">
+                                <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl">
+                                    <TrendingUp :size="22" class="text-emerald-600 dark:text-emerald-400" />
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                                        Ringkasan Keuangan
+                                    </h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                                        Bulan ini
+                                    </p>
+                                </div>
+                            </div>
+                            <Link
+                                :href="financialReports().url"
+                                @click="haptics.light()"
+                                class="text-sm text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                            >
+                                Lihat Laporan
+                                <ChevronRight :size="14" />
+                            </Link>
+                        </div>
+
+                        <!-- Summary Grid -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Pendapatan Bulan Ini -->
+                            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-slate-600 dark:text-slate-400">Pendapatan</p>
+                                    <Wallet :size="16" class="text-emerald-600 dark:text-emerald-400" />
+                                </div>
+                                <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                                    {{ financialSummary.formatted_monthly_income }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    {{ financialSummary.transaction_count }} transaksi
+                                </p>
+                            </div>
+
+                            <!-- Total Piutang -->
+                            <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20">
+                                <p class="text-sm text-slate-600 dark:text-slate-400">Total Piutang</p>
+                                <p class="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">
+                                    {{ financialSummary.formatted_piutang }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    Belum terbayar
+                                </p>
+                            </div>
+
+                            <!-- Kolektibilitas -->
+                            <div class="p-4 rounded-xl" :class="collectibilityBgColor">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-slate-600 dark:text-slate-400">Kolektibilitas</p>
+                                    <PieChart :size="16" :class="collectibilityColor" />
+                                </div>
+                                <p class="text-xl font-bold mt-1" :class="collectibilityColor">
+                                    {{ financialSummary.collectibility }}%
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    Tingkat pembayaran
+                                </p>
+                            </div>
+
+                            <!-- Siswa Menunggak -->
+                            <Link
+                                :href="financialDelinquents().url"
+                                @click="haptics.light()"
+                                class="p-4 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                :class="financialSummary.overdue_students > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-slate-50 dark:bg-zinc-800'"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-slate-600 dark:text-slate-400">Menunggak</p>
+                                    <AlertTriangle v-if="financialSummary.overdue_students > 0" :size="16" class="text-red-500" />
+                                </div>
+                                <p class="text-xl font-bold mt-1" :class="financialSummary.overdue_students > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'">
+                                    {{ financialSummary.overdue_students }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                                    Siswa
+                                    <ChevronRight :size="12" />
+                                </p>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </Motion>
+
+            <!-- Quick Actions -->
+            <Motion
+                :initial="{ opacity: 0, y: 20 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.4 }"
             >
                 <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Aksi Cepat</h2>
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -400,7 +532,7 @@ const quickActions = [
                         :key="action.key"
                         :initial="{ opacity: 0, scale: 0.95 }"
                         :animate="{ opacity: 1, scale: 1 }"
-                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.4 + (index * 0.05) }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.45 + (index * 0.05) }"
                         :whileHover="{ y: -2, scale: 1.01 }"
                         :whileTap="{ scale: 0.97 }"
                     >

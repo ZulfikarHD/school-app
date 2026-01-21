@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bill;
+use App\Models\Payment;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentAttendance;
@@ -89,6 +91,9 @@ class PrincipalDashboardController extends Controller
         // Get attendance summary using service
         $attendanceSummary = $this->attendanceService->getTodayAttendanceSummary();
 
+        // Get financial summary untuk Principal
+        $financialSummary = $this->getFinancialSummary();
+
         return Inertia::render('Dashboard/PrincipalDashboard', [
             'stats' => [
                 'total_students' => $totalStudents,
@@ -112,7 +117,64 @@ class PrincipalDashboardController extends Controller
                 'absent_teachers' => $absentTeachers,
             ],
             'pendingTeacherLeaves' => $pendingTeacherLeaves,
+            'financialSummary' => $financialSummary,
         ]);
+    }
+
+    /**
+     * Get financial summary untuk dashboard Principal
+     *
+     * Menghitung pendapatan bulanan, piutang, dan kolektibilitas
+     * untuk monitoring kesehatan keuangan sekolah
+     */
+    protected function getFinancialSummary(): array
+    {
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+
+        // Monthly verified payments
+        $monthlyPayments = Payment::query()
+            ->whereBetween('tanggal_bayar', [$startOfMonth, $endOfMonth])
+            ->verified()
+            ->get();
+
+        $monthlyIncome = $monthlyPayments->sum('nominal');
+        $transactionCount = $monthlyPayments->count();
+
+        // Total piutang (all unpaid bills)
+        $unpaidBills = Bill::query()
+            ->whereIn('status', ['belum_bayar', 'sebagian'])
+            ->get();
+
+        $totalPiutang = $unpaidBills->sum(fn ($bill) => $bill->sisa_tagihan);
+
+        // Calculate collectibility rate
+        $monthlyBills = Bill::query()
+            ->whereMonth('created_at', $startOfMonth->month)
+            ->whereYear('created_at', $startOfMonth->year)
+            ->get();
+
+        $expectedIncome = $monthlyBills->sum('nominal');
+        $collectibility = $expectedIncome > 0
+            ? round(($monthlyIncome / $expectedIncome) * 100, 1)
+            : 100;
+
+        // Overdue students count
+        $overdueStudents = $unpaidBills
+            ->filter(fn ($bill) => $bill->isOverdue())
+            ->pluck('student_id')
+            ->unique()
+            ->count();
+
+        return [
+            'monthly_income' => $monthlyIncome,
+            'formatted_monthly_income' => 'Rp '.number_format($monthlyIncome, 0, ',', '.'),
+            'transaction_count' => $transactionCount,
+            'total_piutang' => $totalPiutang,
+            'formatted_piutang' => 'Rp '.number_format($totalPiutang, 0, ',', '.'),
+            'collectibility' => $collectibility,
+            'overdue_students' => $overdueStudents,
+        ];
     }
 
     /**

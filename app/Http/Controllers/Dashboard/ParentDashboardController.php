@@ -99,8 +99,10 @@ class ParentDashboardController extends Controller
     /**
      * Get payment summary untuk anak-anak
      *
+     * Menghitung total tagihan belum bayar, jatuh tempo,
+     * dan informasi tagihan terdekat
+     *
      * @param  \Illuminate\Support\Collection  $studentIds
-     * @return array
      */
     protected function getPaymentSummary($studentIds): array
     {
@@ -110,22 +112,39 @@ class ParentDashboardController extends Controller
                 'total_tunggakan' => 0,
                 'formatted_tunggakan' => 'Rp 0',
                 'total_overdue' => 0,
+                'nearest_bill' => null,
             ];
         }
 
         $unpaidBills = Bill::query()
             ->whereIn('student_id', $studentIds)
             ->whereIn('status', ['belum_bayar', 'sebagian'])
+            ->with(['paymentCategory', 'student'])
             ->get();
 
         $totalTunggakan = $unpaidBills->sum(fn ($bill) => $bill->sisa_tagihan);
         $overdueCount = $unpaidBills->filter(fn ($bill) => $bill->isOverdue())->count();
+
+        // Get nearest bill by due date
+        $nearestBill = $unpaidBills
+            ->sortBy('tanggal_jatuh_tempo')
+            ->first();
 
         return [
             'total_unpaid' => $unpaidBills->count(),
             'total_tunggakan' => $totalTunggakan,
             'formatted_tunggakan' => 'Rp '.number_format($totalTunggakan, 0, ',', '.'),
             'total_overdue' => $overdueCount,
+            'nearest_bill' => $nearestBill ? [
+                'id' => $nearestBill->id,
+                'category' => $nearestBill->paymentCategory->nama,
+                'periode' => $nearestBill->nama_bulan.' '.$nearestBill->tahun,
+                'student_name' => $nearestBill->student->nama_lengkap,
+                'amount' => $nearestBill->sisa_tagihan,
+                'formatted_amount' => 'Rp '.number_format($nearestBill->sisa_tagihan, 0, ',', '.'),
+                'due_date' => $nearestBill->tanggal_jatuh_tempo?->format('d M Y'),
+                'is_overdue' => $nearestBill->isOverdue(),
+            ] : null,
         ];
     }
 }
