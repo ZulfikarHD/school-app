@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BillController;
 use App\Http\Controllers\Admin\LeaveRequestController;
 use App\Http\Controllers\Admin\PaymentCategoryController;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TeacherAttendanceController;
 use App\Http\Controllers\Admin\UserController;
@@ -109,5 +110,28 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
         Route::post('preview', [BillController::class, 'preview'])->name('preview');
         Route::post('/', [BillController::class, 'store'])->name('store');
         Route::delete('{bill}', [BillController::class, 'destroy'])->name('destroy');
+    });
+
+    /**
+     * Payment Recording - Catat dan kelola pembayaran siswa
+     */
+    Route::prefix('payments/records')->name('payments.records.')->group(function () {
+        Route::get('/', [PaymentController::class, 'index'])->name('index');
+        Route::get('create', [PaymentController::class, 'create'])->name('create');
+        Route::post('/', [PaymentController::class, 'store'])->name('store');
+        Route::get('verification', [PaymentController::class, 'verification'])->name('verification');
+        Route::get('{payment}', [PaymentController::class, 'show'])->name('show');
+        Route::get('{payment}/receipt', [PaymentController::class, 'receipt'])->name('receipt');
+        Route::get('{payment}/receipt/stream', [PaymentController::class, 'receiptStream'])->name('receipt.stream');
+        Route::post('{payment}/verify', [PaymentController::class, 'verify'])->name('verify');
+        Route::post('{payment}/cancel', [PaymentController::class, 'cancel'])->name('cancel');
+    });
+
+    /**
+     * API Endpoints untuk Payment (AJAX)
+     */
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('students/search', [PaymentController::class, 'searchStudents'])->name('students.search');
+        Route::get('students/{student}/unpaid-bills', [PaymentController::class, 'getUnpaidBills'])->name('students.unpaid-bills');
     });
 });

@@ -18,6 +18,7 @@ import { index as adminAttendanceTeachersIndex } from '@/routes/admin/attendance
 import { index as adminLeaveRequestsIndex } from '@/routes/admin/leave-requests';
 import { index as adminPaymentCategoriesIndex } from '@/routes/admin/payment-categories';
 import { index as adminBillsIndex, generate as adminBillsGenerate } from '@/routes/admin/payments/bills';
+import { index as adminPaymentRecordsIndex, create as adminPaymentRecordsCreate } from '@/routes/admin/payments/records';
 import { index as parentPaymentsIndex } from '@/routes/parent/payments';
 import { index as principalStudentsIndex } from '@/routes/principal/students';
 import { index as principalTeacherLeavesIndex } from '@/routes/principal/teacher-leaves';
@@ -114,6 +115,8 @@ const getRouteUrl = (routeName: string): string => {
         'admin.payment-categories.index': adminPaymentCategoriesIndex().url,
         'admin.payments.bills.index': adminBillsIndex().url,
         'admin.payments.bills.generate': adminBillsGenerate().url,
+        'admin.payments.records.index': adminPaymentRecordsIndex().url,
+        'admin.payments.records.create': adminPaymentRecordsCreate().url,
         'admin.audit-logs.index': adminAuditLogsIndex().url,
         'audit-logs.index': auditLogsIndex().url,
         'profile.show': profileShow().url,
@@ -307,6 +310,8 @@ const menuItems = computed((): MenuItem[] => {
                     { name: 'Kategori Pembayaran', route: 'admin.payment-categories.index', icon: Tags, badge: 0 },
                     { name: 'Generate Tagihan', route: 'admin.payments.bills.generate', icon: Receipt, badge: 0 },
                     { name: 'Daftar Tagihan', route: 'admin.payments.bills.index', icon: FileText, badge: 0 },
+                    { name: 'Catat Pembayaran', route: 'admin.payments.records.create', icon: CreditCard, badge: 0 },
+                    { name: 'Riwayat Pembayaran', route: 'admin.payments.records.index', icon: History, badge: 0 },
                 ]
             },
             { name: 'Audit Log', route: 'admin.audit-logs.index', icon: Activity, badge: 0 },
