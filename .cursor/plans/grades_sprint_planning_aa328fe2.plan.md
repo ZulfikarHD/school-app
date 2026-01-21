@@ -7,7 +7,7 @@ todos:
     status: completed
   - id: sprint-2-teacher
     content: "Sprint 2: Teacher Grade Input - Guru input nilai UH/UTS/UAS/Praktik + Wali Kelas input sikap"
-    status: pending
+    status: completed
   - id: sprint-3-admin
     content: "Sprint 3: Admin Config - Bobot nilai + Rekap nilai + Export Excel"
     status: pending

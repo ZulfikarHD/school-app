@@ -5,12 +5,15 @@
  *
  * File ini berisi semua routes yang berhubungan dengan fungsi guru,
  * yaitu: dashboard, student viewing, daily attendance, subject attendance,
- * clock in/out, student leave verification, dan teacher's own leave management
+ * clock in/out, student leave verification, teacher's own leave management,
+ * dan grades management (input nilai UH/UTS/UAS/Praktik serta nilai sikap)
  */
 
 use App\Http\Controllers\Dashboard\TeacherDashboardController;
 use App\Http\Controllers\Teacher\AttendanceController;
+use App\Http\Controllers\Teacher\AttitudeGradeController;
 use App\Http\Controllers\Teacher\ClockController;
+use App\Http\Controllers\Teacher\GradeController;
 use App\Http\Controllers\Teacher\LeaveRequestController;
 use App\Http\Controllers\Teacher\StudentController;
 use App\Http\Controllers\Teacher\SubjectAttendanceController;
@@ -118,5 +121,32 @@ Route::middleware(['auth', 'role:TEACHER'])->group(function () {
          */
         Route::resource('teacher-leaves', TeacherLeaveController::class)
             ->only(['index', 'create', 'store']);
+
+        /**
+         * Grades Management - Input nilai UH/UTS/UAS/Praktik
+         * untuk mata pelajaran yang diajar oleh guru
+         */
+        Route::prefix('grades')->name('grades.')->group(function () {
+            Route::get('/', [GradeController::class, 'index'])->name('index');
+            Route::get('/create', [GradeController::class, 'create'])->name('create');
+            Route::post('/', [GradeController::class, 'store'])->name('store');
+            Route::get('/{grade}/edit', [GradeController::class, 'edit'])->name('edit');
+            Route::put('/{grade}', [GradeController::class, 'update'])->name('update');
+            Route::delete('/{grade}', [GradeController::class, 'destroy'])->name('destroy');
+
+            // API endpoints for form data
+            Route::get('/classes/{class}/students', [GradeController::class, 'getStudentsByClass'])->name('classes.students');
+            Route::get('/classes/{class}/subjects', [GradeController::class, 'getSubjectsByClass'])->name('classes.subjects');
+        });
+
+        /**
+         * Attitude Grades - Input nilai sikap spiritual dan sosial
+         * hanya untuk wali kelas terhadap siswa di kelasnya
+         */
+        Route::prefix('attitude-grades')->name('attitude-grades.')->group(function () {
+            Route::get('/', [AttitudeGradeController::class, 'index'])->name('index');
+            Route::get('/create', [AttitudeGradeController::class, 'create'])->name('create');
+            Route::post('/', [AttitudeGradeController::class, 'store'])->name('store');
+        });
     });
 });

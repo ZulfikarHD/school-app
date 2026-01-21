@@ -13,10 +13,10 @@ todos:
     status: pending
   - id: teacher-grades
     content: "Implement Teacher: Grade Input (CRUD for UH/UTS/UAS/Praktik)"
-    status: pending
+    status: completed
   - id: teacher-attitude
     content: "Implement Teacher: Attitude Grade Input (Wali Kelas only)"
-    status: pending
+    status: completed
   - id: admin-config
     content: "Implement Admin: Grade Weight Configuration"
     status: pending
@@ -37,7 +37,7 @@ todos:
     status: pending
   - id: navigation
     content: Update Navigation Menus for all roles
-    status: pending
+    status: in_progress
   - id: testing
     content: Write Feature Tests for all flows
     status: pending

@@ -31,6 +31,8 @@ import { create as teacherAttendanceSubjectCreate, index as teacherAttendanceSub
 import { myAttendance as teacherMyAttendance } from '@/routes/teacher';
 import { index as teacherLeaveRequestsIndex } from '@/routes/teacher/leave-requests';
 import { index as teacherTeacherLeavesIndex } from '@/routes/teacher/teacher-leaves';
+import { index as teacherGradesIndex } from '@/routes/teacher/grades';
+import { index as teacherAttitudeGradesIndex } from '@/routes/teacher/attitude-grades';
 import DialogModal from '@/components/ui/DialogModal.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import Alert from '@/components/ui/Alert.vue';
@@ -61,7 +63,9 @@ import {
     Tags,
     Receipt,
     CreditCard,
-    FileSpreadsheet
+    FileSpreadsheet,
+    Award,
+    Heart
 } from 'lucide-vue-next';
 
 /**
@@ -146,6 +150,8 @@ const getRouteUrl = (routeName: string): string => {
         'teacher.my-attendance': teacherMyAttendance().url,
         'teacher.leave-requests': teacherLeaveRequestsIndex().url,
         'teacher.teacher-leaves.index': teacherTeacherLeavesIndex().url,
+        'teacher.grades.index': teacherGradesIndex().url,
+        'teacher.attitude-grades.index': teacherAttitudeGradesIndex().url,
         'parent.children': parentChildrenIndex().url,
         'parent.leave-requests': parentLeaveRequestsIndex().url,
         'parent.payments.index': parentPaymentsIndex().url,
@@ -401,6 +407,14 @@ const menuItems = computed((): MenuItem[] => {
                     { name: 'Presensi Mapel', route: 'teacher.attendance.subject.create', icon: BookOpen, badge: 0 },
                     { name: 'Riwayat Mapel', route: 'teacher.attendance.subject.index', icon: History, badge: 0 },
                     { name: 'Riwayat Saya', route: 'teacher.my-attendance', icon: History, badge: 0 },
+                ]
+            },
+            {
+                name: 'Penilaian',
+                icon: Award,
+                children: [
+                    { name: 'Input Nilai', route: 'teacher.grades.index', icon: Award, badge: 0 },
+                    { name: 'Nilai Sikap', route: 'teacher.attitude-grades.index', icon: Heart, badge: 0 },
                 ]
             },
             {
