@@ -224,6 +224,39 @@ class Student extends Model
     }
 
     /**
+     * Relationship one-to-many dengan Grade untuk tracking
+     * nilai siswa per mata pelajaran
+     *
+     * @return HasMany<Grade>
+     */
+    public function grades(): HasMany
+    {
+        return $this->hasMany(Grade::class);
+    }
+
+    /**
+     * Relationship one-to-many dengan AttitudeGrade untuk tracking
+     * nilai sikap siswa per semester
+     *
+     * @return HasMany<AttitudeGrade>
+     */
+    public function attitudeGrades(): HasMany
+    {
+        return $this->hasMany(AttitudeGrade::class);
+    }
+
+    /**
+     * Relationship one-to-many dengan ReportCard untuk tracking
+     * rapor siswa per semester
+     *
+     * @return HasMany<ReportCard>
+     */
+    public function reportCards(): HasMany
+    {
+        return $this->hasMany(ReportCard::class);
+    }
+
+    /**
      * Relationship one-to-many dengan Bill untuk tracking
      * tagihan pembayaran siswa
      *
