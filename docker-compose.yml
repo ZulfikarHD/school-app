@@ -1,0 +1,131 @@
+# ==============================================================================
+# Docker Compose untuk Laravel School App
+# Konfigurasi yang memastikan aplikasi berjalan konsisten di semua device
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # App Service: Laravel Application dengan Nginx + PHP-FPM
+  # ----------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: school-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      # Laravel Environment
+      APP_NAME: ${APP_NAME:-SchoolApp}
+      APP_ENV: ${APP_ENV:-production}
+      APP_KEY: ${APP_KEY:-}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      APP_LOCALE: id
+      APP_TIMEZONE: Asia/Jakarta
+
+      # Database Configuration (PostgreSQL)
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-school_app}
+      DB_USERNAME: ${DB_USERNAME:-school_user}
+      DB_PASSWORD: ${DB_PASSWORD:-school_password}
+
+      # Session & Cache
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+
+      # Logging
+      LOG_CHANNEL: stack
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      # Persistent storage untuk uploaded files
+      - app-storage:/var/www/html/storage/app
+      # Logs untuk debugging
+      - app-logs:/var/www/html/storage/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - school-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ----------------------------------------------------------------------------
+  # PostgreSQL Database Service
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: school-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-school_app}
+      POSTGRES_USER: ${DB_USERNAME:-school_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-school_password}
+      # Performance tuning untuk development/small production
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      # Persistent database storage
+      - postgres-data:/var/lib/postgresql/data
+      # Custom initialization scripts (optional)
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      # Expose untuk akses database tools (opsional, bisa dihapus untuk production)
+      - "${DB_PORT:-5432}:5432"
+    networks:
+      - school-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-school_user} -d ${DB_DATABASE:-school_app}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ----------------------------------------------------------------------------
+  # Redis Service (Optional - untuk caching dan queue yang lebih cepat)
+  # Uncomment jika diperlukan
+  # ----------------------------------------------------------------------------
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: school-redis
+  #   restart: unless-stopped
+  #   command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+  #   volumes:
+  #     - redis-data:/data
+  #   ports:
+  #     - "${REDIS_PORT:-6379}:6379"
+  #   networks:
+  #     - school-network
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_password}", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+# ==============================================================================
+# Networks
+# ==============================================================================
+networks:
+  school-network:
+    driver: bridge
+
+# ==============================================================================
+# Volumes untuk data persistence
+# ==============================================================================
+volumes:
+  postgres-data:
+    driver: local
+  app-storage:
+    driver: local
+  app-logs:
+    driver: local
+  # redis-data:
+  #   driver: local

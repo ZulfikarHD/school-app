@@ -1,0 +1,3 @@
+# Placeholder untuk custom PostgreSQL initialization scripts
+# File .sql yang ditempatkan di folder ini akan dieksekusi saat container pertama kali dibuat
+# Contoh: 01-create-extensions.sql, 02-seed-data.sql
