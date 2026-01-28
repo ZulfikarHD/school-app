@@ -14,6 +14,7 @@
  * - routes/auth.php      : Authentication (login, logout, password reset)
  */
 
+use App\Http\Controllers\PsbController;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -22,6 +23,28 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
+
+/**
+ * PSB Routes - Pendaftaran Siswa Baru (Public Access)
+ *
+ * Routes untuk proses pendaftaran calon siswa baru yang dapat diakses
+ * tanpa authentication, yaitu: landing page, form pendaftaran,
+ * success page, dan tracking status
+ */
+Route::prefix('psb')->name('psb.')->group(function () {
+    Route::get('/', [PsbController::class, 'landing'])->name('landing');
+    Route::get('/register', [PsbController::class, 'create'])->name('register');
+    // Rate limit: 5 registrations per hour per IP untuk prevent spam
+    Route::post('/register', [PsbController::class, 'store'])
+        ->middleware('throttle:5,60')
+        ->name('store');
+    Route::get('/success/{registration}', [PsbController::class, 'success'])->name('success');
+    Route::get('/tracking', [PsbController::class, 'tracking'])->name('tracking');
+    // Rate limit: 10 status checks per minute per IP untuk prevent brute force
+    Route::post('/tracking', [PsbController::class, 'checkStatus'])
+        ->middleware('throttle:10,1')
+        ->name('check-status');
+});
 
 /**
  * Authenticated Routes - accessible oleh semua user yang sudah login
