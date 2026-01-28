@@ -1085,10 +1085,10 @@ watch(selectedChildId, () => {
                                 </div>
 
                                 <!-- Amount Card -->
-                                <div class="bg-linear-to-br from-violet-500 to-purple-600 rounded-2xl p-5 text-white text-center">
-                                    <p class="text-violet-100 text-sm">Sisa Tagihan</p>
-                                    <p class="text-3xl font-bold mt-1">{{ selectedBill.formatted_sisa }}</p>
-                                    <p v-if="selectedBill.nominal_terbayar > 0" class="text-violet-200 text-sm mt-2">
+                                <div class="bg-violet-50 dark:bg-violet-950/30 rounded-2xl p-5 text-center border border-violet-200 dark:border-violet-800">
+                                    <p class="text-violet-600 dark:text-violet-400 text-sm">Sisa Tagihan</p>
+                                    <p class="text-3xl font-bold mt-1 text-slate-900 dark:text-slate-100">{{ selectedBill.formatted_sisa }}</p>
+                                    <p v-if="selectedBill.nominal_terbayar > 0" class="text-violet-500 dark:text-violet-400 text-sm mt-2">
                                         Terbayar: {{ formatCurrency(selectedBill.nominal_terbayar) }} dari {{ selectedBill.formatted_nominal }}
                                     </p>
                                 </div>

@@ -220,6 +220,15 @@ export function useNavigation() {
             return currentUrl.startsWith('/teacher/attendance/subject/history');
         }
 
+        // PSB Dashboard routes - exact matching untuk menghindari konflik dengan child routes
+        if (route === 'admin.psb.index') {
+            return currentUrl === '/admin/psb';
+        }
+
+        if (route === 'principal.psb.dashboard') {
+            return currentUrl === '/principal/psb';
+        }
+
         // Payment routes - exact matching untuk menghindari konflik
         if (route === 'admin.payments.bills.generate') {
             return currentUrl === '/admin/payments/bills/generate';

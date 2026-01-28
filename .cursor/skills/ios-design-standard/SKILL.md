@@ -8,6 +8,27 @@ description: iOS-like design system for Vue/Tailwind components. Use when creati
 **Philosophy:** Clean, Solid, Performant. Function > Fashion.
 **Target:** Low-end devices (UMKM market) with premium feel.
 
+## Reference Documentation
+
+- **Full Design Guide**: `docs/guides/ios-design-system.md`
+- **Navigation Guide**: `docs/guides/navigation-design-system.md`
+- **UI Components Guide**: `docs/guides/ui-components.md`
+
+## Reusable UI Components
+
+| Component | Path | Usage |
+|-----------|------|-------|
+| Badge | `@/components/ui/Badge.vue` | Status badges, counts |
+| DialogModal | `@/components/ui/DialogModal.vue` | Confirmations |
+| BaseModal | `@/components/ui/BaseModal.vue` | Generic modals |
+| Alert | `@/components/ui/Alert.vue` | Toast notifications |
+| Breadcrumb | `@/components/ui/Breadcrumb.vue` | Navigation breadcrumbs |
+| FormInput | `@/components/ui/Form/FormInput.vue` | Text inputs |
+| FormSelect | `@/components/ui/Form/FormSelect.vue` | Dropdowns |
+| FormTextarea | `@/components/ui/Form/FormTextarea.vue` | Multiline text |
+| FormNumberInput | `@/components/ui/Form/FormNumberInput.vue` | Number inputs |
+| FormCheckbox | `@/components/ui/Form/FormCheckbox.vue` | Checkboxes |
+
 ## Package Dependencies
 
 | Package | Purpose |
@@ -24,6 +45,21 @@ description: iOS-like design system for Vue/Tailwind components. Use when creati
 - **Images:** `loading="lazy"`
 
 ## Design Patterns
+
+### Gradient vs Solid Colors (Pragmatic Approach)
+
+**Gradients Allowed** (max 1-2 per page):
+- Hero sections on landing pages
+- Featured/highlight card (primary metric)
+- Primary CTA on landing/marketing pages
+- Page header icons (1 per page)
+
+**Solid Colors Required**:
+- Regular stat cards: `bg-{color}-50` background, `bg-{color}-500` icon
+- Icon containers in cards: `bg-{color}-100` or `bg-{color}-500`
+- Secondary elements and buttons
+- Navigation items
+- Modal content cards
 
 ### Solid Surfaces (No Glass)
 ```
@@ -311,11 +347,116 @@ Cards:      rounded-xl p-6 bg-white border border-slate-200
 Containers: max-w-7xl mx-auto px-4 sm:px-6 lg:px-8
 ```
 
+### Symmetric Grid Layout for Stat Cards
+
+When displaying stat cards that don't divide evenly into rows, split into multiple grids for visual symmetry:
+
+```vue
+<!-- Example: 7 cards = 4 + 3 (centered) -->
+
+<!-- First Row: 4 cards, full width -->
+<div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
+    <div v-for="card in cards.slice(0, 4)" :key="card.key">
+        <!-- Card content -->
+    </div>
+</div>
+
+<!-- Second Row: 3 cards, centered -->
+<div class="grid gap-4 grid-cols-2 lg:grid-cols-3 lg:max-w-3xl lg:mx-auto">
+    <div 
+        v-for="(card, index) in cards.slice(4)" 
+        :key="card.key"
+        :class="[
+            // Last item spans full width on mobile if odd count
+            cards.slice(4).length % 2 !== 0 && index === cards.slice(4).length - 1 
+                ? 'col-span-2 lg:col-span-1' 
+                : ''
+        ]"
+    >
+        <!-- Card content -->
+    </div>
+</div>
+```
+
+**Grid Symmetry Rules:**
+- 4 items: `grid-cols-2 lg:grid-cols-4` (2x2 mobile, 1x4 desktop)
+- 6 items: `grid-cols-2 lg:grid-cols-3` (3x2 mobile, 2x3 desktop)
+- 7 items: Split into 4+3, center the second row
+- 8 items: `grid-cols-2 lg:grid-cols-4` (4x2 mobile, 2x4 desktop)
+- Odd last row on mobile: Last item `col-span-2` for full width
+
+## Dashboard Card Patterns
+
+### Stat Card (Solid - Default)
+```vue
+<div class="rounded-2xl border shadow-sm p-4 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
+    <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center">
+        <Icon class="w-5 h-5 text-white" />
+    </div>
+    <p class="text-amber-600 dark:text-amber-400">Label</p>
+    <p class="text-slate-900 dark:text-slate-100 font-bold">Value</p>
+</div>
+```
+
+### Featured Card (Gradient - Sparingly)
+```vue
+<!-- Only for hero/featured elements, max 1 per page -->
+<div class="rounded-2xl shadow-lg p-6 bg-linear-to-br from-emerald-500 to-teal-600 text-white">
+    <p class="text-emerald-100">Label</p>
+    <p class="text-3xl font-bold">Value</p>
+</div>
+```
+
+### Color Helper Pattern
+```typescript
+const getColorClasses = (color: string) => {
+    const colors: Record<string, { bg: string; border: string; icon: string; text: string }> = {
+        amber: {
+            bg: 'bg-amber-50 dark:bg-amber-950/30',
+            border: 'border-amber-200 dark:border-amber-800',
+            icon: 'bg-amber-500',
+            text: 'text-amber-600 dark:text-amber-400',
+        },
+        emerald: {
+            bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+            border: 'border-emerald-200 dark:border-emerald-800',
+            icon: 'bg-emerald-500',
+            text: 'text-emerald-600 dark:text-emerald-400',
+        },
+        blue: {
+            bg: 'bg-blue-50 dark:bg-blue-950/30',
+            border: 'border-blue-200 dark:border-blue-800',
+            icon: 'bg-blue-500',
+            text: 'text-blue-600 dark:text-blue-400',
+        },
+        red: {
+            bg: 'bg-red-50 dark:bg-red-950/30',
+            border: 'border-red-200 dark:border-red-800',
+            icon: 'bg-red-500',
+            text: 'text-red-600 dark:text-red-400',
+        },
+        purple: {
+            bg: 'bg-purple-50 dark:bg-purple-950/30',
+            border: 'border-purple-200 dark:border-purple-800',
+            icon: 'bg-purple-500',
+            text: 'text-purple-600 dark:text-purple-400',
+        },
+        teal: {
+            bg: 'bg-teal-50 dark:bg-teal-950/30',
+            border: 'border-teal-200 dark:border-teal-800',
+            icon: 'bg-teal-500',
+            text: 'text-teal-600 dark:text-teal-400',
+        },
+    };
+    return colors[color] || colors.emerald;
+};
+```
+
 ## Checklist
 
 - [ ] Buttons: `active:scale-97` or Motion `whileTap`
 - [ ] Forms: emerald focus
-- [ ] Solid backgrounds
+- [ ] Solid backgrounds (no gradients except hero/featured)
 - [ ] Borders: `border-slate-200`
 - [ ] Haptics on interactions
 - [ ] Skeleton loading
@@ -324,3 +465,7 @@ Containers: max-w-7xl mx-auto px-4 sm:px-6 lg:px-8
 - [ ] Icons: lucide-vue-next with proper sizing
 - [ ] Animations: motion-v with AnimatePresence for enter/exit
 - [ ] Charts: vue-chartjs with emerald color palette
+- [ ] Stat cards: Use `getColorClasses` helper for consistent styling
+- [ ] Gradient usage: Max 1-2 per page (hero/featured only)
+- [ ] Reuse existing UI components from `@/components/ui/`
+- [ ] Grid symmetry: Split uneven card counts into centered rows

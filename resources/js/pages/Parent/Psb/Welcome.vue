@@ -152,7 +152,7 @@ const formatDate = (dateString: string | undefined): string => {
                 >
                     <div class="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 dark:border-zinc-800">
                         <div class="flex items-center gap-4 mb-6">
-                            <div class="w-16 h-16 rounded-2xl bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                            <div class="w-16 h-16 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
                                 <GraduationCap :size="32" class="text-white" />
                             </div>
                             <div>

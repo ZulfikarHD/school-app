@@ -71,10 +71,56 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const haptics = useHaptics();
+
+/**
+ * Color classes helper untuk stat cards
+ * Menggunakan solid colors sesuai iOS Design Standard (pragmatic approach)
+ */
+const getColorClasses = (color: string) => {
+    const colors: Record<string, { bg: string; border: string; icon: string; text: string }> = {
+        emerald: {
+            bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+            border: 'border-emerald-200 dark:border-emerald-800',
+            icon: 'bg-emerald-500',
+            text: 'text-emerald-600 dark:text-emerald-400',
+        },
+        amber: {
+            bg: 'bg-amber-50 dark:bg-amber-950/30',
+            border: 'border-amber-200 dark:border-amber-800',
+            icon: 'bg-amber-500',
+            text: 'text-amber-600 dark:text-amber-400',
+        },
+        blue: {
+            bg: 'bg-blue-50 dark:bg-blue-950/30',
+            border: 'border-blue-200 dark:border-blue-800',
+            icon: 'bg-blue-500',
+            text: 'text-blue-600 dark:text-blue-400',
+        },
+        red: {
+            bg: 'bg-red-50 dark:bg-red-950/30',
+            border: 'border-red-200 dark:border-red-800',
+            icon: 'bg-red-500',
+            text: 'text-red-600 dark:text-red-400',
+        },
+        purple: {
+            bg: 'bg-purple-50 dark:bg-purple-950/30',
+            border: 'border-purple-200 dark:border-purple-800',
+            icon: 'bg-purple-500',
+            text: 'text-purple-600 dark:text-purple-400',
+        },
+        teal: {
+            bg: 'bg-teal-50 dark:bg-teal-950/30',
+            border: 'border-teal-200 dark:border-teal-800',
+            icon: 'bg-teal-500',
+            text: 'text-teal-600 dark:text-teal-400',
+        },
+    };
+    return colors[color] || colors.emerald;
+};
 
 /**
  * Stat cards configuration
+ * Menggunakan solid colors untuk icon containers (bukan gradient)
  */
 const statCards = computed(() => [
     {
@@ -83,7 +129,6 @@ const statCards = computed(() => [
         value: props.summary.total,
         icon: Users,
         color: 'emerald',
-        gradient: 'from-emerald-500 to-teal-600',
     },
     {
         key: 'pending',
@@ -91,7 +136,6 @@ const statCards = computed(() => [
         value: props.summary.pending,
         icon: Clock,
         color: 'amber',
-        gradient: 'from-amber-500 to-orange-600',
     },
     {
         key: 'approved',
@@ -99,7 +143,6 @@ const statCards = computed(() => [
         value: props.summary.approved,
         icon: CheckCircle,
         color: 'blue',
-        gradient: 'from-blue-500 to-indigo-600',
     },
     {
         key: 'rejected',
@@ -107,7 +150,6 @@ const statCards = computed(() => [
         value: props.summary.rejected,
         icon: XCircle,
         color: 'red',
-        gradient: 'from-red-500 to-rose-600',
     },
     {
         key: 're_registration',
@@ -115,7 +157,6 @@ const statCards = computed(() => [
         value: props.summary.re_registration,
         icon: RefreshCw,
         color: 'purple',
-        gradient: 'from-purple-500 to-violet-600',
     },
     {
         key: 'completed',
@@ -123,7 +164,6 @@ const statCards = computed(() => [
         value: props.summary.completed,
         icon: Trophy,
         color: 'teal',
-        gradient: 'from-teal-500 to-cyan-600',
     },
 ]);
 
@@ -336,11 +376,13 @@ const chartKey = computed(() => `${props.summary.total}-${props.dailyRegistratio
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.05 + (index * 0.05) }"
                 >
                     <div
-                        class="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 dark:border-zinc-800 transition-all hover:shadow-md"
+                        class="rounded-2xl p-4 sm:p-5 shadow-sm border transition-all hover:shadow-md"
+                        :class="[getColorClasses(card.color).bg, getColorClasses(card.color).border]"
                     >
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex-1 min-w-0">
-                                <p class="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 truncate">
+                                <p class="text-xs sm:text-sm font-medium truncate"
+                                   :class="getColorClasses(card.color).text">
                                     {{ card.label }}
                                 </p>
                                 <p class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1 tabular-nums">
@@ -349,7 +391,7 @@ const chartKey = computed(() => `${props.summary.total}-${props.dailyRegistratio
                             </div>
                             <div
                                 class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0"
-                                :class="`bg-linear-to-br ${card.gradient}`"
+                                :class="getColorClasses(card.color).icon"
                             >
                                 <component :is="card.icon" :size="20" class="text-white sm:w-6 sm:h-6" />
                             </div>

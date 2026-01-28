@@ -363,25 +363,26 @@ const getStatusVariant = (status: string): string => {
                 </Link>
             </Motion>
 
-            <!-- Stats Grid -->
+            <!-- Stats Grid - First Row (4 items) -->
             <div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 <Motion
-                    v-for="(card, index) in statCards"
+                    v-for="(card, index) in statCards.slice(0, 4)"
                     :key="card.key"
                     :initial="{ opacity: 0, y: 20, scale: 0.95 }"
                     :animate="{ opacity: 1, y: 0, scale: 1 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.15 + (index * 0.05) }"
+                    class="h-full"
                 >
                     <Link
                         :href="`${registrationsIndex().url}?status=${card.status}`"
                         :class="[
-                            'group block rounded-2xl border shadow-sm p-4 sm:p-5 transition-all duration-200',
+                            'group block h-full rounded-2xl border shadow-sm p-4 sm:p-5 transition-all duration-200',
                             'hover:scale-[1.02] active:scale-[0.98]',
                             getColorClasses(card.color).bg,
                             getColorClasses(card.color).border,
                         ]"
                     >
-                        <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-start justify-between gap-2 h-full">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-1.5 mb-1">
                                     <component
@@ -409,6 +410,61 @@ const getStatusVariant = (status: string): string => {
                         </div>
                     </Link>
                 </Motion>
+            </div>
+
+            <!-- Stats Grid - Second Row (3 items, centered on desktop) -->
+            <div class="flex justify-center">
+                <div class="grid gap-4 grid-cols-2 lg:grid-cols-3 w-full lg:w-3/4">
+                    <Motion
+                        v-for="(card, index) in statCards.slice(4)"
+                        :key="card.key"
+                        :initial="{ opacity: 0, y: 20, scale: 0.95 }"
+                        :animate="{ opacity: 1, y: 0, scale: 1 }"
+                        :transition="{ type: 'spring', stiffness: 300, damping: 25, delay: 0.35 + (index * 0.05) }"
+                        :class="[
+                            'h-full',
+                            // On mobile (2 cols), last item spans full width if odd count
+                            statCards.slice(4).length % 2 !== 0 && index === statCards.slice(4).length - 1 ? 'col-span-2 lg:col-span-1' : ''
+                        ]"
+                    >
+                        <Link
+                            :href="`${registrationsIndex().url}?status=${card.status}`"
+                            :class="[
+                                'group block h-full rounded-2xl border shadow-sm p-4 sm:p-5 transition-all duration-200',
+                                'hover:scale-[1.02] active:scale-[0.98]',
+                                getColorClasses(card.color).bg,
+                                getColorClasses(card.color).border,
+                            ]"
+                        >
+                            <div class="flex items-start justify-between gap-2 h-full">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <component
+                                            :is="card.icon"
+                                            :size="14"
+                                            :class="getColorClasses(card.color).icon"
+                                        />
+                                        <p class="text-[10px] sm:text-xs font-semibold uppercase tracking-wide"
+                                           :class="getColorClasses(card.color).icon">
+                                            {{ card.label }}
+                                        </p>
+                                    </div>
+                                    <p class="text-2xl sm:text-3xl font-bold tabular-nums"
+                                       :class="getColorClasses(card.color).text">
+                                        {{ stats[card.key as keyof Stats] }}
+                                    </p>
+                                </div>
+                                <ChevronRight
+                                    :size="16"
+                                    :class="[
+                                        'transition-transform shrink-0 mt-1 group-hover:translate-x-1',
+                                        getColorClasses(card.color).icon,
+                                    ]"
+                                />
+                            </div>
+                        </Link>
+                    </Motion>
+                </div>
             </div>
 
             <!-- Recent Registrations -->
