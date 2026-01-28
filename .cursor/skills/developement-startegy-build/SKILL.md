@@ -1,3 +1,8 @@
+---
+name: developement-startegy-build
+description: developement-startegy-build
+disable-model-invocation: true
+---
 # developement-startegy-build
 
 I need you to analyze a feature development file and create a comprehensive cross-frontend implementation strategy.

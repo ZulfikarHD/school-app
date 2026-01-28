@@ -1,3 +1,8 @@
+---
+name: owasp-review
+description: owasp-check
+disable-model-invocation: true
+---
 # owasp-check
 
 Perform comprehensive OWASP Top 10 security audit dengan **SMART TRACING** - automatically follow data flow dari component yang ditentukan.

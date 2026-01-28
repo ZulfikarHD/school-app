@@ -1,3 +1,8 @@
+---
+name: implementation-check
+description: Implementation Verification Rules
+disable-model-invocation: true
+---
 # Implementation Verification Rules
 
 ## Purpose
