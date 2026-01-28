@@ -6,6 +6,8 @@ use App\Models\AcademicYear;
 use App\Models\PsbDocument;
 use App\Models\PsbRegistration;
 use App\Models\PsbSetting;
+use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -349,6 +351,185 @@ class PsbService
             'waiting_list' => $stats[PsbRegistration::STATUS_WAITING_LIST] ?? 0,
             're_registration' => $stats[PsbRegistration::STATUS_RE_REGISTRATION] ?? 0,
             'completed' => $stats[PsbRegistration::STATUS_COMPLETED] ?? 0,
+        ];
+    }
+
+    /**
+     * Approve pendaftaran dengan update status dan verifier info
+     */
+    public function approveRegistration(PsbRegistration $registration, User $verifier, ?string $notes = null): bool
+    {
+        $allowedStatuses = [PsbRegistration::STATUS_PENDING, PsbRegistration::STATUS_DOCUMENT_REVIEW];
+
+        if (! in_array($registration->status, $allowedStatuses)) {
+            throw new \Exception('Status pendaftaran tidak dapat disetujui.');
+        }
+
+        return $registration->update([
+            'status' => PsbRegistration::STATUS_APPROVED,
+            'verified_by' => $verifier->id,
+            'verified_at' => now(),
+            'announced_at' => now(),
+            'notes' => $notes ?? $registration->notes,
+        ]);
+    }
+
+    /**
+     * Reject pendaftaran dengan alasan penolakan
+     */
+    public function rejectRegistration(PsbRegistration $registration, User $verifier, string $reason): bool
+    {
+        $allowedStatuses = [PsbRegistration::STATUS_PENDING, PsbRegistration::STATUS_DOCUMENT_REVIEW];
+
+        if (! in_array($registration->status, $allowedStatuses)) {
+            throw new \Exception('Status pendaftaran tidak dapat ditolak.');
+        }
+
+        return $registration->update([
+            'status' => PsbRegistration::STATUS_REJECTED,
+            'rejection_reason' => $reason,
+            'verified_by' => $verifier->id,
+            'verified_at' => now(),
+            'announced_at' => now(),
+        ]);
+    }
+
+    /**
+     * Request revisi dokumen dengan update status dokumen dan catatan revisi
+     */
+    public function requestDocumentRevision(PsbRegistration $registration, array $documents): bool
+    {
+        $allowedStatuses = [PsbRegistration::STATUS_PENDING, PsbRegistration::STATUS_DOCUMENT_REVIEW];
+
+        if (! in_array($registration->status, $allowedStatuses)) {
+            throw new \Exception('Status pendaftaran tidak dapat diminta revisi.');
+        }
+
+        return DB::transaction(function () use ($registration, $documents) {
+            $registration->update(['status' => PsbRegistration::STATUS_DOCUMENT_REVIEW]);
+
+            $documentIds = collect($documents)->pluck('id')->toArray();
+
+            // Verifikasi semua documents milik registration ini
+            $validDocuments = PsbDocument::where('psb_registration_id', $registration->id)
+                ->whereIn('id', $documentIds)
+                ->pluck('id')
+                ->toArray();
+
+            if (count($validDocuments) !== count($documentIds)) {
+                throw new \Exception('Satu atau lebih dokumen tidak valid atau tidak milik pendaftaran ini.');
+            }
+
+            foreach ($documents as $docData) {
+                PsbDocument::where('id', $docData['id'])
+                    ->where('psb_registration_id', $registration->id)
+                    ->update([
+                        'status' => PsbDocument::STATUS_REJECTED,
+                        'revision_note' => $docData['revision_note'],
+                    ]);
+            }
+
+            return true;
+        });
+    }
+
+    /**
+     * Get list pendaftaran dengan filter dan pagination untuk admin
+     *
+     * @param  array  $filters  Filter: status, search, start_date, end_date
+     * @param  int  $perPage  Jumlah item per halaman
+     * @return LengthAwarePaginator Paginated list pendaftaran
+     */
+    public function getRegistrations(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        $activeYear = AcademicYear::where('is_active', true)->first();
+
+        $query = PsbRegistration::with(['documents', 'academicYear', 'verifier'])
+            ->when($activeYear, function ($q) use ($activeYear) {
+                $q->where('academic_year_id', $activeYear->id);
+            })
+            ->when(! empty($filters['status']), function ($q) use ($filters) {
+                $q->where('status', $filters['status']);
+            })
+            ->when(! empty($filters['search']), function ($q) use ($filters) {
+                $q->where(function ($query) use ($filters) {
+                    $query->where('registration_number', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('student_name', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('student_nik', 'like', '%'.$filters['search'].'%');
+                });
+            })
+            ->when(! empty($filters['start_date']), function ($q) use ($filters) {
+                $q->whereDate('created_at', '>=', $filters['start_date']);
+            })
+            ->when(! empty($filters['end_date']), function ($q) use ($filters) {
+                $q->whereDate('created_at', '<=', $filters['end_date']);
+            })
+            ->latest();
+
+        return $query->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * Get detail lengkap pendaftaran dengan dokumen dan timeline
+     *
+     * @param  PsbRegistration  $registration  Data pendaftaran
+     * @return array Detail registration dengan documents dan timeline
+     */
+    public function getRegistrationDetail(PsbRegistration $registration): array
+    {
+        $registration->load(['documents', 'academicYear', 'verifier']);
+
+        return [
+            'registration' => [
+                'id' => $registration->id,
+                'registration_number' => $registration->registration_number,
+                'status' => $registration->status,
+                'status_label' => $registration->getStatusLabel(),
+                'rejection_reason' => $registration->rejection_reason,
+                'notes' => $registration->notes,
+                // Data Siswa
+                'student_name' => $registration->student_name,
+                'student_nik' => $registration->student_nik,
+                'birth_place' => $registration->birth_place,
+                'birth_date' => $registration->birth_date->format('Y-m-d'),
+                'birth_date_formatted' => $registration->birth_date->format('d F Y'),
+                'gender' => $registration->gender,
+                'gender_label' => $registration->gender === 'male' ? 'Laki-laki' : 'Perempuan',
+                'religion' => $registration->religion,
+                'address' => $registration->address,
+                'child_order' => $registration->child_order,
+                'origin_school' => $registration->origin_school,
+                // Data Ayah
+                'father_name' => $registration->father_name,
+                'father_nik' => $registration->father_nik,
+                'father_occupation' => $registration->father_occupation,
+                'father_phone' => $registration->father_phone,
+                'father_email' => $registration->father_email,
+                // Data Ibu
+                'mother_name' => $registration->mother_name,
+                'mother_nik' => $registration->mother_nik,
+                'mother_occupation' => $registration->mother_occupation,
+                'mother_phone' => $registration->mother_phone,
+                'mother_email' => $registration->mother_email,
+                // Metadata
+                'academic_year' => $registration->academicYear?->name,
+                'verifier_name' => $registration->verifier?->name,
+                'created_at' => $registration->created_at->format('d F Y H:i'),
+                'verified_at' => $registration->verified_at?->format('d F Y H:i'),
+                'announced_at' => $registration->announced_at?->format('d F Y H:i'),
+            ],
+            'documents' => $registration->documents->map(fn ($doc) => [
+                'id' => $doc->id,
+                'document_type' => $doc->document_type,
+                'type_label' => $doc->getDocumentTypeLabel(),
+                'file_path' => $doc->file_path,
+                'file_url' => $doc->getFileUrl(),
+                'original_name' => $doc->original_name,
+                'status' => $doc->status,
+                'status_label' => $doc->getStatusLabel(),
+                'revision_note' => $doc->revision_note,
+            ])->toArray(),
+            'timeline' => $this->buildTimeline($registration),
         ];
     }
 }

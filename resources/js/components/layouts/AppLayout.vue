@@ -37,6 +37,8 @@ import { index as teacherGradesIndex } from '@/routes/teacher/grades';
 import { index as teacherAttitudeGradesIndex } from '@/routes/teacher/attitude-grades';
 import { index as teacherReportCardsIndex } from '@/routes/teacher/report-cards';
 import { index as adminReportCardsIndex } from '@/routes/admin/report-cards';
+import { index as adminPsbIndex } from '@/routes/admin/psb';
+import { index as adminPsbRegistrationsIndex } from '@/routes/admin/psb/registrations';
 import { index as principalReportCardsIndex } from '@/routes/principal/report-cards';
 import { dashboard as principalAcademicDashboard, grades as principalAcademicGrades } from '@/routes/principal/academic';
 import DialogModal from '@/components/ui/DialogModal.vue';
@@ -71,7 +73,8 @@ import {
     CreditCard,
     FileSpreadsheet,
     Award,
-    Heart
+    Heart,
+    UserPlus
 } from 'lucide-vue-next';
 
 /**
@@ -365,6 +368,14 @@ const menuItems = computed((): MenuItem[] => {
                 ]
             },
             { name: 'Verifikasi Izin', route: 'admin.leave-requests.index', icon: FileText, badge: leaveRequestsBadge },
+            {
+                name: 'PSB',
+                icon: UserPlus,
+                children: [
+                    { name: 'Dashboard', route: 'admin.psb.index', icon: Home, badge: 0 },
+                    { name: 'Pendaftaran', route: 'admin.psb.registrations.index', icon: Users, badge: pendingCounts.value.pendingPsb || 0 },
+                ]
+            },
             {
                 name: 'Pembayaran',
                 icon: Wallet,

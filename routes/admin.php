@@ -8,6 +8,7 @@
  * audit logs, leave request verification, payment management, dan grade management
  */
 
+use App\Http\Controllers\Admin\AdminPsbController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BankReconciliationController;
@@ -58,6 +59,26 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
     Route::post('students/{student}/update-status', [StudentController::class, 'updateStatus'])
         ->name('students.update-status');
     Route::resource('students', StudentController::class);
+
+    /**
+     * PSB Management - Verifikasi pendaftaran siswa baru
+     */
+    Route::prefix('psb')->name('psb.')->group(function () {
+        Route::get('/', [AdminPsbController::class, 'index'])->name('index');
+        Route::get('registrations', [AdminPsbController::class, 'registrations'])
+            ->middleware('throttle:60,1')
+            ->name('registrations.index');
+        Route::get('registrations/{registration}', [AdminPsbController::class, 'show'])->name('registrations.show');
+        Route::post('registrations/{registration}/approve', [AdminPsbController::class, 'approve'])
+            ->middleware('throttle:10,1')
+            ->name('registrations.approve');
+        Route::post('registrations/{registration}/reject', [AdminPsbController::class, 'reject'])
+            ->middleware('throttle:10,1')
+            ->name('registrations.reject');
+        Route::post('registrations/{registration}/revision', [AdminPsbController::class, 'requestRevision'])
+            ->middleware('throttle:10,1')
+            ->name('registrations.revision');
+    });
 
     /**
      * Audit Log - Read-only access untuk monitoring aktivitas sistem
