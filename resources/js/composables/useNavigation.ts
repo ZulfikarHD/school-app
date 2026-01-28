@@ -28,6 +28,8 @@ import {
     Award,
     Heart,
     UserPlus,
+    Megaphone,
+    ClipboardCheck,
 } from 'lucide-vue-next';
 
 // Import route functions dari Wayfinder
@@ -65,8 +67,19 @@ import { index as teacherReportCardsIndex } from '@/routes/teacher/report-cards'
 import { index as adminReportCardsIndex } from '@/routes/admin/report-cards';
 import { index as adminPsbIndex } from '@/routes/admin/psb';
 import { index as adminPsbRegistrationsIndex } from '@/routes/admin/psb/registrations';
+// TODO: Uncomment setelah backend routes dibuat dan Wayfinder generate routes
+// import { index as adminPsbAnnouncementsIndex } from '@/routes/admin/psb/announcements';
+// import { index as adminPsbPaymentsIndex } from '@/routes/admin/psb/payments';
 import { index as principalReportCardsIndex } from '@/routes/principal/report-cards';
 import { dashboard as principalAcademicDashboard, grades as principalAcademicGrades } from '@/routes/principal/academic';
+// import { dashboard as principalPsbDashboard } from '@/routes/principal/psb';
+// import { reRegister as parentPsbReRegister } from '@/routes/parent/psb';
+
+// Temporary route functions sampai Wayfinder generate
+const adminPsbAnnouncementsIndex = () => ({ url: '/admin/psb/announcements' });
+const adminPsbPaymentsIndex = () => ({ url: '/admin/psb/payments' });
+const principalPsbDashboard = () => ({ url: '/principal/psb' });
+const parentPsbReRegister = () => ({ url: '/parent/psb/re-register' });
 
 import type { Component } from 'vue';
 
@@ -88,6 +101,8 @@ export interface PendingCounts {
     leaveRequests: number;
     pendingPayments: number;
     pendingPsb?: number;
+    pendingPsbPayments?: number;
+    hasAnnouncedRegistration?: boolean;
 }
 
 /**
@@ -135,7 +150,11 @@ const routeMap: Record<string, () => string> = {
     'admin.report-cards.index': () => adminReportCardsIndex().url,
     'admin.psb.index': () => adminPsbIndex().url,
     'admin.psb.registrations.index': () => adminPsbRegistrationsIndex().url,
+    'admin.psb.announcements.index': () => adminPsbAnnouncementsIndex().url,
+    'admin.psb.payments.index': () => adminPsbPaymentsIndex().url,
     'principal.report-cards.index': () => principalReportCardsIndex().url,
+    'principal.psb.dashboard': () => principalPsbDashboard().url,
+    'parent.psb.re-register': () => parentPsbReRegister().url,
     'principal.academic.dashboard': () => principalAcademicDashboard().url,
     'principal.academic.grades': () => principalAcademicGrades().url,
     'parent.children': () => parentChildrenIndex().url,
@@ -274,6 +293,8 @@ export function useNavigation() {
                     children: [
                         { name: 'Dashboard', route: 'admin.psb.index', icon: Home, badge: 0 },
                         { name: 'Pendaftaran', route: 'admin.psb.registrations.index', icon: Users, badge: pendingCounts.value.pendingPsb || 0 },
+                        { name: 'Pengumuman', route: 'admin.psb.announcements.index', icon: Megaphone, badge: 0 },
+                        { name: 'Verifikasi Bayar', route: 'admin.psb.payments.index', icon: CreditCard, badge: pendingCounts.value.pendingPsbPayments || 0 },
                     ]
                 },
                 {
@@ -334,6 +355,7 @@ export function useNavigation() {
                         { name: 'Siswa Menunggak', route: 'principal.financial.delinquents', icon: CreditCard, badge: 0 },
                     ]
                 },
+                { name: 'PSB', route: 'principal.psb.dashboard', icon: UserPlus, badge: 0 },
                 { name: 'Izin Guru', route: 'principal.teacher-leaves.index', icon: ClipboardList, badge: 0 },
                 { name: 'Audit Log', route: 'audit-logs.index', icon: Activity, badge: 0 },
             ];
@@ -375,11 +397,17 @@ export function useNavigation() {
         }
 
         if (role === 'PARENT') {
+            const hasAnnouncedReg = pendingCounts.value.hasAnnouncedRegistration;
+
             return [
                 ...commonItems,
                 { name: 'Data Anak', route: 'parent.children', icon: Users, badge: 0 },
                 { name: 'Pembayaran', route: 'parent.payments.index', icon: CreditCard, badge: 0 },
                 { name: 'Pengajuan Izin', route: 'parent.leave-requests', icon: FileText, badge: 0 },
+                // Conditional: tampilkan menu Daftar Ulang hanya jika ada announced registration
+                ...(hasAnnouncedReg ? [
+                    { name: 'Daftar Ulang PSB', route: 'parent.psb.re-register', icon: ClipboardCheck, badge: 0 }
+                ] : []),
             ];
         }
 
