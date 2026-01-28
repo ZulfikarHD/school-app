@@ -8,6 +8,14 @@ description: iOS-like design system for Vue/Tailwind components. Use when creati
 **Philosophy:** Clean, Solid, Performant. Function > Fashion.
 **Target:** Low-end devices (UMKM market) with premium feel.
 
+## Package Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `motion-v` | Animation library (AnimatePresence, Motion components) |
+| `vue-chartjs` | Chart components (Bar, Line, Pie, Doughnut) |
+| `lucide-vue-next` | Icon library |
+
 ## Mobile-First Essentials
 
 - **Touch Targets:** Min 44x44px
@@ -24,16 +32,179 @@ Cards:         bg-white border border-slate-200 rounded-xl shadow-sm
 Modals:        bg-white rounded-2xl shadow-xl border border-slate-200
 ```
 
-### Motion (Strategic)
-```vue
-<!-- ✅ Use motion-v for: -->
-Page transitions: motion-v preset-fade
-Modals:           motion-v preset-slide-up
-Button press:     :whileTap="{ scale: 0.97 }"
+### Motion (motion-v)
 
-<!-- ❌ Long lists: use CSS transition-all duration-200 -->
+```vue
+<script setup>
+import { Motion, AnimatePresence } from 'motion-v';
+</script>
+
+<!-- ✅ Page Transitions -->
+<AnimatePresence>
+  <Motion
+    v-if="show"
+    :initial="{ opacity: 0, y: 10 }"
+    :animate="{ opacity: 1, y: 0 }"
+    :exit="{ opacity: 0, y: -10 }"
+    :transition="{ duration: 0.2 }"
+  >
+    <div>Content</div>
+  </Motion>
+</AnimatePresence>
+
+<!-- ✅ Modal Animation -->
+<AnimatePresence>
+  <Motion
+    v-if="isOpen"
+    :initial="{ opacity: 0, scale: 0.95 }"
+    :animate="{ opacity: 1, scale: 1 }"
+    :exit="{ opacity: 0, scale: 0.95 }"
+    :transition="{ type: 'spring', stiffness: 300, damping: 28 }"
+  >
+    <div class="modal">...</div>
+  </Motion>
+</AnimatePresence>
+
+<!-- ✅ Button Press -->
+<Motion
+  as="button"
+  :whileTap="{ scale: 0.97 }"
+  :transition="{ duration: 0.1 }"
+>
+  Click me
+</Motion>
+
+<!-- ✅ List Items (staggered) -->
+<Motion
+  v-for="(item, i) in items"
+  :key="item.id"
+  :initial="{ opacity: 0, y: 20 }"
+  :animate="{ opacity: 1, y: 0 }"
+  :transition="{ delay: i * 0.05 }"
+>
+  {{ item.name }}
+</Motion>
 ```
-Spring: `{ stiffness: 300, damping: 28 }`
+
+**Spring Config:** `{ type: 'spring', stiffness: 300, damping: 28 }`
+
+> ❌ For long lists (50+ items), use CSS `transition-all duration-200` instead.
+
+### Icons (Lucide)
+
+```vue
+<script setup>
+import { User, ChevronRight, Plus, Trash2, Edit, Check, X } from 'lucide-vue-next';
+</script>
+
+<!-- Standard sizes -->
+<User :size="16" class="text-slate-400" />      <!-- Small (inline text) -->
+<User :size="20" class="text-slate-500" />      <!-- Default (buttons) -->
+<User :size="24" class="text-slate-600" />      <!-- Large (headers) -->
+
+<!-- With stroke width -->
+<Check :size="20" :stroke-width="2.5" class="text-emerald-500" />
+
+<!-- Button with icon -->
+<button class="inline-flex items-center gap-2">
+  <Plus :size="18" />
+  Tambah
+</button>
+```
+
+**Common Icons:**
+| Action | Icon |
+|--------|------|
+| Add | `Plus` |
+| Edit | `Edit`, `Pencil` |
+| Delete | `Trash2` |
+| Close | `X` |
+| Confirm | `Check` |
+| Back | `ChevronLeft`, `ArrowLeft` |
+| Next | `ChevronRight`, `ArrowRight` |
+| Menu | `Menu` |
+| Search | `Search` |
+| Settings | `Settings` |
+| User | `User`, `Users` |
+| Loading | `Loader2` (with `animate-spin`) |
+
+### Charts (vue-chartjs)
+
+```vue
+<script setup>
+import { Bar, Line, Doughnut } from 'vue-chartjs';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+const chartData = {
+  labels: ['Jan', 'Feb', 'Mar'],
+  datasets: [{
+    label: 'Pendapatan',
+    data: [1000000, 1500000, 1200000],
+    backgroundColor: 'rgba(16, 185, 129, 0.8)', // emerald-500
+    borderColor: 'rgb(16, 185, 129)',
+    borderRadius: 8,
+  }],
+};
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      grid: { color: 'rgba(148, 163, 184, 0.1)' }, // slate-400/10
+    },
+    x: {
+      grid: { display: false },
+    },
+  },
+};
+</script>
+
+<template>
+  <div class="h-64 w-full">
+    <Bar :data="chartData" :options="chartOptions" />
+  </div>
+</template>
+```
+
+**Chart Color Palette:**
+```ts
+const colors = {
+  primary: 'rgba(16, 185, 129, 0.8)',   // emerald-500
+  secondary: 'rgba(59, 130, 246, 0.8)', // blue-500
+  warning: 'rgba(245, 158, 11, 0.8)',   // amber-500
+  danger: 'rgba(239, 68, 68, 0.8)',     // red-500
+  info: 'rgba(14, 165, 233, 0.8)',      // sky-500
+  muted: 'rgba(148, 163, 184, 0.5)',    // slate-400
+};
+```
 
 ### Press Feedback (Required)
 ```vue
@@ -100,11 +271,37 @@ const confirmed = await modal.confirm('Simpan?');
 ```
 
 ```vue
-<BaseModal :show="show" title="Judul" @close="show = false">
-  <div class="p-6">Content</div>
-</BaseModal>
+<script setup>
+import { Motion, AnimatePresence } from 'motion-v';
+import { X } from 'lucide-vue-next';
+</script>
 
-<Alert :show="show" type="success" message="Tersimpan" />
+<!-- Modal with motion-v -->
+<AnimatePresence>
+  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center">
+    <!-- Backdrop -->
+    <Motion
+      :initial="{ opacity: 0 }"
+      :animate="{ opacity: 1 }"
+      :exit="{ opacity: 0 }"
+      class="absolute inset-0 bg-black/50"
+      @click="show = false"
+    />
+    <!-- Modal Content -->
+    <Motion
+      :initial="{ opacity: 0, scale: 0.95, y: 20 }"
+      :animate="{ opacity: 1, scale: 1, y: 0 }"
+      :exit="{ opacity: 0, scale: 0.95, y: 20 }"
+      :transition="{ type: 'spring', stiffness: 300, damping: 28 }"
+      class="relative bg-white rounded-2xl shadow-xl border border-slate-200 p-6 max-w-md w-full mx-4"
+    >
+      <button @click="show = false" class="absolute top-4 right-4">
+        <X :size="20" class="text-slate-400 hover:text-slate-600" />
+      </button>
+      <slot />
+    </Motion>
+  </div>
+</AnimatePresence>
 ```
 
 ## Layout Patterns
@@ -116,7 +313,7 @@ Containers: max-w-7xl mx-auto px-4 sm:px-6 lg:px-8
 
 ## Checklist
 
-- [ ] Buttons: `active:scale-97`
+- [ ] Buttons: `active:scale-97` or Motion `whileTap`
 - [ ] Forms: emerald focus
 - [ ] Solid backgrounds
 - [ ] Borders: `border-slate-200`
@@ -124,3 +321,6 @@ Containers: max-w-7xl mx-auto px-4 sm:px-6 lg:px-8
 - [ ] Skeleton loading
 - [ ] WCAG AA contrast
 - [ ] Mobile touch targets
+- [ ] Icons: lucide-vue-next with proper sizing
+- [ ] Animations: motion-v with AnimatePresence for enter/exit
+- [ ] Charts: vue-chartjs with emerald color palette
