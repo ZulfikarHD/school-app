@@ -25,10 +25,11 @@ return new class extends Migration
             $table->foreignId('payment_category_id')->constrained()->cascadeOnDelete();
             $table->string('tahun_ajaran', 20);
             $table->tinyInteger('bulan')->nullable()->comment('1-12 untuk tagihan bulanan');
-            $table->year('tahun');
+            $table->smallInteger('tahun')->comment('Tahun tagihan (format: 2024, 2025, dst)');
             $table->decimal('nominal', 15, 2);
             $table->decimal('nominal_terbayar', 15, 2)->default(0);
-            $table->decimal('nominal_sisa', 15, 2)->virtualAs('nominal - nominal_terbayar');
+            $table->decimal('nominal_sisa', 15, 2)->storedAs('nominal - nominal_terbayar')
+                ->comment('Calculated: nominal - nominal_terbayar');
             $table->enum('status', ['belum_bayar', 'sebagian', 'lunas', 'dibatalkan'])->default('belum_bayar');
             $table->date('tanggal_jatuh_tempo');
             $table->text('keterangan')->nullable();
