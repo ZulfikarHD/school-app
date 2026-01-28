@@ -67,17 +67,15 @@ import { index as teacherReportCardsIndex } from '@/routes/teacher/report-cards'
 import { index as adminReportCardsIndex } from '@/routes/admin/report-cards';
 import { index as adminPsbIndex } from '@/routes/admin/psb';
 import { index as adminPsbRegistrationsIndex } from '@/routes/admin/psb/registrations';
-// TODO: Uncomment setelah backend routes dibuat dan Wayfinder generate routes
-// import { index as adminPsbAnnouncementsIndex } from '@/routes/admin/psb/announcements';
-// import { index as adminPsbPaymentsIndex } from '@/routes/admin/psb/payments';
+import { index as adminPsbAnnouncementsIndex } from '@/routes/admin/psb/announcements';
+import { index as adminPsbPaymentsIndex } from '@/routes/admin/psb/payments';
+import { index as adminPsbSettingsIndex } from '@/routes/admin/psb/settings';
 import { index as principalReportCardsIndex } from '@/routes/principal/report-cards';
 import { dashboard as principalAcademicDashboard, grades as principalAcademicGrades } from '@/routes/principal/academic';
 // import { dashboard as principalPsbDashboard } from '@/routes/principal/psb';
 // import { reRegister as parentPsbReRegister } from '@/routes/parent/psb';
 
 // Temporary route functions sampai Wayfinder generate
-const adminPsbAnnouncementsIndex = () => ({ url: '/admin/psb/announcements' });
-const adminPsbPaymentsIndex = () => ({ url: '/admin/psb/payments' });
 const principalPsbDashboard = () => ({ url: '/principal/psb' });
 const parentPsbReRegister = () => ({ url: '/parent/psb/re-register' });
 
@@ -152,6 +150,7 @@ const routeMap: Record<string, () => string> = {
     'admin.psb.registrations.index': () => adminPsbRegistrationsIndex().url,
     'admin.psb.announcements.index': () => adminPsbAnnouncementsIndex().url,
     'admin.psb.payments.index': () => adminPsbPaymentsIndex().url,
+    'admin.psb.settings.index': () => adminPsbSettingsIndex().url,
     'principal.report-cards.index': () => principalReportCardsIndex().url,
     'principal.psb.dashboard': () => principalPsbDashboard().url,
     'parent.psb.re-register': () => parentPsbReRegister().url,
@@ -295,6 +294,7 @@ export function useNavigation() {
                         { name: 'Pendaftaran', route: 'admin.psb.registrations.index', icon: Users, badge: pendingCounts.value.pendingPsb || 0 },
                         { name: 'Pengumuman', route: 'admin.psb.announcements.index', icon: Megaphone, badge: 0 },
                         { name: 'Verifikasi Bayar', route: 'admin.psb.payments.index', icon: CreditCard, badge: pendingCounts.value.pendingPsbPayments || 0 },
+                        { name: 'Pengaturan', route: 'admin.psb.settings.index', icon: Settings, badge: 0 },
                     ]
                 },
                 {

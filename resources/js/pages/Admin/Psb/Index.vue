@@ -1,7 +1,14 @@
 <script setup lang="ts">
+/**
+ * Admin PSB Dashboard Page
+ *
+ * Halaman dashboard untuk mengelola dan memantau pendaftaran siswa baru,
+ * yaitu: statistik, quick actions, dan recent registrations
+ */
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 import { Motion } from 'motion-v';
+import Badge from '@/components/ui/Badge.vue';
 import {
     UserPlus,
     Clock,
@@ -12,9 +19,19 @@ import {
     ChevronRight,
     AlertTriangle,
     RefreshCw,
-    Trophy
+    Trophy,
+    Megaphone,
+    CreditCard,
+    Settings,
+    Download,
+    Calendar,
+    ArrowRight
 } from 'lucide-vue-next';
 import { index as registrationsIndex } from '@/routes/admin/psb/registrations';
+import { index as settingsIndex } from '@/routes/admin/psb/settings';
+import { index as announcementsIndex } from '@/routes/admin/psb/announcements';
+import { index as paymentsIndex } from '@/routes/admin/psb/payments';
+import { exportMethod as exportData } from '@/routes/admin/psb';
 
 /**
  * Interface untuk statistik PSB
@@ -30,12 +47,40 @@ interface Stats {
     completed: number;
 }
 
+/**
+ * Interface untuk recent registration
+ */
+interface RecentRegistration {
+    id: number;
+    registration_number: string;
+    student_name: string;
+    status: string;
+    status_label: string;
+    created_at: string;
+}
+
+/**
+ * Interface untuk active settings
+ */
+interface ActiveSettings {
+    id: number;
+    academic_year: string;
+    registration_open_date: string;
+    registration_close_date: string;
+    announcement_date: string;
+    is_registration_open: boolean;
+    formatted_fee: string;
+    quota_per_class: number;
+}
+
 interface Props {
     title: string;
     stats: Stats;
+    recentRegistrations: RecentRegistration[];
+    activeSettings: ActiveSettings | null;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 /**
  * Konfigurasi stat cards untuk dashboard
@@ -48,6 +93,48 @@ const statCards = [
     { key: 'waiting_list', label: 'Waiting List', icon: AlertTriangle, color: 'orange', status: 'waiting_list' },
     { key: 're_registration', label: 'Daftar Ulang', icon: RefreshCw, color: 'purple', status: 're_registration' },
     { key: 'completed', label: 'Selesai', icon: Trophy, color: 'teal', status: 'completed' },
+];
+
+/**
+ * Quick actions untuk navigasi cepat
+ */
+const quickActions = [
+    {
+        label: 'Verifikasi Pending',
+        icon: Clock,
+        href: () => `${registrationsIndex().url}?status=pending`,
+        color: 'amber',
+        badge: () => props.stats.pending,
+    },
+    {
+        label: 'Pengumuman',
+        icon: Megaphone,
+        href: announcementsIndex,
+        color: 'violet',
+        badge: () => props.stats.approved,
+    },
+    {
+        label: 'Verifikasi Bayar',
+        icon: CreditCard,
+        href: paymentsIndex,
+        color: 'blue',
+        badge: null,
+    },
+    {
+        label: 'Pengaturan',
+        icon: Settings,
+        href: settingsIndex,
+        color: 'slate',
+        badge: null,
+    },
+    {
+        label: 'Export Data',
+        icon: Download,
+        href: exportData,
+        color: 'green',
+        badge: null,
+        isDownload: true,
+    },
 ];
 
 /**
@@ -97,8 +184,42 @@ const getColorClasses = (color: string) => {
             icon: 'text-teal-500 dark:text-teal-400',
             border: 'border-teal-200 dark:border-teal-800',
         },
+        violet: {
+            bg: 'bg-violet-50 dark:bg-violet-950/30',
+            text: 'text-violet-900 dark:text-violet-100',
+            icon: 'text-violet-500 dark:text-violet-400',
+            border: 'border-violet-200 dark:border-violet-800',
+        },
+        slate: {
+            bg: 'bg-slate-50 dark:bg-zinc-800/50',
+            text: 'text-slate-900 dark:text-slate-100',
+            icon: 'text-slate-500 dark:text-slate-400',
+            border: 'border-slate-200 dark:border-zinc-700',
+        },
+        green: {
+            bg: 'bg-green-50 dark:bg-green-950/30',
+            text: 'text-green-900 dark:text-green-100',
+            icon: 'text-green-500 dark:text-green-400',
+            border: 'border-green-200 dark:border-green-800',
+        },
     };
     return colors[color] || colors.emerald;
+};
+
+/**
+ * Get status badge variant
+ */
+const getStatusVariant = (status: string): string => {
+    const variants: Record<string, string> = {
+        pending: 'amber',
+        document_review: 'blue',
+        approved: 'emerald',
+        rejected: 'red',
+        waiting_list: 'orange',
+        re_registration: 'purple',
+        completed: 'teal',
+    };
+    return variants[status] || 'gray';
 };
 </script>
 
@@ -131,6 +252,90 @@ const getColorClasses = (color: string) => {
                             <Users :size="18" />
                             <span>Lihat Semua</span>
                         </Link>
+                    </div>
+                </div>
+            </Motion>
+
+            <!-- Active Period Info -->
+            <Motion
+                v-if="activeSettings"
+                :initial="{ opacity: 0, y: 10 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ duration: 0.3, ease: 'easeOut', delay: 0.05 }"
+            >
+                <div class="bg-white dark:bg-zinc-900 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-zinc-800">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                <Calendar :size="20" class="text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Periode {{ activeSettings.academic_year }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    {{ activeSettings.registration_open_date }} - {{ activeSettings.registration_close_date }}
+                                </p>
+                            </div>
+                        </div>
+                        <Badge
+                            :variant="activeSettings.is_registration_open ? 'emerald' : 'amber'"
+                            size="sm"
+                            dot
+                        >
+                            {{ activeSettings.is_registration_open ? 'Pendaftaran Dibuka' : 'Pendaftaran Ditutup' }}
+                        </Badge>
+                    </div>
+                </div>
+            </Motion>
+
+            <!-- Quick Actions -->
+            <Motion
+                :initial="{ opacity: 0, y: 10 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ duration: 0.3, ease: 'easeOut', delay: 0.08 }"
+            >
+                <div class="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 dark:border-zinc-800">
+                    <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Aksi Cepat</h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                        <component
+                            v-for="action in quickActions"
+                            :key="action.label"
+                            :is="action.isDownload ? 'a' : Link"
+                            :href="typeof action.href === 'function' ? action.href().url : action.href"
+                            :download="action.isDownload"
+                            :class="[
+                                'relative flex flex-col items-center gap-2 p-4 rounded-xl border transition-all hover:scale-[1.02] active:scale-[0.98]',
+                                getColorClasses(action.color).bg,
+                                getColorClasses(action.color).border,
+                            ]"
+                        >
+                            <div
+                                :class="[
+                                    'w-10 h-10 rounded-xl flex items-center justify-center',
+                                    action.color === 'slate' ? 'bg-slate-200/50 dark:bg-zinc-700' : `bg-white/50 dark:bg-white/10`,
+                                ]"
+                            >
+                                <component
+                                    :is="action.icon"
+                                    :size="20"
+                                    :class="getColorClasses(action.color).icon"
+                                />
+                            </div>
+                            <span
+                                class="text-xs font-medium text-center"
+                                :class="getColorClasses(action.color).text"
+                            >
+                                {{ action.label }}
+                            </span>
+                            <!-- Badge -->
+                            <span
+                                v-if="action.badge && action.badge() > 0"
+                                class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[10px] font-bold text-white bg-red-500 rounded-full"
+                            >
+                                {{ action.badge() }}
+                            </span>
+                        </component>
                     </div>
                 </div>
             </Motion>
@@ -205,6 +410,54 @@ const getColorClasses = (color: string) => {
                     </Link>
                 </Motion>
             </div>
+
+            <!-- Recent Registrations -->
+            <Motion
+                v-if="recentRegistrations && recentRegistrations.length > 0"
+                :initial="{ opacity: 0, y: 10 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ duration: 0.3, ease: 'easeOut', delay: 0.4 }"
+            >
+                <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800">
+                    <div class="p-4 sm:p-6 border-b border-slate-200 dark:border-zinc-800">
+                        <div class="flex items-center justify-between">
+                            <h2 class="font-semibold text-slate-900 dark:text-slate-100">Pendaftaran Terbaru</h2>
+                            <Link
+                                :href="registrationsIndex().url"
+                                class="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
+                            >
+                                <span>Lihat Semua</span>
+                                <ArrowRight :size="14" />
+                            </Link>
+                        </div>
+                    </div>
+                    <div class="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <Link
+                            v-for="reg in recentRegistrations"
+                            :key="reg.id"
+                            :href="`${registrationsIndex().url}/${reg.id}`"
+                            class="flex items-center justify-between p-4 sm:px-6 hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors"
+                        >
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium text-slate-900 dark:text-slate-100 truncate">
+                                    {{ reg.student_name }}
+                                </p>
+                                <div class="flex items-center gap-2 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                    <span class="font-mono">{{ reg.registration_number }}</span>
+                                    <span>•</span>
+                                    <span>{{ reg.created_at }}</span>
+                                </div>
+                            </div>
+                            <Badge
+                                :variant="getStatusVariant(reg.status) as any"
+                                size="xs"
+                            >
+                                {{ reg.status_label }}
+                            </Badge>
+                        </Link>
+                    </div>
+                </div>
+            </Motion>
 
             <!-- Mobile CTA -->
             <Motion

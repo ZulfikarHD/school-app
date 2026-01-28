@@ -43,10 +43,49 @@ class AdminPsbController extends Controller
     public function index(): Response
     {
         $stats = $this->psbService->getRegistrationStats();
+        $activeSettings = $this->psbService->getActiveSettings();
+
+        // Get active academic year
+        $activeYear = AcademicYear::where('is_active', true)->first();
+
+        // Get recent registrations (5 latest)
+        $recentRegistrations = [];
+        if ($activeYear) {
+            $recentRegistrations = PsbRegistration::where('academic_year_id', $activeYear->id)
+                ->latest()
+                ->take(5)
+                ->get(['id', 'registration_number', 'student_name', 'status', 'created_at'])
+                ->map(fn ($reg) => [
+                    'id' => $reg->id,
+                    'registration_number' => $reg->registration_number,
+                    'student_name' => $reg->student_name,
+                    'status' => $reg->status,
+                    'status_label' => $reg->getStatusLabel(),
+                    'created_at' => $reg->created_at->format('d M Y H:i'),
+                ])
+                ->toArray();
+        }
+
+        // Format active settings untuk frontend
+        $activeSettingsData = null;
+        if ($activeSettings) {
+            $activeSettingsData = [
+                'id' => $activeSettings->id,
+                'academic_year' => $activeSettings->academicYear?->name,
+                'registration_open_date' => $activeSettings->registration_open_date->format('d M Y'),
+                'registration_close_date' => $activeSettings->registration_close_date->format('d M Y'),
+                'announcement_date' => $activeSettings->announcement_date->format('d M Y'),
+                'is_registration_open' => $activeSettings->isRegistrationOpen(),
+                'formatted_fee' => $activeSettings->getFormattedRegistrationFee(),
+                'quota_per_class' => $activeSettings->quota_per_class,
+            ];
+        }
 
         return Inertia::render('Admin/Psb/Index', [
             'title' => 'Dashboard PSB',
             'stats' => $stats,
+            'recentRegistrations' => $recentRegistrations,
+            'activeSettings' => $activeSettingsData,
         ]);
     }
 

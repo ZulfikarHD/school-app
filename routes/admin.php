@@ -10,7 +10,9 @@
 
 use App\Http\Controllers\Admin\AdminPsbAnnouncementController;
 use App\Http\Controllers\Admin\AdminPsbController;
+use App\Http\Controllers\Admin\AdminPsbExportController;
 use App\Http\Controllers\Admin\AdminPsbPaymentController;
+use App\Http\Controllers\Admin\AdminPsbSettingsController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BankReconciliationController;
@@ -100,6 +102,20 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
                 ->middleware('throttle:10,1')
                 ->name('verify');
         });
+
+        /**
+         * PSB Settings - Pengaturan periode pendaftaran per tahun ajaran
+         */
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/', [AdminPsbSettingsController::class, 'index'])->name('index');
+            Route::post('/', [AdminPsbSettingsController::class, 'store'])->name('store');
+            Route::put('/{setting}', [AdminPsbSettingsController::class, 'update'])->name('update');
+        });
+
+        /**
+         * PSB Export - Export data pendaftaran ke Excel
+         */
+        Route::get('export', [AdminPsbExportController::class, 'export'])->name('export');
     });
 
     /**

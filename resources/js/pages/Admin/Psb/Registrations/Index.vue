@@ -1,4 +1,10 @@
 <script setup lang="ts">
+/**
+ * Admin PSB Registrations List Page
+ *
+ * Halaman untuk menampilkan dan mengelola daftar pendaftaran PSB,
+ * yaitu: filter, search, export, dan navigasi ke detail
+ */
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/components/layouts/AppLayout.vue';
@@ -18,11 +24,14 @@ import {
     Eye,
     ChevronRight,
     Inbox,
-    Calendar
+    Calendar,
+    Download,
+    FileSpreadsheet
 } from 'lucide-vue-next';
 import { useHaptics } from '@/composables/useHaptics';
 import Badge from '@/components/ui/Badge.vue';
 import { index as registrationsIndex, show } from '@/routes/admin/psb/registrations';
+import { exportMethod as exportData } from '@/routes/admin/psb';
 
 /**
  * Interface definitions untuk type safety
@@ -91,6 +100,15 @@ const localFilters = ref<Filters>({
 });
 
 const showFilters = ref(false);
+const showExportModal = ref(false);
+const isExporting = ref(false);
+
+// Export filters (separate from list filters)
+const exportFilters = ref({
+    status: '',
+    start_date: '',
+    end_date: '',
+});
 
 /**
  * Status config untuk badge dan styling
@@ -185,6 +203,53 @@ const hasActiveFilters = computed(() => {
 const getStatusConfig = (status: string) => {
     return statusConfig[status] || { label: status, variant: 'default', icon: Clock };
 };
+
+/**
+ * Open export modal dan reset filters
+ */
+const openExportModal = () => {
+    haptics.light();
+    // Pre-fill dengan current filters
+    exportFilters.value = {
+        status: localFilters.value.status || '',
+        start_date: localFilters.value.start_date || '',
+        end_date: localFilters.value.end_date || '',
+    };
+    showExportModal.value = true;
+};
+
+/**
+ * Close export modal
+ */
+const closeExportModal = () => {
+    showExportModal.value = false;
+};
+
+/**
+ * Execute export dengan filters
+ */
+const executeExport = () => {
+    haptics.medium();
+    isExporting.value = true;
+
+    // Build query params
+    const params = new URLSearchParams();
+    if (exportFilters.value.status) params.set('status', exportFilters.value.status);
+    if (exportFilters.value.start_date) params.set('start_date', exportFilters.value.start_date);
+    if (exportFilters.value.end_date) params.set('end_date', exportFilters.value.end_date);
+
+    const url = exportData().url + (params.toString() ? '?' + params.toString() : '');
+
+    // Trigger download
+    window.location.href = url;
+
+    // Reset state after brief delay
+    setTimeout(() => {
+        isExporting.value = false;
+        showExportModal.value = false;
+        haptics.success();
+    }, 1000);
+};
 </script>
 
 <template>
@@ -203,12 +268,20 @@ const getStatusConfig = (status: string) => {
                         <div class="w-12 h-12 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 shrink-0">
                             <UserPlus :size="24" class="text-white" />
                         </div>
-                        <div>
+                        <div class="flex-1">
                             <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">{{ title }}</h1>
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                                 {{ registrations.total }} pendaftaran ditemukan
                             </p>
                         </div>
+                        <!-- Export Button -->
+                        <button
+                            @click="openExportModal"
+                            class="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium transition-colors shadow-sm active:scale-97"
+                        >
+                            <Download :size="18" />
+                            <span>Export</span>
+                        </button>
                     </div>
                 </div>
             </Motion>
@@ -547,5 +620,136 @@ const getStatusConfig = (status: string) => {
                 </div>
             </Motion>
         </div>
+
+        <!-- Export Modal -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="duration-200 ease-out"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
+                leave-active-class="duration-150 ease-in"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="showExportModal"
+                    class="fixed inset-0 z-50 overflow-y-auto"
+                >
+                    <div class="flex min-h-full items-end sm:items-center justify-center p-4">
+                        <!-- Backdrop -->
+                        <div
+                            class="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                            @click="closeExportModal"
+                        />
+
+                        <!-- Modal -->
+                        <Transition
+                            enter-active-class="duration-200 ease-out"
+                            enter-from-class="opacity-0 scale-95 translate-y-4 sm:translate-y-0"
+                            enter-to-class="opacity-100 scale-100 translate-y-0"
+                            leave-active-class="duration-150 ease-in"
+                            leave-from-class="opacity-100 scale-100 translate-y-0"
+                            leave-to-class="opacity-0 scale-95 translate-y-4 sm:translate-y-0"
+                        >
+                            <div
+                                v-if="showExportModal"
+                                class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-slate-200 dark:border-zinc-700"
+                            >
+                                <!-- Modal Header -->
+                                <div class="px-6 py-4 border-b border-slate-200 dark:border-zinc-800">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                            <FileSpreadsheet :size="20" class="text-green-600 dark:text-green-400" />
+                                        </div>
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                                                Export Data PSB
+                                            </h3>
+                                            <p class="text-sm text-slate-500 dark:text-slate-400">
+                                                Download data ke format Excel
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Modal Body -->
+                                <div class="p-6 space-y-4">
+                                    <p class="text-sm text-slate-600 dark:text-slate-400">
+                                        Pilih filter untuk menentukan data yang akan diexport. Biarkan kosong untuk export semua data.
+                                    </p>
+
+                                    <!-- Status Filter -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                                            Status
+                                        </label>
+                                        <select
+                                            v-model="exportFilters.status"
+                                            class="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
+                                        >
+                                            <option value="">Semua Status</option>
+                                            <option v-for="(label, status) in statuses" :key="status" :value="status">
+                                                {{ label }}
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Date Range -->
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                                                Dari Tanggal
+                                            </label>
+                                            <input
+                                                v-model="exportFilters.start_date"
+                                                type="date"
+                                                class="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                                                Sampai Tanggal
+                                            </label>
+                                            <input
+                                                v-model="exportFilters.end_date"
+                                                type="date"
+                                                class="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Info -->
+                                    <div class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                                        <FileSpreadsheet :size="16" class="text-blue-500 mt-0.5 shrink-0" />
+                                        <p class="text-xs text-blue-700 dark:text-blue-300">
+                                            File akan didownload dalam format Excel (.xlsx) dengan kolom lengkap termasuk data siswa, orang tua, dan status pembayaran.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Modal Footer -->
+                                <div class="px-6 py-4 border-t border-slate-200 dark:border-zinc-800 flex justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        @click="closeExportModal"
+                                        class="px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        @click="executeExport"
+                                        :disabled="isExporting"
+                                        class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-green-500 hover:bg-green-600 disabled:bg-green-400 disabled:cursor-not-allowed rounded-xl transition-colors shadow-sm"
+                                    >
+                                        <Download :size="16" :class="{ 'animate-bounce': isExporting }" />
+                                        <span>{{ isExporting ? 'Downloading...' : 'Download Excel' }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </AppLayout>
 </template>
