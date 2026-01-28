@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Psb\VerifyPaymentRequest;
+use App\Models\AcademicYear;
 use App\Models\PsbPayment;
 use App\Notifications\PsbPaymentVerified;
 use App\Services\PsbService;
@@ -62,6 +63,13 @@ class AdminPsbPaymentController extends Controller
      */
     public function verify(VerifyPaymentRequest $request, PsbPayment $payment): RedirectResponse
     {
+        // Verify payment belongs to active academic year untuk prevent IDOR
+        $activeYear = AcademicYear::where('is_active', true)->first();
+
+        if (! $activeYear || $payment->registration->academic_year_id !== $activeYear->id) {
+            abort(403, 'Pembayaran tidak dapat diakses untuk tahun ajaran ini.');
+        }
+
         // Pastikan payment masih pending
         if ($payment->status !== PsbPayment::STATUS_PENDING) {
             return back()->with('error', 'Pembayaran sudah diverifikasi sebelumnya.');

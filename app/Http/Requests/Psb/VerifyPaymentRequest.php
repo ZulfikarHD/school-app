@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Psb;
 
+use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -22,7 +23,7 @@ class VerifyPaymentRequest extends FormRequest
             return false;
         }
 
-        return in_array($this->user()->role, ['SUPERADMIN', 'ADMIN']);
+        return UserRole::isAdmin($this->user()->role);
     }
 
     /**

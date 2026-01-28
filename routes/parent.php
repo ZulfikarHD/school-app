@@ -47,7 +47,9 @@ Route::middleware(['auth', 'role:PARENT'])->group(function () {
         Route::prefix('psb')->name('psb.')->group(function () {
             Route::get('/re-register', [ParentPsbController::class, 'reRegister'])->name('re-register');
             Route::post('/re-register', [ParentPsbController::class, 'submitReRegister'])->name('submit-re-register');
-            Route::post('/payment', [ParentPsbController::class, 'uploadPayment'])->name('upload-payment');
+            Route::post('/payment', [ParentPsbController::class, 'uploadPayment'])
+                ->middleware('throttle:5,1') // 5 uploads per minute untuk prevent abuse
+                ->name('upload-payment');
             Route::get('/welcome', [ParentPsbController::class, 'welcome'])->name('welcome');
         });
 

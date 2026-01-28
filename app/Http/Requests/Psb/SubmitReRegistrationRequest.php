@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Psb;
 
+use App\Enums\UserRole;
 use App\Services\PsbService;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -21,7 +22,7 @@ class SubmitReRegistrationRequest extends FormRequest
     {
         $user = $this->user();
 
-        if (! $user || $user->role !== 'PARENT') {
+        if (! $user || $user->role !== UserRole::PARENT->value) {
             return false;
         }
 

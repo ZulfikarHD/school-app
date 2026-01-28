@@ -15,6 +15,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * PsbService - Service class untuk business logic PSB
@@ -1000,8 +1001,9 @@ class PsbService
             return $existingUser;
         }
 
-        // Create new parent account dengan password = Ortu{NIS}
-        $password = 'Ortu'.$student->nis;
+        // Generate random password yang aman untuk first-time login
+        // User akan diminta ganti password pada login pertama (is_first_login = true)
+        $password = Str::random(12);
 
         $user = User::create([
             'name' => $guardian->nama_lengkap,

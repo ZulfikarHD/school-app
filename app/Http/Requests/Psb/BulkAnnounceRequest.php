@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Psb;
 
+use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -22,7 +23,7 @@ class BulkAnnounceRequest extends FormRequest
             return false;
         }
 
-        return in_array($this->user()->role, ['SUPERADMIN', 'ADMIN']);
+        return UserRole::isAdmin($this->user()->role);
     }
 
     /**
@@ -34,7 +35,11 @@ class BulkAnnounceRequest extends FormRequest
     {
         return [
             'registration_ids' => ['required', 'array', 'min:1'],
-            'registration_ids.*' => ['required', 'integer', 'exists:psb_registrations,id'],
+            'registration_ids.*' => [
+                'required',
+                'integer',
+                'exists:psb_registrations,id,status,approved,announced_at,NULL',
+            ],
             'send_notification' => ['boolean'],
         ];
     }

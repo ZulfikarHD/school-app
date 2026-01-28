@@ -85,7 +85,7 @@ class AdminPsbAnnouncementController extends Controller
                 ->with('success', "{$count} pendaftaran berhasil diumumkan.");
         } catch (\Exception $e) {
             Log::error('Failed to bulk announce registrations', [
-                'registration_ids' => $request->validated('registration_ids'),
+                'registration_count' => count($request->validated('registration_ids')),
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
             ]);

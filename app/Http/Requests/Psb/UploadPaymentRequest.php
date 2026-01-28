@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Psb;
 
+use App\Enums\UserRole;
 use App\Models\PsbPayment;
+use App\Models\PsbRegistration;
 use App\Services\PsbService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,7 +25,7 @@ class UploadPaymentRequest extends FormRequest
     {
         $user = $this->user();
 
-        if (! $user || $user->role !== 'PARENT') {
+        if (! $user || $user->role !== UserRole::PARENT->value) {
             return false;
         }
 
@@ -35,8 +37,11 @@ class UploadPaymentRequest extends FormRequest
             return false;
         }
 
-        // Parent dapat upload payment jika status re_registration atau sudah upload tapi belum verified
-        return in_array($registration->status, ['approved', 're_registration']);
+        // Parent dapat upload payment jika status approved atau re_registration
+        return in_array($registration->status, [
+            PsbRegistration::STATUS_APPROVED,
+            PsbRegistration::STATUS_RE_REGISTRATION,
+        ]);
     }
 
     /**
