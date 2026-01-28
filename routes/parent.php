@@ -11,6 +11,7 @@
 use App\Http\Controllers\Dashboard\ParentDashboardController;
 use App\Http\Controllers\Parent\ChildController;
 use App\Http\Controllers\Parent\LeaveRequestController;
+use App\Http\Controllers\Parent\ParentPsbController;
 use App\Http\Controllers\Parent\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,16 @@ Route::middleware(['auth', 'role:PARENT'])->group(function () {
                 Route::get('{reportCard}', [ChildController::class, 'showReportCard'])->name('show');
                 Route::get('{reportCard}/download', [ChildController::class, 'downloadReportCard'])->name('download');
             });
+        });
+
+        /**
+         * PSB Re-registration - Daftar ulang untuk pendaftar yang diterima
+         */
+        Route::prefix('psb')->name('psb.')->group(function () {
+            Route::get('/re-register', [ParentPsbController::class, 'reRegister'])->name('re-register');
+            Route::post('/re-register', [ParentPsbController::class, 'submitReRegister'])->name('submit-re-register');
+            Route::post('/payment', [ParentPsbController::class, 'uploadPayment'])->name('upload-payment');
+            Route::get('/welcome', [ParentPsbController::class, 'welcome'])->name('welcome');
         });
 
         /**

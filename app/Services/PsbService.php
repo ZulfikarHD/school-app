@@ -3,13 +3,17 @@
 namespace App\Services;
 
 use App\Models\AcademicYear;
+use App\Models\Guardian;
 use App\Models\PsbDocument;
+use App\Models\PsbPayment;
 use App\Models\PsbRegistration;
 use App\Models\PsbSetting;
+use App\Models\Student;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -531,5 +535,522 @@ class PsbService
             ])->toArray(),
             'timeline' => $this->buildTimeline($registration),
         ];
+    }
+
+    /**
+     * Bulk announce registrations dengan single query update
+     * untuk mengumumkan pendaftaran yang sudah disetujui
+     *
+     * @param  array  $registrationIds  Array of registration IDs to announce
+     * @return int Number of registrations announced
+     */
+    public function bulkAnnounce(array $registrationIds): int
+    {
+        return PsbRegistration::whereIn('id', $registrationIds)
+            ->where('status', PsbRegistration::STATUS_APPROVED)
+            ->whereNull('announced_at')
+            ->update(['announced_at' => now()]);
+    }
+
+    /**
+     * Get approved registrations ready for announcement
+     * dengan filter dan pagination untuk admin
+     *
+     * @param  array  $filters  Filter: search, academic_year_id
+     * @param  int  $perPage  Jumlah item per halaman
+     * @return LengthAwarePaginator Paginated list pendaftaran
+     */
+    public function getApprovedRegistrations(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        $activeYear = AcademicYear::where('is_active', true)->first();
+
+        $query = PsbRegistration::with(['documents', 'academicYear', 'verifier'])
+            ->where('status', PsbRegistration::STATUS_APPROVED)
+            ->when($activeYear, function ($q) use ($activeYear) {
+                $q->where('academic_year_id', $activeYear->id);
+            })
+            ->when(! empty($filters['search']), function ($q) use ($filters) {
+                $q->where(function ($query) use ($filters) {
+                    $query->where('registration_number', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('student_name', 'like', '%'.$filters['search'].'%');
+                });
+            })
+            ->when(! empty($filters['announced']), function ($q) use ($filters) {
+                if ($filters['announced'] === 'yes') {
+                    $q->whereNotNull('announced_at');
+                } elseif ($filters['announced'] === 'no') {
+                    $q->whereNull('announced_at');
+                }
+            })
+            ->latest('verified_at');
+
+        return $query->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * Submit re-registration dengan update data tambahan
+     * dan perubahan status ke re_registration
+     *
+     * @param  PsbRegistration  $registration  Data pendaftaran
+     * @param  array  $data  Data tambahan dari form re-registration
+     * @return bool True jika berhasil
+     *
+     * @throws \Exception Jika status tidak valid
+     */
+    public function submitReRegistration(PsbRegistration $registration, array $data): bool
+    {
+        if (! $registration->canReRegister()) {
+            throw new \Exception('Pendaftaran tidak dapat melakukan daftar ulang.');
+        }
+
+        return $registration->update([
+            'status' => PsbRegistration::STATUS_RE_REGISTRATION,
+            'notes' => $data['notes'] ?? $registration->notes,
+        ]);
+    }
+
+    /**
+     * Upload bukti pembayaran dan create PsbPayment record
+     *
+     * @param  PsbRegistration  $registration  Data pendaftaran
+     * @param  UploadedFile  $file  File bukti pembayaran
+     * @param  array  $data  Data pembayaran (payment_type, amount, payment_method, payment_date, notes)
+     * @return PsbPayment Record pembayaran yang dibuat
+     */
+    public function uploadPaymentProof(PsbRegistration $registration, UploadedFile $file, array $data): PsbPayment
+    {
+        // Generate path: psb/payments/{year}/{registration_id}/{timestamp}.{ext}
+        $year = now()->year;
+        $timestamp = now()->timestamp;
+        $extension = $file->getClientOriginalExtension();
+        $filename = "payment_{$timestamp}.{$extension}";
+        $path = "psb/payments/{$year}/{$registration->id}";
+
+        // Store file
+        $filePath = $file->storeAs($path, $filename, 'public');
+
+        // Update status ke re_registration jika belum
+        if ($registration->status === PsbRegistration::STATUS_APPROVED) {
+            $registration->update(['status' => PsbRegistration::STATUS_RE_REGISTRATION]);
+        }
+
+        // Create payment record
+        return PsbPayment::create([
+            'psb_registration_id' => $registration->id,
+            'payment_type' => $data['payment_type'],
+            'amount' => $data['amount'],
+            'payment_method' => $data['payment_method'],
+            'proof_file_path' => $filePath,
+            'status' => PsbPayment::STATUS_PENDING,
+            'notes' => $data['notes'] ?? null,
+        ]);
+    }
+
+    /**
+     * Verify payment (approve/reject)
+     *
+     * @param  PsbPayment  $payment  Data pembayaran
+     * @param  User  $verifier  Admin yang memverifikasi
+     * @param  bool  $approved  True untuk approve, false untuk reject
+     * @param  string|null  $notes  Catatan verifikasi atau alasan penolakan
+     * @return bool True jika berhasil
+     */
+    public function verifyPayment(PsbPayment $payment, User $verifier, bool $approved, ?string $notes = null): bool
+    {
+        return DB::transaction(function () use ($payment, $verifier, $approved, $notes) {
+            $payment->update([
+                'status' => $approved ? PsbPayment::STATUS_VERIFIED : PsbPayment::STATUS_REJECTED,
+                'verified_by' => $verifier->id,
+                'verified_at' => now(),
+                'notes' => $notes,
+            ]);
+
+            // If approved and all payments verified, create student
+            if ($approved) {
+                $registration = $payment->registration;
+                if ($registration->allPaymentsVerified()) {
+                    $this->createStudentFromRegistration($registration);
+                }
+            }
+
+            return true;
+        });
+    }
+
+    /**
+     * Get pending payments untuk verifikasi admin
+     *
+     * @param  array  $filters  Filter: status, search
+     * @param  int  $perPage  Jumlah item per halaman
+     * @return LengthAwarePaginator Paginated list pembayaran
+     */
+    public function getPendingPayments(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        $activeYear = AcademicYear::where('is_active', true)->first();
+
+        $query = PsbPayment::with(['registration', 'verifier'])
+            ->whereHas('registration', function ($q) use ($activeYear) {
+                if ($activeYear) {
+                    $q->where('academic_year_id', $activeYear->id);
+                }
+            })
+            ->when(! empty($filters['status']), function ($q) use ($filters) {
+                $q->where('status', $filters['status']);
+            }, function ($q) {
+                // Default to pending only if no filter specified
+                $q->where('status', PsbPayment::STATUS_PENDING);
+            })
+            ->when(! empty($filters['search']), function ($q) use ($filters) {
+                $q->whereHas('registration', function ($query) use ($filters) {
+                    $query->where('registration_number', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('student_name', 'like', '%'.$filters['search'].'%');
+                });
+            })
+            ->latest();
+
+        return $query->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * Create student from completed registration
+     * dengan generate NIS, create Student, Guardian, dan Parent account
+     *
+     * @param  PsbRegistration  $registration  Data pendaftaran yang sudah complete
+     * @return Student Student record yang dibuat
+     *
+     * @throws \Exception Jika status tidak valid atau data tidak lengkap
+     */
+    public function createStudentFromRegistration(PsbRegistration $registration): Student
+    {
+        if ($registration->status !== PsbRegistration::STATUS_RE_REGISTRATION) {
+            throw new \Exception('Status pendaftaran tidak valid untuk membuat data siswa.');
+        }
+
+        return DB::transaction(function () use ($registration) {
+            $activeYear = AcademicYear::where('is_active', true)->first();
+
+            if (! $activeYear) {
+                throw new \Exception('Tahun ajaran aktif tidak ditemukan.');
+            }
+
+            // Generate NIS
+            $nis = $this->generateNis($activeYear->name);
+
+            // Map gender dari PSB ke Student format
+            $jenisKelamin = $registration->gender === 'male' ? 'L' : 'P';
+
+            // Create Student record
+            $student = Student::create([
+                'nis' => $nis,
+                'nisn' => null, // Will be filled manually later
+                'nik' => $registration->student_nik,
+                'nama_lengkap' => $registration->student_name,
+                'nama_panggilan' => $this->extractNamaPanggilan($registration->student_name),
+                'jenis_kelamin' => $jenisKelamin,
+                'tempat_lahir' => $registration->birth_place,
+                'tanggal_lahir' => $registration->birth_date,
+                'agama' => $this->mapAgama($registration->religion),
+                'anak_ke' => $registration->child_order,
+                'jumlah_saudara' => 0, // Default, can be updated later
+                'status_keluarga' => 'Anak Kandung',
+                'alamat' => $registration->address,
+                'tahun_ajaran_masuk' => $activeYear->name,
+                'tanggal_masuk' => now(),
+                'status' => 'aktif',
+            ]);
+
+            // Create Father Guardian
+            $ayah = $this->createOrUpdateGuardianFromPsb([
+                'nik' => $registration->father_nik,
+                'nama_lengkap' => $registration->father_name,
+                'pekerjaan' => $registration->father_occupation,
+                'no_hp' => $registration->father_phone,
+                'email' => $registration->father_email,
+                'alamat' => $registration->address,
+            ], 'ayah');
+
+            // Attach father as primary contact
+            $student->guardians()->attach($ayah->id, ['is_primary_contact' => true]);
+
+            // Create parent account for father
+            $this->createParentAccountFromPsb($ayah, $student);
+
+            // Create Mother Guardian
+            $ibu = $this->createOrUpdateGuardianFromPsb([
+                'nik' => $registration->mother_nik,
+                'nama_lengkap' => $registration->mother_name,
+                'pekerjaan' => $registration->mother_occupation,
+                'no_hp' => $registration->mother_phone,
+                'email' => $registration->mother_email,
+                'alamat' => $registration->address,
+            ], 'ibu');
+
+            // Attach mother as secondary contact
+            $student->guardians()->attach($ibu->id, ['is_primary_contact' => false]);
+
+            // Update registration status to completed
+            $registration->update(['status' => PsbRegistration::STATUS_COMPLETED]);
+
+            return $student;
+        });
+    }
+
+    /**
+     * Get parent's PSB registration based on guardian NIK
+     *
+     * @param  User  $parent  Parent user
+     * @return PsbRegistration|null Registration if found
+     */
+    public function getParentRegistration(User $parent): ?PsbRegistration
+    {
+        $guardian = $parent->guardian;
+
+        if (! $guardian) {
+            return null;
+        }
+
+        return PsbRegistration::where(function ($q) use ($guardian) {
+            $q->where('father_nik', $guardian->nik)
+                ->orWhere('mother_nik', $guardian->nik);
+        })
+            ->whereIn('status', [
+                PsbRegistration::STATUS_APPROVED,
+                PsbRegistration::STATUS_RE_REGISTRATION,
+                PsbRegistration::STATUS_COMPLETED,
+            ])
+            ->whereNotNull('announced_at')
+            ->with(['payments', 'documents', 'academicYear'])
+            ->first();
+    }
+
+    /**
+     * Get daily registrations untuk chart data
+     *
+     * @param  int  $days  Jumlah hari ke belakang
+     * @return array Array of {date, count}
+     */
+    public function getDailyRegistrations(int $days = 30): array
+    {
+        $activeYear = AcademicYear::where('is_active', true)->first();
+
+        if (! $activeYear) {
+            return [];
+        }
+
+        $startDate = now()->subDays($days)->startOfDay();
+
+        return PsbRegistration::where('academic_year_id', $activeYear->id)
+            ->where('created_at', '>=', $startDate)
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(fn ($item) => [
+                'date' => $item->date,
+                'count' => $item->count,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Get gender distribution untuk chart data
+     *
+     * @return array Array of {gender, count}
+     */
+    public function getGenderDistribution(): array
+    {
+        $activeYear = AcademicYear::where('is_active', true)->first();
+
+        if (! $activeYear) {
+            return [];
+        }
+
+        return PsbRegistration::where('academic_year_id', $activeYear->id)
+            ->selectRaw('gender, COUNT(*) as count')
+            ->groupBy('gender')
+            ->get()
+            ->map(fn ($item) => [
+                'gender' => $item->gender === 'male' ? 'Laki-laki' : 'Perempuan',
+                'count' => $item->count,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Get status distribution untuk chart data
+     *
+     * @return array Array of {status, label, count}
+     */
+    public function getStatusDistribution(): array
+    {
+        $activeYear = AcademicYear::where('is_active', true)->first();
+
+        if (! $activeYear) {
+            return [];
+        }
+
+        $statusLabels = PsbRegistration::getStatuses();
+
+        return PsbRegistration::where('academic_year_id', $activeYear->id)
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->get()
+            ->map(fn ($item) => [
+                'status' => $item->status,
+                'label' => $statusLabels[$item->status] ?? $item->status,
+                'count' => $item->count,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Generate NIS (Nomor Induk Siswa) otomatis
+     *
+     * @param  string  $tahunAjaran  Format: 2024/2025
+     * @return string Format: 20240001
+     */
+    protected function generateNis(string $tahunAjaran): string
+    {
+        // Extract tahun dari format 2024/2025 -> 2024
+        $year = substr($tahunAjaran, 0, 4);
+
+        // Get last NIS untuk tahun ini
+        $lastNis = Student::where('nis', 'like', $year.'%')
+            ->orderByRaw('CAST(SUBSTRING(nis, 5, 4) AS UNSIGNED) DESC')
+            ->value('nis');
+
+        if ($lastNis) {
+            $lastNumber = (int) substr($lastNis, 4);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        return $year.str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Create or update guardian dari data PSB
+     *
+     * @param  array  $data  Data guardian
+     * @param  string  $hubungan  Hubungan dengan siswa (ayah, ibu, wali)
+     * @return Guardian Guardian record
+     */
+    protected function createOrUpdateGuardianFromPsb(array $data, string $hubungan): Guardian
+    {
+        // Check if guardian dengan NIK ini sudah ada
+        $guardian = Guardian::where('nik', $data['nik'])->first();
+
+        if ($guardian) {
+            // Update existing guardian
+            $guardian->update([
+                'nama_lengkap' => $data['nama_lengkap'],
+                'pekerjaan' => $data['pekerjaan'],
+                'no_hp' => $data['no_hp'],
+                'email' => $data['email'] ?? null,
+                'alamat' => $data['alamat'] ?? null,
+            ]);
+        } else {
+            // Create new guardian
+            $guardian = Guardian::create([
+                'nik' => $data['nik'],
+                'nama_lengkap' => $data['nama_lengkap'],
+                'hubungan' => $hubungan,
+                'pekerjaan' => $data['pekerjaan'],
+                'pendidikan' => null,
+                'penghasilan' => null,
+                'no_hp' => $data['no_hp'],
+                'email' => $data['email'] ?? null,
+                'alamat' => $data['alamat'] ?? null,
+            ]);
+        }
+
+        return $guardian;
+    }
+
+    /**
+     * Create parent account dari PSB data
+     *
+     * @param  Guardian  $guardian  Guardian record
+     * @param  Student  $student  Student record
+     * @return User|null User record atau null jika sudah ada
+     */
+    protected function createParentAccountFromPsb(Guardian $guardian, Student $student): ?User
+    {
+        // Jika guardian sudah punya user account, skip
+        if ($guardian->user_id) {
+            return null;
+        }
+
+        // Skip if no phone number
+        if (! $guardian->no_hp) {
+            return null;
+        }
+
+        // Normalize nomor HP untuk username
+        $username = preg_replace('/[^0-9]/', '', $guardian->no_hp);
+
+        // Check if user dengan username ini sudah ada
+        $existingUser = User::where('username', $username)->first();
+
+        if ($existingUser) {
+            // Link guardian ke existing user
+            $guardian->update(['user_id' => $existingUser->id]);
+
+            return $existingUser;
+        }
+
+        // Create new parent account dengan password = Ortu{NIS}
+        $password = 'Ortu'.$student->nis;
+
+        $user = User::create([
+            'name' => $guardian->nama_lengkap,
+            'username' => $username,
+            'email' => $guardian->email ?? $username.'@parent.sekolah.id',
+            'phone_number' => $guardian->no_hp,
+            'password' => Hash::make($password),
+            'role' => 'PARENT',
+            'status' => 'ACTIVE',
+            'is_first_login' => true,
+        ]);
+
+        // Link guardian ke user
+        $guardian->update(['user_id' => $user->id]);
+
+        return $user;
+    }
+
+    /**
+     * Extract nama panggilan dari nama lengkap
+     * mengambil kata pertama sebagai nama panggilan
+     *
+     * @param  string  $namaLengkap  Nama lengkap siswa
+     * @return string Nama panggilan
+     */
+    protected function extractNamaPanggilan(string $namaLengkap): string
+    {
+        $parts = explode(' ', trim($namaLengkap));
+
+        return $parts[0] ?? $namaLengkap;
+    }
+
+    /**
+     * Map agama dari format PSB ke format Student
+     *
+     * @param  string  $religion  Agama dari PSB
+     * @return string Agama untuk Student
+     */
+    protected function mapAgama(string $religion): string
+    {
+        $map = [
+            'islam' => 'Islam',
+            'kristen' => 'Kristen',
+            'katolik' => 'Katolik',
+            'hindu' => 'Hindu',
+            'buddha' => 'Buddha',
+            'konghucu' => 'Konghucu',
+        ];
+
+        return $map[strtolower($religion)] ?? ucfirst($religion);
     }
 }

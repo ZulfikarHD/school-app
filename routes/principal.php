@@ -13,6 +13,7 @@ use App\Http\Controllers\Dashboard\PrincipalDashboardController;
 use App\Http\Controllers\Principal\AcademicDashboardController;
 use App\Http\Controllers\Principal\AttendanceController;
 use App\Http\Controllers\Principal\FinancialReportController;
+use App\Http\Controllers\Principal\PrincipalPsbController;
 use App\Http\Controllers\Principal\ReportCardController;
 use App\Http\Controllers\Principal\StudentController;
 use App\Http\Controllers\Principal\TeacherLeaveController;
@@ -80,6 +81,13 @@ Route::middleware(['auth', 'role:PRINCIPAL'])->group(function () {
         Route::prefix('academic')->name('academic.')->group(function () {
             Route::get('dashboard', [AcademicDashboardController::class, 'index'])->name('dashboard');
             Route::get('grades', [AcademicDashboardController::class, 'grades'])->name('grades');
+        });
+
+        /**
+         * PSB Dashboard - Dashboard monitoring PSB untuk Kepala Sekolah
+         */
+        Route::prefix('psb')->name('psb.')->group(function () {
+            Route::get('/', [PrincipalPsbController::class, 'dashboard'])->name('dashboard');
         });
 
         /**

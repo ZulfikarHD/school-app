@@ -216,4 +216,59 @@ class PsbRegistration extends Model
                 ->orWhere('student_nik', 'like', "%{$search}%");
         });
     }
+
+    /**
+     * Check apakah pendaftaran dapat melakukan daftar ulang
+     * yaitu jika status approved dan sudah diumumkan
+     *
+     * @return bool True jika dapat daftar ulang
+     */
+    public function canReRegister(): bool
+    {
+        return $this->status === self::STATUS_APPROVED
+            && $this->announced_at !== null;
+    }
+
+    /**
+     * Check apakah semua pembayaran sudah terverifikasi
+     * untuk menentukan apakah sudah siap untuk create student
+     *
+     * @return bool True jika semua pembayaran terverifikasi
+     */
+    public function allPaymentsVerified(): bool
+    {
+        // Harus ada minimal satu pembayaran
+        if ($this->payments()->count() === 0) {
+            return false;
+        }
+
+        // Semua pembayaran harus status verified
+        return $this->payments()
+            ->where('status', '!=', PsbPayment::STATUS_VERIFIED)
+            ->doesntExist();
+    }
+
+    /**
+     * Check apakah ada pembayaran yang pending verifikasi
+     *
+     * @return bool True jika ada pembayaran pending
+     */
+    public function hasPendingPayment(): bool
+    {
+        return $this->payments()
+            ->where('status', PsbPayment::STATUS_PENDING)
+            ->exists();
+    }
+
+    /**
+     * Get total pembayaran yang sudah terverifikasi
+     *
+     * @return int Total dalam rupiah
+     */
+    public function getTotalVerifiedPayment(): int
+    {
+        return (int) $this->payments()
+            ->where('status', PsbPayment::STATUS_VERIFIED)
+            ->sum('amount');
+    }
 }

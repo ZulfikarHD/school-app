@@ -8,7 +8,9 @@
  * audit logs, leave request verification, payment management, dan grade management
  */
 
+use App\Http\Controllers\Admin\AdminPsbAnnouncementController;
 use App\Http\Controllers\Admin\AdminPsbController;
+use App\Http\Controllers\Admin\AdminPsbPaymentController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BankReconciliationController;
@@ -78,6 +80,26 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
         Route::post('registrations/{registration}/revision', [AdminPsbController::class, 'requestRevision'])
             ->middleware('throttle:10,1')
             ->name('registrations.revision');
+
+        /**
+         * PSB Announcements - Bulk announce pendaftaran yang disetujui
+         */
+        Route::prefix('announcements')->name('announcements.')->group(function () {
+            Route::get('/', [AdminPsbAnnouncementController::class, 'index'])->name('index');
+            Route::post('/bulk-announce', [AdminPsbAnnouncementController::class, 'bulkAnnounce'])
+                ->middleware('throttle:10,1')
+                ->name('bulk-announce');
+        });
+
+        /**
+         * PSB Payments - Verifikasi pembayaran daftar ulang
+         */
+        Route::prefix('payments')->name('payments.')->group(function () {
+            Route::get('/', [AdminPsbPaymentController::class, 'index'])->name('index');
+            Route::post('/{payment}/verify', [AdminPsbPaymentController::class, 'verify'])
+                ->middleware('throttle:10,1')
+                ->name('verify');
+        });
     });
 
     /**
