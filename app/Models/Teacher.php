@@ -114,6 +114,17 @@ class Teacher extends Model
     }
 
     /**
+     * Relationship one-to-many dengan TeachingSchedule untuk tracking
+     * jadwal mengajar guru
+     *
+     * @return HasMany<TeachingSchedule>
+     */
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(TeachingSchedule::class);
+    }
+
+    /**
      * Helper method untuk check apakah guru masih aktif
      */
     public function isActive(): bool

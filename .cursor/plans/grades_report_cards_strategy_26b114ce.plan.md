@@ -137,7 +137,7 @@ flowchart LR
 
 - API: GET /teacher/grades, POST /teacher/grades
 - DB: `grades` table migration
-- Wayfinder routes: `teacher.grades.*`
+- Wayfinder routes: `teacher.grades.`*
 
 ---
 

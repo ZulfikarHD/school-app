@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\ReportCardController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TeacherAttendanceController;
 use App\Http\Controllers\Admin\TeacherController;
+use App\Http\Controllers\Admin\TeachingScheduleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Dashboard\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +76,26 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
     Route::patch('teachers/{teacher}/toggle-status', [TeacherController::class, 'toggleStatus'])
         ->name('teachers.toggle-status');
     Route::resource('teachers', TeacherController::class)->except(['show', 'destroy']);
+
+    /**
+     * Teaching Schedule Management - Jadwal mengajar guru
+     *
+     * Routes mencakup: CRUD jadwal, matrix views per guru/kelas,
+     * conflict detection API, copy semester, dan export PDF
+     */
+    Route::prefix('teachers/schedules')->name('teachers.schedules.')->group(function () {
+        Route::get('/', [TeachingScheduleController::class, 'index'])->name('index');
+        Route::get('create', [TeachingScheduleController::class, 'create'])->name('create');
+        Route::post('/', [TeachingScheduleController::class, 'store'])->name('store');
+        Route::get('by-teacher/{teacher}', [TeachingScheduleController::class, 'byTeacher'])->name('by-teacher');
+        Route::get('by-class/{schoolClass}', [TeachingScheduleController::class, 'byClass'])->name('by-class');
+        Route::post('check-conflict', [TeachingScheduleController::class, 'checkConflict'])->name('check-conflict');
+        Route::post('copy-semester', [TeachingScheduleController::class, 'copySemester'])->name('copy-semester');
+        Route::get('export-pdf', [TeachingScheduleController::class, 'exportPdf'])->name('export-pdf');
+        Route::get('{schedule}/edit', [TeachingScheduleController::class, 'edit'])->name('edit');
+        Route::put('{schedule}', [TeachingScheduleController::class, 'update'])->name('update');
+        Route::delete('{schedule}', [TeachingScheduleController::class, 'destroy'])->name('destroy');
+    });
 
     /**
      * PSB Management - Verifikasi pendaftaran siswa baru
