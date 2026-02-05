@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             SchoolClassSeeder::class,        // Must run FIRST - creates classes
             SubjectSeeder::class,             // Creates subjects
             UserSeeder::class,                // Creates users + guardian + children (needs classes to exist)
+            TeacherSeeder::class,             // Creates teachers with user accounts and subjects
             StudentSeeder::class,             // Creates additional test students
             AttendanceQuickSeeder::class,     // Creates attendance test data
             AttendanceTestSeeder::class,      // Creates more test data

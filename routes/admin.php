@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ReportCardController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TeacherAttendanceController;
+use App\Http\Controllers\Admin\TeacherController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Dashboard\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -63,6 +64,17 @@ Route::middleware(['auth', 'role:SUPERADMIN,ADMIN'])->prefix('admin')->name('adm
     Route::post('students/{student}/update-status', [StudentController::class, 'updateStatus'])
         ->name('students.update-status');
     Route::resource('students', StudentController::class);
+
+    /**
+     * Teacher Management - Resource routes untuk pengelolaan data guru
+     *
+     * Routes mencakup: index, create, store, edit, update, dan toggle status
+     * Digunakan oleh Admin/TU untuk mengelola data guru, status kepegawaian,
+     * dan assignment mata pelajaran
+     */
+    Route::patch('teachers/{teacher}/toggle-status', [TeacherController::class, 'toggleStatus'])
+        ->name('teachers.toggle-status');
+    Route::resource('teachers', TeacherController::class)->except(['show', 'destroy']);
 
     /**
      * PSB Management - Verifikasi pendaftaran siswa baru

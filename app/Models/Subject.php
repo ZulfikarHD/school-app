@@ -43,13 +43,23 @@ class Subject extends Model
      * Relasi ke guru yang mengajar mata pelajaran ini
      * melalui pivot table teacher_subjects
      *
-     * @return BelongsToMany<User>
+     * @return BelongsToMany<Teacher>
      */
     public function teachers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'teacher_subjects', 'subject_id', 'teacher_id')
-            ->withPivot('class_id', 'tahun_ajaran')
+        return $this->belongsToMany(Teacher::class, 'teacher_subjects', 'subject_id', 'teacher_id')
+            ->withPivot('class_id', 'tahun_ajaran', 'is_primary')
             ->withTimestamps();
+    }
+
+    /**
+     * Relasi untuk mendapatkan guru yang mengajar mapel ini sebagai mata pelajaran utama
+     *
+     * @return BelongsToMany<Teacher>
+     */
+    public function primaryTeachers(): BelongsToMany
+    {
+        return $this->teachers()->wherePivot('is_primary', true);
     }
 
     /**

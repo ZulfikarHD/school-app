@@ -97,6 +97,17 @@ class User extends Authenticatable
     }
 
     /**
+     * Relationship one-to-one dengan Teacher untuk profil guru
+     * dimana user dengan role TEACHER akan ter-link ke teacher record
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne<Teacher>
+     */
+    public function teacher()
+    {
+        return $this->hasOne(Teacher::class);
+    }
+
+    /**
      * Helper method untuk mendapatkan students yang terhubung dengan parent user
      * melalui guardian relationship
      */
